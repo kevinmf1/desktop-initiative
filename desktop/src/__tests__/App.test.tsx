@@ -2,7 +2,12 @@ import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
-import App, { SCREENS, type Account } from '../App';
+import App, {
+  SCREENS,
+  WorkspaceShell,
+  workspaceSwitchRefusal,
+  type Account,
+} from '../App';
 
 afterEach(clearMocks);
 
@@ -103,6 +108,87 @@ test('sign-out clears the local session and returns to the sign-in screen', asyn
 
   expect(command).toHaveBeenCalledWith('sign_out', {});
   expect(await screen.findByRole('button', { name: 'Sign in with Google' })).toBeTruthy();
+});
+
+// FR-056a — every workspace the user is in, and only those.
+test('the switcher lists every active membership and no invited or removed one', async () => {
+  ipc({
+    cached_account: () =>
+      account({
+        memberships: [
+          { workspace_id: 'ws-1', name: 'Alpha', role: 'admin', status: 'active' },
+          { workspace_id: 'ws-2', name: 'Beta', role: 'admin', status: 'invited' },
+          { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
+          { workspace_id: 'ws-4', name: 'Delta', role: 'admin', status: 'removed' },
+        ],
+      }),
+  });
+  render(<App />);
+
+  const switcher = (await screen.findByLabelText('Workspace')) as HTMLSelectElement;
+  expect([...switcher.options].map((o) => o.textContent)).toEqual(['Alpha', 'Gamma']);
+  expect(switcher.value).toBe('ws-1');
+});
+
+// FR-001 / FR-056c
+test('switching scopes the content to the new workspace without rewriting anything', async () => {
+  const user = userEvent.setup();
+  const command = ipc({
+    cached_account: () =>
+      account({
+        memberships: [
+          { workspace_id: 'ws-1', name: 'Alpha', role: 'admin', status: 'active' },
+          { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
+        ],
+      }),
+  });
+  render(<App />);
+
+  await user.click(await screen.findByRole('button', { name: 'Bugs' }));
+  expect(screen.getByText(/Bugs in Alpha/)).toBeTruthy();
+
+  await user.selectOptions(screen.getByLabelText('Workspace'), 'ws-3');
+
+  expect(screen.getByText(/in Gamma/)).toBeTruthy();
+  expect(screen.queryByText(/in Alpha/)).toBeNull();
+  // No reattribution: a switch is a view change, so it issues no Rust call at all.
+  expect(command.mock.calls.map(([name]) => name)).toEqual(['cached_account']);
+});
+
+// FR-056d
+test('a switch is refused while a test session is running', async () => {
+  const user = userEvent.setup();
+  const signedIn = account({
+    memberships: [
+      { workspace_id: 'ws-1', name: 'Alpha', role: 'admin', status: 'active' },
+      { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
+    ],
+  });
+  render(<WorkspaceShell account={signedIn} onSignOut={() => {}} runningSessions={2} />);
+
+  await user.selectOptions(screen.getByLabelText('Workspace'), 'ws-3');
+
+  expect((await screen.findByRole('alert')).textContent).toBe(
+    'Stop the 2 running test sessions before switching workspace.',
+  );
+  expect((screen.getByLabelText('Workspace') as HTMLSelectElement).value).toBe('ws-1');
+  expect(screen.getByText(/in Alpha/)).toBeTruthy();
+
+  expect(workspaceSwitchRefusal(0)).toBeNull();
+  expect(workspaceSwitchRefusal(1)).toContain('1 running test session before');
+});
+
+test('an account with no active membership says so instead of showing a workspace', async () => {
+  ipc({
+    cached_account: () =>
+      account({
+        memberships: [{ workspace_id: 'ws-2', name: 'Beta', role: 'admin', status: 'invited' }],
+      }),
+  });
+  render(<App />);
+
+  expect((await screen.findByRole('status')).textContent).toContain('No active workspace');
+  expect(screen.queryByLabelText('Workspace')).toBeNull();
 });
 
 test('a sign-out that could not clear the credential stays signed in and says so', async () => {
