@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 1/20 | feat-005 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 2/20 | feat-006 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -49,7 +49,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | ID | Feature | Status | By | Depends on | Evidence |
 |----|---------|:------:|----|------------|----------|
 | feat-004 | Tauri 2.x shell + navigation, independently buildable/releasable — FR-000; adds a real compile step to `verify.sh` | ✅ | kevin-malik | — | [archive](archive/features/feat-004.md) |
-| feat-005 | Contract version + capability handshake: same-major connects, major mismatch refuses and names the stale peer, unknown fields ignored, missing capability shown *unavailable-because-out-of-date* — FR-000c, FR-000d, FR-000e | 🟡 | — | feat-004 | — |
+| feat-005 | Contract version + capability handshake: same-major connects, major mismatch refuses and names the stale peer, unknown fields ignored, missing capability shown *unavailable-because-out-of-date* — FR-000c, FR-000d, FR-000e | ✅ | kevin-malik | feat-004 | [archive](archive/features/feat-005.md) |
 | feat-006 | Google SSO in the system browser — PKCE + `127.0.0.1` loopback, no embedded webview, no client secret — FR-001b, FR-051a | 🟡 | — | feat-004 | — |
 | feat-007 | Session credential in the OS keychain, cached membership list, 30-day offline grace (expiry never interrupts a running session), sign-out clears local only — FR-052a, FR-053, FR-053a, FR-054 | 🟡 | — | feat-006 | — |
 | feat-008 | Workspace switcher: every membership listed, all data scoped to the active workspace, no reattribution on switch, switch blocked while a session runs — FR-001, FR-056a, FR-056c, FR-056d | 🟡 | — | feat-007 | — |

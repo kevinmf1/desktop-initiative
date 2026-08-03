@@ -8,14 +8,16 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-004 closed; nothing 🔵)
-- **Status:** feat-004 is complete and ready to commit; `main` is at `967e5b6 Git Init`.
+- **Active feature:** — (feat-005 closed; nothing 🔵)
+- **Status:** feat-004 and feat-005 are complete and committed separately.
+  Session detail: [archive](../archive/sessions/2026-08-03-feat-004-feat-005.md).
 - **Last verify:** 2026-08-03 · `build` → **PASS** · `test` → **PASS** · `lint` → not configured.
-  Release check: `cargo tauri build --no-bundle` passed.
+  Rust handshake tests: 9/9 passed. Prior release check: `cargo tauri build --no-bundle` passed.
 
 ## Next step
 
-Pick **feat-005**, the next ready feature, and set its row 🔵 before editing.
+Pick one ready feature. **feat-006** starts the auth/workspace/authoring chain; **feat-013** is now
+also ready and starts pairing toward the WebSocket server. Set the chosen row 🔵 before editing.
 
 `desktop/node_modules`, `desktop/dist` and `desktop/src-tauri/target/` are already ignored by the
 scaffold's own `.gitignore`s — verified with `git status --short -uall desktop`.
@@ -37,4 +39,5 @@ scaffold's own `.gitignore`s — verified with `git status --short -uall desktop
 
 | File | Change | Why |
 |------|--------|-----|
-_No unarchived session changes. See [feat-004](../archive/features/feat-004.md)._
+_No unarchived session changes. See
+[2026-08-03-feat-004-feat-005.md](../archive/sessions/2026-08-03-feat-004-feat-005.md)._
