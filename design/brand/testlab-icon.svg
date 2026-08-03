@@ -1,0 +1,37 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Testlab icon">
+  <defs>
+    <linearGradient id="tl-bg" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="tl-liquid" x1="0" y1="150" x2="0" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <clipPath id="tl-flask">
+      <path d="M108 60 L108 112 L64 186 C58 196 65 208 77 208 L179 208 C191 208 198 196 192 186 L148 112 L148 60 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- App-icon background -->
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#tl-bg)"/>
+
+  <!-- Flask body (white) -->
+  <path d="M108 60 L108 112 L64 186 C58 196 65 208 77 208 L179 208 C191 208 198 196 192 186 L148 112 L148 60 Z"
+        fill="#FFFFFF"/>
+
+  <!-- Liquid fill, clipped to flask -->
+  <g clip-path="url(#tl-flask)">
+    <path d="M40 150 L216 150 L216 220 L40 220 Z" fill="url(#tl-liquid)"/>
+    <circle cx="96" cy="176" r="6" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="150" cy="190" r="8" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="120" cy="196" r="4" fill="#FFFFFF" opacity="0.6"/>
+  </g>
+
+  <!-- Neck lip -->
+  <rect x="100" y="48" width="56" height="16" rx="8" fill="#FFFFFF"/>
+
+  <!-- Checkmark badge -->
+  <path d="M104 182 L120 198 L154 162"
+        stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

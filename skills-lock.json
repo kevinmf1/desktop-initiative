@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "edts-harness": {
+      "source": "edtsmobile/edts-harness",
+      "sourceType": "github",
+      "skillPath": "skills/edts-harness/SKILL.md",
+      "computedHash": "b155c4f28ccf88c07631e1557270ba59fe95feaf2a3844e5d87f4ce13cac0d57"
+    }
+  }
+}

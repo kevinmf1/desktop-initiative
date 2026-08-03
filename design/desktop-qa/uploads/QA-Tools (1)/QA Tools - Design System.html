@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QA Tools — Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #F5F7FA; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#F5F7FA">
+  <svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="140" fill="#F5F7FA"/>
+    <!-- Header bar -->
+    <rect x="16" y="16" width="36" height="36" rx="8" fill="#2563EB"/>
+    <text x="34" y="39" fill="#fff" font-size="13" font-weight="700" text-anchor="middle" font-family="monospace">QA</text>
+    <rect x="60" y="20" width="80" height="10" rx="3" fill="#1E293B"/>
+    <rect x="60" y="34" width="50" height="7" rx="2" fill="#94A3B8"/>
+    <rect x="16" y="66" width="168" height="1" fill="#DDE3EB"/>
+    <!-- Color swatches row -->
+    <rect x="16" y="76" width="22" height="16" rx="4" fill="#2563EB"/>
+    <rect x="42" y="76" width="22" height="16" rx="4" fill="#16A34A"/>
+    <rect x="68" y="76" width="22" height="16" rx="4" fill="#DC2626"/>
+    <rect x="94" y="76" width="22" height="16" rx="4" fill="#7C3AED"/>
+    <rect x="120" y="76" width="22" height="16" rx="4" fill="#B45309"/>
+    <rect x="146" y="76" width="22" height="16" rx="4" fill="#1A2233"/>
+    <!-- Type rows -->
+    <rect x="16" y="102" width="60" height="8" rx="2" fill="#111827"/>
+    <rect x="16" y="114" width="100" height="6" rx="2" fill="#6B7280"/>
+    <rect x="16" y="124" width="140" height="5" rx="2" fill="#9CA3AF"/>
+    <text x="184" y="135" fill="#94A3B8" font-size="7" text-anchor="end" font-family="monospace">v1.0</text>
+  </svg>
+</template>
+
+<div id="root"></div>
+<script type="text/babel" src="qa-tokens.jsx"></script>
+<script type="text/babel" src="qa-icons.jsx"></script>
+<script type="text/babel" src="qa-ui.jsx"></script>
+<script type="text/babel">
+
+const T = THEME_A; // Design system uses the light (Clean Pro) theme as canonical
+
+// ─── Layout helpers ──────────────────────────────────────────────────────────
+const Section = ({ title, subtitle, children }) => (
+  <div style={{ marginBottom: 64 }}>
+    <div style={{ marginBottom: 24 }}>
+      <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, color: '#94A3B8', fontFamily: T.mono, marginBottom: 4 }}>{title}</h2>
+      {subtitle && <p style={{ fontSize: 14, color: '#64748B', fontFamily: T.font }}>{subtitle}</p>}
+    </div>
+    {children}
+  </div>
+);
+
+const Row = ({ children, gap = 16, wrap }) => (
+  <div style={{ display: 'flex', gap, alignItems: 'flex-start', flexWrap: wrap ? 'wrap' : 'nowrap' }}>{children}</div>
+);
+
+const Card = ({ children, width, pad = 20 }) => (
+  <div style={{ background: '#FFFFFF', border: '1px solid #DDE3EB', borderRadius: 10, padding: pad, width, flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>{children}</div>
+);
+
+const Label = ({ children }) => (
+  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: '#94A3B8', fontFamily: T.mono, marginBottom: 12 }}>{children}</div>
+);
+
+// ─── Color swatches ───────────────────────────────────────────────────────────
+const Swatch = ({ color, name, hex, dark }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 80 }}>
+    <div style={{ width: 80, height: 56, borderRadius: 8, background: color, border: '1px solid rgba(0,0,0,0.08)', flexShrink: 0 }}/>
+    <div style={{ fontSize: 12, fontWeight: 600, color: '#1E293B' }}>{name}</div>
+    <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: T.mono }}>{hex}</div>
+  </div>
+);
+
+const ColorRow = ({ label, swatches }) => (
+  <div style={{ marginBottom: 24 }}>
+    <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.7, fontFamily: T.mono, marginBottom: 12 }}>{label}</div>
+    <Row gap={12} wrap>{swatches.map(s => <Swatch key={s.name} {...s}/>)}</Row>
+  </div>
+);
+
+// ─── Type specimen ────────────────────────────────────────────────────────────
+const TypeRow = ({ label, size, weight, family, example, color = '#111827' }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 24, padding: '14px 0', borderBottom: '1px solid #EEF2F7' }}>
+    <div style={{ width: 180, flexShrink: 0 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: 0.6 }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#CBD5E1', fontFamily: T.mono, marginTop: 2 }}>{size} · {weight}</div>
+    </div>
+    <div style={{ fontSize: size, fontWeight: weight, fontFamily: family || T.font, color, lineHeight: 1.3, flex: 1 }}>{example}</div>
+  </div>
+);
+
+// ─── Icon grid ────────────────────────────────────────────────────────────────
+const ICON_NAMES = ['testCase','testPlan','runner','logs','device','settings','bug','stop','check','x','skip','block','plus','search','filter','chevronRight','chevronDown','wifi','timer','copy','tag','link','refresh','upload','more','layers','workspace','arrowLeft','info'];
+
+const IconCell = ({ name }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 8, background: '#F8FAFC', border: '1px solid #EEF2F7', width: 80 }}>
+    <QAIcon name={name} size={18} color="#374151"/>
+    <span style={{ fontSize: 10, color: '#94A3B8', fontFamily: T.mono, textAlign: 'center', lineHeight: 1.3 }}>{name}</span>
+  </div>
+);
+
+// ─── Component demos ──────────────────────────────────────────────────────────
+const DemoBlock = ({ label, children }) => (
+  <div style={{ marginBottom: 20 }}>
+    <Label>{label}</Label>
+    {children}
+  </div>
+);
+
+function App() {
+  return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 40px 80px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 56, paddingBottom: 32, borderBottom: '1px solid #DDE3EB' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#fff', fontFamily: T.mono, fontSize: 16, fontWeight: 700 }}>QA</span>
+          </div>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', fontFamily: T.font }}>QA Tools — Design System</h1>
+            <p style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Core tokens · Typography · Components · Icons · v1.0</p>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
+            <a href="QA Tools.html" style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:6, background:'#2563EB', color:'#fff', fontSize:13, fontWeight:600, textDecoration:'none', fontFamily:T.font }}>
+              <QAIcon name="arrowLeft" size={13} color="#fff"/> Open Design Canvas
+            </a>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 32 }}>
+          {[
+            { label: 'Typeface', val: 'IBM Plex Sans + Mono' },
+            { label: 'Accent', val: 'Blue #2563EB' },
+            { label: 'Themes', val: 'Clean Pro · Dev Dark' },
+            { label: 'Radius', val: '4 / 6 / 10px' },
+          ].map(m => (
+            <div key={m.label}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7, color: '#94A3B8', fontFamily: T.mono }}>{m.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginTop: 2 }}>{m.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Colors */}
+      <Section title="Colors" subtitle="Token-based color system. Both themes share the same semantic slot names.">
+        <Card pad={24}>
+          <ColorRow label="Brand" swatches={[
+            { name:'Accent', hex:'#2563EB', color:'#2563EB' },
+            { name:'Accent Hover', hex:'#1D4ED8', color:'#1D4ED8' },
+            { name:'Accent Light', hex:'#EFF6FF', color:'#EFF6FF' },
+            { name:'Accent Text', hex:'#1E40AF', color:'#1E40AF' },
+          ]}/>
+          <ColorRow label="Semantic — Status" swatches={[
+            { name:'Pass', hex:'#16A34A', color:'#16A34A' },
+            { name:'Fail', hex:'#DC2626', color:'#DC2626' },
+            { name:'Blocked', hex:'#7C3AED', color:'#7C3AED' },
+            { name:'Warning', hex:'#B45309', color:'#B45309' },
+            { name:'Skip', hex:'#6B7280', color:'#6B7280' },
+            { name:'Live', hex:'#16A34A', color:'#16A34A' },
+          ]}/>
+          <ColorRow label="Clean Pro — Surfaces" swatches={[
+            { name:'BG', hex:'#F5F7FA', color:'#F5F7FA' },
+            { name:'Surface', hex:'#FFFFFF', color:'#FFFFFF' },
+            { name:'Surface 2', hex:'#EEF2F7', color:'#EEF2F7' },
+            { name:'Rail', hex:'#1A2233', color:'#1A2233' },
+            { name:'Border', hex:'#DDE3EB', color:'#DDE3EB' },
+          ]}/>
+          <ColorRow label="Dev Dark — Surfaces" swatches={[
+            { name:'BG', hex:'#0D1117', color:'#0D1117' },
+            { name:'Surface', hex:'#161B22', color:'#161B22' },
+            { name:'Surface 2', hex:'#21262D', color:'#21262D' },
+            { name:'Rail', hex:'#010409', color:'#010409' },
+            { name:'Border', hex:'#30363D', color:'#30363D' },
+          ]}/>
+          <ColorRow label="Text" swatches={[
+            { name:'Primary', hex:'#111827', color:'#111827' },
+            { name:'Secondary', hex:'#6B7280', color:'#6B7280' },
+            { name:'Muted', hex:'#9CA3AF', color:'#9CA3AF' },
+            { name:'On-dark', hex:'#E6EDF3', color:'#E6EDF3' },
+          ]}/>
+        </Card>
+      </Section>
+
+      {/* Typography */}
+      <Section title="Typography" subtitle="IBM Plex Sans for UI — IBM Plex Mono for code, IDs, timestamps, and log data.">
+        <Card pad={0}>
+          <div style={{ padding: '0 24px' }}>
+            <TypeRow label="Display" size={28} weight={700} example="QA Tools for iOS"/>
+            <TypeRow label="Heading 1" size={22} weight={700} example="Regression Suite v2.4"/>
+            <TypeRow label="Heading 2" size={18} weight={600} example="Test Cases · 10 results"/>
+            <TypeRow label="Heading 3" size={16} weight={600} example="Password Reset Flow"/>
+            <TypeRow label="Body Large" size={15} weight={400} example="Verify that registered users can reset their password using the email link."/>
+            <TypeRow label="Body" size={13} weight={400} example="Select a plan, build version, server, and target device to begin the session."/>
+            <TypeRow label="Body Small" size={12} weight={400} example="Last updated 2 hours ago · Build 2.4.1 · iOS"/>
+            <TypeRow label="Label" size={11} weight={700} example="TEST CASE · STATUS · PRIORITY" color="#94A3B8"/>
+            <TypeRow label="Mono — URL" size={13} weight={400} family={T.mono} example="POST /api/v1/auth/reset-password" color="#1E293B"/>
+            <TypeRow label="Mono — Code" size={12} weight={400} family={T.mono} example='{ "error": "validation_failed", "retryable": false }' color="#374151"/>
+            <TypeRow label="Mono — ID" size={11} weight={500} family={T.mono} example="TC-003 · req_8f2a3c1e · DEVICE-A3B2" color="#6B7280"/>
+          </div>
+        </Card>
+      </Section>
+
+      {/* Components */}
+      <Section title="Components" subtitle="Core UI building blocks used across all screens.">
+        <Row gap={20} wrap>
+          {/* Buttons */}
+          <Card width={300}>
+            <DemoBlock label="Buttons">
+              <Row gap={8} wrap>
+                <Btn t={T} variant="primary">Primary</Btn>
+                <Btn t={T} variant="secondary">Secondary</Btn>
+                <Btn t={T} variant="ghost">Ghost</Btn>
+              </Row>
+              <div style={{ marginTop: 10 }}>
+                <Row gap={8} wrap>
+                  <Btn t={T} variant="danger">Danger</Btn>
+                  <Btn t={T} variant="warn" icon="bug">Bug Occurred</Btn>
+                  <Btn t={T} variant="success" icon="check">Pass</Btn>
+                </Row>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Row gap={8}>
+                  <Btn t={T} variant="primary" icon="plus" compact>New Case</Btn>
+                  <Btn t={T} variant="secondary" icon="runner" compact>Run</Btn>
+                  <Btn t={T} variant="ghost" icon="more" compact/>
+                </Row>
+              </div>
+            </DemoBlock>
+          </Card>
+
+          {/* Badges */}
+          <Card width={280}>
+            <DemoBlock label="Status Badges">
+              <Row gap={6} wrap>
+                <Badge t={T} variant="pass" dot>Pass</Badge>
+                <Badge t={T} variant="fail" dot>Fail</Badge>
+                <Badge t={T} variant="blocked" dot>Blocked</Badge>
+                <Badge t={T} variant="warn" dot>Warning</Badge>
+                <Badge t={T} variant="skip" dot>Skip</Badge>
+                <Badge t={T} variant="active">Active</Badge>
+                <Badge t={T} variant="accent">In Progress</Badge>
+                <Badge t={T} variant="default">Draft</Badge>
+              </Row>
+              <div style={{ marginTop: 10 }}>
+                <Row gap={6} wrap>
+                  <Badge t={T} variant="pass" sm dot>Pass</Badge>
+                  <Badge t={T} variant="fail" sm dot>Fail</Badge>
+                  <Badge t={T} variant="blocked" sm dot>Blocked</Badge>
+                  <Badge t={T} variant="default" sm>3 Cases</Badge>
+                </Row>
+              </div>
+            </DemoBlock>
+          </Card>
+
+          {/* Method pills */}
+          <Card width={220}>
+            <DemoBlock label="HTTP Method Pills">
+              <Row gap={6} wrap>
+                {['GET','POST','PUT','DELETE','PATCH'].map(m => <MethodPill key={m} t={T} method={m}/>)}
+              </Row>
+            </DemoBlock>
+            <DemoBlock label="Status Codes">
+              <Row gap={6} wrap>
+                {[200, 201, 301, 401, 422, 500].map(c => <StatusCode key={c} t={T} code={c}/>)}
+              </Row>
+            </DemoBlock>
+          </Card>
+
+          {/* Form elements */}
+          <Card width={300}>
+            <DemoBlock label="Inputs & Search">
+              <div style={{ marginBottom: 10 }}><SearchField t={T} placeholder="Search test cases…" width={260}/></div>
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderRadius:T.r, border:`1px solid ${T.border}`, background:'#fff', marginBottom:10 }}>
+                <span style={{ fontSize:13, color:T.text }}>Active</span>
+                <QAIcon name="chevronDown" size={12} color={T.text3} style={{ marginLeft:'auto' }}/>
+              </div>
+              <Row gap={6} wrap>
+                <Chip t={T} active>Active</Chip>
+                <Chip t={T}>Draft</Chip>
+                <Chip t={T} icon="filter">Filter</Chip>
+                <Chip t={T} icon="tag">Auth</Chip>
+              </Row>
+            </DemoBlock>
+          </Card>
+
+          {/* Live indicators */}
+          <Card width={240}>
+            <DemoBlock label="Live Status">
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                <LiveDot t={T} active={true}/>
+                <LiveDot t={T} active={false}/>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', background:T.pass, boxShadow:`0 0 0 3px ${T.liveGlow}` }}/>
+                  <span style={{ fontSize:12, color:T.pass, fontWeight:600 }}>Connected · iOS</span>
+                </div>
+              </div>
+            </DemoBlock>
+            <DemoBlock label="Pass Rate Bar">
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {[100,87,62,38].map(r => (
+                  <div key={r} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ flex:1, height:6, borderRadius:T.rFull, background:T.border, overflow:'hidden' }}>
+                      <div style={{ width:`${r}%`, height:'100%', borderRadius:T.rFull, background: r>=90?T.pass:r>=70?T.warn:T.fail }}/>
+                    </div>
+                    <span style={{ fontSize:11, fontWeight:700, color:r>=90?T.pass:r>=70?T.warn:T.fail, fontFamily:T.mono, width:32 }}>{r}%</span>
+                  </div>
+                ))}
+              </div>
+            </DemoBlock>
+          </Card>
+        </Row>
+      </Section>
+
+      {/* Icons */}
+      <Section title="Icon Set" subtitle="Geometric 16×16 icons. Stroke-based, 1.4px weight, round caps/joins.">
+        <Card>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {ICON_NAMES.map(n => <IconCell key={n} name={n}/>)}
+          </div>
+        </Card>
+      </Section>
+
+      {/* Spacing & Radius */}
+      <Section title="Spacing & Radius">
+        <Row gap={20}>
+          <Card width={400}>
+            <Label>Border Radius</Label>
+            <Row gap={16} wrap>
+              {[{r:'4px',name:'sm'},{r:'6px',name:'default'},{r:'10px',name:'lg'},{r:'999px',name:'full'}].map(s => (
+                <div key={s.name} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                  <div style={{ width:48, height:48, borderRadius:s.r, background:'#EFF6FF', border:'1.5px solid #BFDBFE' }}/>
+                  <div style={{ fontSize:11, color:'#94A3B8', fontFamily:T.mono, textAlign:'center' }}>{s.r}<br/>{s.name}</div>
+                </div>
+              ))}
+            </Row>
+          </Card>
+          <Card width={500}>
+            <Label>Spacing Scale</Label>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {[{n:'4px',w:4},{n:'8px',w:8},{n:'12px',w:12},{n:'16px',w:16},{n:'20px',w:20},{n:'24px',w:24},{n:'32px',w:32},{n:'48px',w:48}].map(s => (
+                <div key={s.n} style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ width:s.w, height:14, background:'#2563EB', borderRadius:2, flexShrink:0 }}/>
+                  <span style={{ fontSize:11, color:'#94A3B8', fontFamily:T.mono }}>{s.n}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Row>
+      </Section>
+
+      {/* Navigation */}
+      <Section title="Navigation Rail" subtitle="60px icon rail. Dark background for both themes. Active state: left border + tinted bg.">
+        <Card pad={0} width={300}>
+          <div style={{ display:'flex', height:500, borderRadius:10, overflow:'hidden' }}>
+            <div style={{ width:60, background:'#1A2233', display:'flex', flexDirection:'column', alignItems:'center', padding:'12px 0', gap:2 }}>
+              <div style={{ width:34, height:34, borderRadius:6, background:'#2563EB', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16 }}>
+                <span style={{ color:'#fff', fontFamily:T.mono, fontSize:13, fontWeight:700 }}>QA</span>
+              </div>
+              {NAV_ITEMS.map((item, i) => (
+                <div key={item.id} style={{ width:'100%', paddingLeft:6, paddingRight:6 }}>
+                  <div style={{ width:'100%', height:44, borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', background: i===2?'rgba(59,130,246,0.14)':'transparent', borderLeft:`2px solid ${i===2?'#3B82F6':'transparent'}` }}>
+                    <QAIcon name={item.icon} size={18} color={i===2?'#93C5FD':'#7A8BA8'}/>
+                  </div>
+                </div>
+              ))}
+              <div style={{ marginTop:'auto', display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'0 6px', width:'100%' }}>
+                <div style={{ width:'100%', height:44, borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <QAIcon name="settings" size={18} color="#7A8BA8"/>
+                </div>
+                <div style={{ width:28, height:28, borderRadius:'50%', background:'#2D3D5A', display:'flex', alignItems:'center', justifyContent:'center', color:'#8B9BB8', fontSize:11, fontWeight:600 }}>M</div>
+              </div>
+            </div>
+            <div style={{ flex:1, background:'#F5F7FA', padding:16 }}>
+              <div style={{ fontSize:11, color:'#94A3B8', fontFamily:T.mono, textTransform:'uppercase', letterSpacing:0.7, marginBottom:12 }}>Rail States</div>
+              {NAV_ITEMS.map((item, i) => (
+                <div key={item.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', borderRadius:6, background: i===2?'#EFF6FF':'transparent', marginBottom:2 }}>
+                  <QAIcon name={item.icon} size={14} color={i===2?'#2563EB':'#6B7280'}/>
+                  <span style={{ fontSize:12, fontWeight: i===2?600:400, color: i===2?'#1E40AF':'#6B7280', fontFamily:T.font }}>{item.label}</span>
+                  {i===2 && <div style={{ marginLeft:'auto', width:6, height:6, borderRadius:'50%', background:'#2563EB' }}/>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </Section>
+
+      {/* Footer */}
+      <div style={{ borderTop:'1px solid #DDE3EB', paddingTop:24, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <span style={{ fontSize:12, color:'#94A3B8', fontFamily:T.mono }}>QA Tools Design System · v1.0 · June 2026</span>
+        <a href="QA Tools.html" style={{ fontSize:13, fontWeight:600, color:'#2563EB', textDecoration:'none', fontFamily:T.font }}>← Back to Design Canvas</a>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

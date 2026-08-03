@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QA Tools — Design Canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a1a; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 3px; }
+    .qa-tip-bubble { opacity: 0; transform: translateY(-4px); transition: opacity .12s ease, transform .12s ease; }
+    .qa-tip:hover .qa-tip-bubble { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="140" fill="#1A2233"/>
+    <rect x="0" y="0" width="30" height="140" fill="#0D1117"/>
+    <rect x="8" y="16" width="14" height="14" rx="3" fill="#2563EB"/>
+    <rect x="10" y="40" width="10" height="10" rx="2" fill="#3D5070"/>
+    <rect x="10" y="56" width="10" height="10" rx="2" fill="#3D5070"/>
+    <rect x="10" y="72" width="10" height="10" rx="2" fill="#3D5070"/>
+    <rect x="30" y="0" width="170" height="26" fill="#1E293B"/>
+    <rect x="38" y="9" width="60" height="8" rx="2" fill="#334155"/>
+    <rect x="140" y="9" width="40" height="8" rx="3" fill="#2563EB"/>
+    <rect x="30" y="26" width="80" height="114" fill="#F5F7FA"/>
+    <rect x="110" y="26" width="90" height="114" fill="#FFFFFF"/>
+    <rect x="36" y="34" width="68" height="10" rx="2" fill="#E2E8F0"/>
+    <rect x="36" y="50" width="68" height="10" rx="2" fill="#2563EB" opacity="0.2"/>
+    <rect x="36" y="66" width="68" height="10" rx="2" fill="#E2E8F0"/>
+    <rect x="36" y="82" width="68" height="10" rx="2" fill="#E2E8F0"/>
+    <rect x="118" y="34" width="74" height="8" rx="2" fill="#E2E8F0"/>
+    <rect x="118" y="48" width="50" height="8" rx="2" fill="#E2E8F0"/>
+    <rect x="118" y="64" width="74" height="8" rx="2" fill="#E2E8F0"/>
+    <rect x="118" y="78" width="40" height="8" rx="2" fill="#E2E8F0"/>
+    <text x="100" y="135" fill="#4A5568" font-size="8" text-anchor="middle" font-family="system-ui">QA Tools</text>
+  </svg>
+</template>
+<div id="root"></div>
+
+<script type="text/babel" src="qa-tokens.jsx"></script>
+<script type="text/babel" src="qa-icons.jsx"></script>
+<script type="text/babel" src="qa-ui.jsx"></script>
+<script type="text/babel" src="qa-runner.jsx"></script>
+<script type="text/babel" src="qa-test-cases.jsx"></script>
+<script type="text/babel" src="qa-test-plans.jsx"></script>
+<script type="text/babel" src="qa-log-inspector.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+const SCREENS_A = [
+  { id:'runner-a',     label:'Runner — 2 Devices (iOS + Android)', Comp: () => <RunnerScreen t={THEME_A}/> },
+  { id:'cases-a',      label:'Test Cases — List + Detail', Comp: () => <TestCasesScreen t={THEME_A}/> },
+  { id:'cases-modal-a',label:'Test Cases — Add to Plan',   Comp: () => <TestCasesScreen t={THEME_A} showModal/> },
+  { id:'plans-a',      label:'Test Plans',                Comp: () => <TestPlansScreen t={THEME_A}/> },
+  { id:'plans-empty-a',label:'Test Plans — Empty State',   Comp: () => <TestPlansScreen t={THEME_A} noSelection/> },
+  { id:'plans-del-a',  label:'Test Plans — Delete Confirm', Comp: () => <TestPlansScreen t={THEME_A} showDelete/> },
+  { id:'logs-a',       label:'Log Inspector',             Comp: () => <LogInspectorScreen t={THEME_A}/> },
+  { id:'logs-empty-a', label:'Log Inspector — No Device',  Comp: () => <LogInspectorScreen t={THEME_A} noDevice/> },
+  { id:'connect-a',    label:'Device Connector — How to Connect', Comp: () => <TestCasesScreen t={THEME_A} dockOpen/> },
+];
+
+const SCREENS_B = [
+  { id:'runner-b',     label:'Runner — 2 Devices (iOS + Android)', Comp: () => <RunnerScreen t={THEME_B}/> },
+  { id:'cases-b',      label:'Test Cases — List + Detail', Comp: () => <TestCasesScreen t={THEME_B}/> },
+  { id:'cases-modal-b',label:'Test Cases — Add to Plan',   Comp: () => <TestCasesScreen t={THEME_B} showModal/> },
+  { id:'plans-b',      label:'Test Plans',                Comp: () => <TestPlansScreen t={THEME_B}/> },
+  { id:'plans-empty-b',label:'Test Plans — Empty State',   Comp: () => <TestPlansScreen t={THEME_B} noSelection/> },
+  { id:'plans-del-b',  label:'Test Plans — Delete Confirm', Comp: () => <TestPlansScreen t={THEME_B} showDelete/> },
+  { id:'logs-b',       label:'Log Inspector',             Comp: () => <LogInspectorScreen t={THEME_B}/> },
+  { id:'logs-empty-b', label:'Log Inspector — No Device',  Comp: () => <LogInspectorScreen t={THEME_B} noDevice/> },
+  { id:'connect-b',    label:'Device Connector — How to Connect', Comp: () => <TestCasesScreen t={THEME_B} dockOpen/> },
+];
+
+const W = 1440, H = 900;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="conservative" title="A · Clean Pro" subtitle="Light surfaces · Dark rail · Blue accent — balanced, professional, approachable">
+        {SCREENS_A.map(s => (
+          <DCArtboard key={s.id} id={s.id} label={s.label} width={W} height={H}>
+            <s.Comp/>
+          </DCArtboard>
+        ))}
+      </DCSection>
+      <DCSection id="bold" title="B · Dev Dark" subtitle="Full dark theme · GitHub-inspired · High contrast — built for power users and long sessions">
+        {SCREENS_B.map(s => (
+          <DCArtboard key={s.id} id={s.id} label={s.label} width={W} height={H}>
+            <s.Comp/>
+          </DCArtboard>
+        ))}
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

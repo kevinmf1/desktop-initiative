@@ -1,0 +1,30 @@
+<svg width="720" height="200" viewBox="0 0 720 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Testlab logo (dark background)">
+  <defs>
+    <linearGradient id="tld-bg" x1="24" y1="36" x2="176" y2="188" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="tld-liquid" x1="0" y1="122" x2="0" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <clipPath id="tld-flask">
+      <path d="M86 60 L86 100 L52 158 C47 166 53 176 62 176 L142 176 C151 176 157 166 152 158 L118 100 L118 60 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect x="24" y="36" width="152" height="152" rx="34" fill="url(#tld-bg)"/>
+  <path d="M86 60 L86 100 L52 158 C47 166 53 176 62 176 L142 176 C151 176 157 166 152 158 L118 100 L118 60 Z" fill="#FFFFFF"/>
+  <g clip-path="url(#tld-flask)">
+    <path d="M40 122 L164 122 L164 184 L40 184 Z" fill="url(#tld-liquid)"/>
+    <circle cx="76" cy="150" r="4" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="112" cy="160" r="5" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="94" cy="166" r="3" fill="#FFFFFF" opacity="0.6"/>
+  </g>
+  <rect x="80" y="52" width="44" height="12" rx="6" fill="#FFFFFF"/>
+  <path d="M83 152 L95 164 L120 138" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <text x="212" y="128" font-family="'Poppins', 'Helvetica Neue', Arial, sans-serif" font-size="84" font-weight="700" font-style="italic" letter-spacing="-2">
+    <tspan fill="#FFFFFF">Test</tspan><tspan fill="#60A5FA">lab</tspan>
+  </text>
+</svg>

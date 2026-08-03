@@ -1,0 +1,5401 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>QA Tools — Mobile SDK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  /* Default Theme: Dev Dark */
+  --bg:         #0D1117;
+  --surface:    #161B22;
+  --surface-2:  #21262D;
+  --surface-3:  #30363D;
+  --fg:         #E6EDF3;
+  --muted:      #8B949E;
+  --border:     #30363D;
+  --border-hi:  #484F58;
+  --accent:     #388BFD;
+  --accent-dim: rgba(56,139,253,0.12);
+  --warn:       #D29922;
+  --danger:     #F85149;
+  --info:       #BC8CFF;
+  --success:    #3FB950;
+  --font-ui:    "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono:  "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 16px;
+  --text-on:    #E6EDF3;
+
+  /* Method pills (Dev Dark defaults) */
+  --method-get-bg: rgba(56,139,253,0.12);
+  --method-get-fg: #79C0FF;
+  --method-get-border: rgba(56,139,253,0.25);
+  --method-post-bg: rgba(63,185,80,0.1);
+  --method-post-fg: #7EE787;
+  --method-post-border: rgba(63,185,80,0.25);
+  --method-put-bg: rgba(210,153,34,0.1);
+  --method-put-fg: #E3B341;
+  --method-put-border: rgba(210,153,34,0.25);
+  --method-del-bg: rgba(248,81,73,0.1);
+  --method-del-fg: #FF7B72;
+  --method-del-border: rgba(248,81,73,0.25);
+  --method-patch-bg: rgba(188,140,255,0.1);
+  --method-patch-fg: #D2A8FF;
+  --method-patch-border: rgba(188,140,255,0.25);
+
+  --shadow: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* ===== THEMES FROM DESIGN SYSTEM ===== */
+.theme-clean-pro {
+  --bg:         #F5F7FA;
+  --surface:    #FFFFFF;
+  --surface-2:  #EEF2F7;
+  --surface-3:  #E2E8F0;
+  --fg:         #111827;
+  --muted:      #475569;
+  --border:     #DDE3EB;
+  --border-hi:  #CBD5E1;
+  --accent:     #1D4ED8;
+  --accent-dim: #EFF6FF;
+  --warn:       #B45309;
+  --danger:     #DC2626;
+  --info:       #7C3AED;
+  --success:    #16A34A;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 16px;
+  --text-on:    #FFFFFF;
+
+  /* Method pills (Clean Pro) */
+  --method-get-bg: #EFF6FF;
+  --method-get-fg: #1E40AF;
+  --method-get-border: #BFDBFE;
+  --method-post-bg: #F0FDF4;
+  --method-post-fg: #166534;
+  --method-post-border: #BBF7D0;
+  --method-put-bg: #FFFBEB;
+  --method-put-fg: #92400E;
+  --method-put-border: #FDE68A;
+  --method-del-bg: #FEF2F2;
+  --method-del-fg: #991B1B;
+  --method-del-border: #FECACA;
+  --method-patch-bg: #F5F3FF;
+  --method-patch-fg: #5B21B6;
+  --method-patch-border: #DDD6FE;
+
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
+}
+
+.theme-dev-dark {
+  --bg:         #0D1117;
+  --surface:    #161B22;
+  --surface-2:  #21262D;
+  --surface-3:  #30363D;
+  --fg:         #E6EDF3;
+  --muted:      #8B949E;
+  --border:     #30363D;
+  --border-hi:  #484F58;
+  --accent:     #388BFD;
+  --accent-dim: rgba(56,139,253,0.12);
+  --warn:       #D29922;
+  --danger:     #F85149;
+  --info:       #BC8CFF;
+  --success:    #3FB950;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 16px;
+  --text-on:    #E6EDF3;
+
+  /* Method pills (Dev Dark) */
+  --method-get-bg: rgba(56,139,253,0.12);
+  --method-get-fg: #79C0FF;
+  --method-get-border: rgba(56,139,253,0.25);
+  --method-post-bg: rgba(63,185,80,0.1);
+  --method-post-fg: #7EE787;
+  --method-post-border: rgba(63,185,80,0.25);
+  --method-put-bg: rgba(210,153,34,0.1);
+  --method-put-fg: #E3B341;
+  --method-put-border: rgba(210,153,34,0.25);
+  --method-del-bg: rgba(248,81,73,0.1);
+  --method-del-fg: #FF7B72;
+  --method-del-border: rgba(248,81,73,0.25);
+  --method-patch-bg: rgba(188,140,255,0.1);
+  --method-patch-fg: #D2A8FF;
+  --method-patch-border: rgba(188,140,255,0.25);
+
+  --shadow: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: #0d0e12;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== PHONE FRAME ===== */
+.phone-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-frame {
+  width: 393px;
+  height: 852px;
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 52px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.8),
+    0 60px 120px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 1000;
+}
+
+/* Status bar */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 59px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px 10px;
+  z-index: 100;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+
+.status-time { font-size: 15px; font-weight: 600; }
+.status-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-icons svg { opacity: 0.9; }
+
+/* Home indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: color-mix(in oklab, var(--fg) 35%, transparent);
+  border-radius: 999px;
+  z-index: 1000;
+}
+
+/* ===== APP SCREEN (HOST APP MOCKUP) ===== */
+.app-screen {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+.app-screen.app-closed {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.app-nav {
+  position: absolute;
+  top: 59px;
+  left: 0; right: 0;
+  height: 52px;
+  background: color-mix(in oklab, var(--surface) 95%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 10px;
+  z-index: 10;
+}
+.app-nav-logo {
+  width: 22px; height: 22px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-nav-logo svg { color: var(--accent); }
+.app-nav-title { font-size: 14px; font-weight: 600; color: var(--fg); letter-spacing: -0.01em; }
+.app-nav-sub { font-size: 11px; color: var(--muted); }
+
+.app-content {
+  position: absolute;
+  top: 111px;
+  left: 0; right: 0;
+  bottom: 0;
+  padding: 16px;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+/* Mock app content */
+.mock-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mock-row.clickable {
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.mock-row.clickable:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hi);
+}
+.mock-row.clickable:active {
+  transform: scale(0.98);
+}
+.mock-row.loading-pulse {
+  animation: mockLoadingPulse 1.2s infinite ease-in-out;
+  pointer-events: none;
+}
+@keyframes mockLoadingPulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+.mock-row.flash-success {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 10px oklch(68% 0.18 155 / 0.2);
+}
+.mock-row.flash-log-active {
+  border-color: var(--border-hi) !important;
+  background: var(--surface-3) !important;
+}
+.mock-row-icon {
+  width: 36px; height: 36px;
+  background: var(--surface-2);
+  border-radius: 9px;
+  border: 1px solid var(--border-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mock-row-icon svg {
+  stroke: var(--muted) !important;
+}
+.mock-row-icon.log-icon-d { background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+.mock-row-icon.log-icon-i { background: color-mix(in oklab, var(--success) 12%, transparent); color: var(--success); font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+.mock-row-icon.log-icon-w { background: color-mix(in oklab, var(--warn) 12%, transparent); color: var(--warn); font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+.mock-row-icon.log-icon-e { background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+
+.mock-row-text { flex: 1; }
+.mock-row-label { font-size: 13px; font-weight: 500; color: var(--fg); letter-spacing: -0.01em; }
+.mock-row-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.mock-row-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 3px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.badge-ok { background: var(--accent-dim); color: var(--accent); }
+.badge-err { background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); }
+.badge-warn { background: color-mix(in oklab, var(--warn) 12%, transparent); color: var(--warn); }
+.badge-log { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+
+/* Crash button */
+.crash-btn {
+  background: color-mix(in oklab, var(--danger) 6%, transparent);
+  border: 1px solid color-mix(in oklab, var(--danger) 25%, transparent);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.crash-btn:hover {
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+  border-color: var(--danger);
+}
+.crash-btn:active {
+  transform: scale(0.97);
+}
+.crash-btn-icon {
+  width: 36px; height: 36px;
+  background: color-mix(in oklab, var(--danger) 12%, transparent);
+  border-radius: 9px;
+  border: 1px solid color-mix(in oklab, var(--danger) 30%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--danger);
+}
+.crash-btn-text { flex: 1; }
+
+/* Crash sheet */
+.cs-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 975;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.cs-backdrop.open { opacity: 1; pointer-events: all; }
+#sdkBackdrop {
+  z-index: 940;
+}
+
+.cs-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border: 1px solid var(--border-hi);
+  border-bottom: none;
+  z-index: 980;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 20px;
+  overflow: hidden;
+  max-height: 85%;
+}
+.cs-sheet.open { transform: translateY(0); }
+.cs-sheet.open.expanded {
+  max-height: 100%;
+  height: 100%;
+  border-radius: 0;
+  border-top-color: transparent;
+}
+.cs-handle {
+  width: 36px; height: 4px;
+  background: var(--border-hi);
+  border-radius: 2px;
+  margin: 10px auto 4px;
+  flex-shrink: 0;
+}
+.cs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.cs-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.cs-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cs-exception {
+  background: color-mix(in oklab, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--danger) 20%, transparent);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cs-exception-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--danger);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cs-exception-msg {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  line-height: 1.5;
+  word-break: break-word;
+}
+.cs-exception-stack {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 100px;
+  overflow-y: auto;
+}
+.cs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cs-section-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cs-log-tab {
+  flex: 1;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.cs-log-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.cs-log-panel {
+  display: none;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-top: 6px;
+}
+.cs-log-panel.active {
+  display: block;
+}
+.cs-log-entry-click {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cs-log-entry-click:hover {
+  background: var(--surface-2);
+}
+.cs-log-entry {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 6px 8px;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+.cs-log-entry + .cs-log-entry {
+  margin-top: -4px;
+}
+.cs-empty {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 4px 0;
+}
+.cs-footer {
+  padding: 8px 16px 0;
+}
+.cs-dismiss-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.cs-dismiss-btn:hover { opacity: 0.85; }
+.cs-dismiss-btn:active { transform: scale(0.98); }
+
+/* Crash history list */
+.ch-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.ch-entry:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hi);
+}
+.ch-entry:active {
+  transform: scale(0.98);
+}
+.ch-entry + .ch-entry {
+  margin-top: 6px;
+}
+.ch-entry-icon {
+  width: 32px; height: 32px;
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.ch-entry-body {
+  flex: 1;
+}
+.ch-entry-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.ch-entry-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* SDK crash history sheet (tab-panel style) */
+.sd-tab-sheet {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ===== FAB ===== */
+.fab {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hi);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 900;
+  transition: opacity 0.4s, transform 0.3s, left 0.3s, right 0.3s, top 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.fab.idle {
+  opacity: 0.45;
+}
+.fab.active-state, .fab:hover {
+  opacity: 1;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1.5px var(--accent), 0 0 20px var(--accent-dim);
+}
+
+/* Snapping overrides */
+.fab.fab-left {
+  right: auto;
+  left: 0;
+}
+.fab.fab-left.idle {
+  transform: translateX(-26px);
+}
+.fab.fab-left.active-state, .fab.fab-left:hover {
+  transform: translateX(-4px);
+}
+
+.fab.fab-right {
+  left: auto;
+  right: 0;
+}
+.fab.fab-right.idle {
+  transform: translateX(26px);
+}
+.fab.fab-right.active-state, .fab.fab-right:hover {
+  transform: translateX(4px);
+}
+.fab-inner {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: var(--text-on);
+}
+.fab-inner::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  top: 4px; left: 4px;
+  opacity: 0.3;
+}
+.fab svg { position: relative; z-index: 1; }
+
+/* Pulse ring on FAB */
+.fab-ring {
+  position: absolute;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: fabPulse 2.5s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes fabPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ===== SDK OVERLAY ===== */
+.sdk-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  background: var(--bg);
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), border-radius 0.4s, visibility 0.4s;
+  border-radius: 16px 16px 0 0;
+  border-top: 1px solid var(--border-hi);
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+.sdk-overlay.open {
+  height: 50%;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+.sdk-overlay.open.expanded {
+  height: 100%;
+  border-radius: 0;
+  border-top-color: transparent;
+}
+
+/* SDK Header */
+.sdk-header {
+  padding: 62px 20px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sdk-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sdk-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sdk-logo-mark {
+  width: 30px; height: 30px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sdk-brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.02em;
+}
+.sdk-brand-version {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  margin-top: 1px;
+  letter-spacing: 0.04em;
+}
+
+.sdk-close-btn, .sdk-theme-toggle-btn {
+  width: 32px; height: 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hi);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: color 0.2s, background 0.2s;
+}
+.sdk-close-btn:hover, .sdk-theme-toggle-btn:hover { color: var(--fg); background: var(--surface-3); }
+
+/* Session + Mode strip */
+.sdk-session-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.session-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  width: 100%;
+  box-sizing: border-box;
+}
+.session-chip .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.mode-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 99px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.mode-standalone { background: color-mix(in oklab, var(--warn) 12%, transparent); border: 1px solid color-mix(in oklab, var(--warn) 30%, transparent); color: var(--warn); }
+.mode-ws         { background: color-mix(in oklab, var(--info) 12%, transparent); border: 1px solid color-mix(in oklab, var(--info) 30%, transparent); color: var(--info); }
+.mode-ws-tc      { background: color-mix(in oklab, var(--accent) 12%, transparent); border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent); color: var(--accent); }
+
+/* Connection row (Unified Component) */
+.sdk-conn-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  user-select: none;
+}
+.sdk-conn-row.clickable {
+  cursor: pointer;
+}
+.sdk-conn-row.clickable:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.sdk-conn-row.state-disconnected:hover {
+  border-color: var(--accent);
+}
+.sdk-conn-row.state-connected:hover {
+  border-color: var(--danger);
+}
+.sdk-conn-row.state-connecting {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.conn-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+}
+.conn-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.conn-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.conn-dot.disconnected { background: var(--muted); }
+.conn-dot.connecting { background: var(--warn); animation: blink 1s ease-in-out infinite; }
+
+.conn-action {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+}
+
+.conn-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid oklch(78% 0.16 65 / 0.25);
+  border-top-color: var(--warn);
+  border-radius: 50%;
+  animation: conn-spin 0.8s linear infinite;
+}
+@keyframes conn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tabs */
+.sdk-tabs {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+.sdk-tab {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  position: relative;
+}
+.sdk-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ===== SDK BODY ===== */
+.sdk-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab panels */
+.tab-panel {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: none;
+  flex-direction: column;
+  gap: 0;
+}
+.tab-panel.active { display: flex; }
+
+/* Scrollbar */
+.tab-panel::-webkit-scrollbar { width: 3px; }
+.tab-panel::-webkit-scrollbar-track { background: transparent; }
+.tab-panel::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 99px; }
+
+/* ===== TEST CASE PANEL ===== */
+.tc-banner {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.tc-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.tc-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.tc-constraints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-constraint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+.tc-constraint-check {
+  width: 14px; height: 14px;
+  border-radius: 4px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ===== NETWORK LOG ROWS ===== */
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.log-row:last-child { border-bottom: none; }
+.log-row:hover { background: var(--surface-2); border-radius: var(--r-sm); margin: 0 -4px; padding: 8px 4px; }
+
+.log-method {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  margin-top: 1px;
+  min-width: 34px;
+  text-align: center;
+}
+.method-get  { background: var(--method-get-bg); color: var(--method-get-fg); border: 1px solid var(--method-get-border); }
+.method-post { background: var(--method-post-bg); color: var(--method-post-fg); border: 1px solid var(--method-post-border); }
+.method-put  { background: var(--method-put-bg); color: var(--method-put-fg); border: 1px solid var(--method-put-border); }
+.method-del  { background: var(--method-del-bg); color: var(--method-del-fg); border: 1px solid var(--method-del-border); }
+.method-patch { background: var(--method-patch-bg); color: var(--method-patch-fg); border: 1px solid var(--method-patch-border); }
+
+.log-main { flex: 1; min-width: 0; }
+.log-url {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+.log-status {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.status-2xx { color: var(--accent); }
+.status-3xx { color: var(--info); }
+.status-4xx { color: var(--warn); }
+.status-5xx { color: var(--danger); }
+.log-time { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+.log-size { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+/* ===== LOGCAT ROWS ===== */
+.lc-row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lc-row:hover {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: 5px 4px;
+  margin: 0 -4px;
+}
+.lc-ts { color: var(--muted); flex-shrink: 0; font-size: 9.5px; margin-top: 1px; }
+.lc-tag { flex-shrink: 0; min-width: 56px; font-weight: 600; font-size: 10px; }
+.lc-level {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+}
+.level-v { color: var(--muted); }
+.level-d { color: var(--info); }
+.level-i { color: var(--accent); }
+.level-w { color: var(--warn); }
+.level-e { color: var(--danger); }
+.lc-msg { color: var(--fg); flex: 1; font-size: 10px; word-break: break-word; }
+
+/* ===== TOOLBAR ===== */
+.sdk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.toolbar-search {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 10px 7px 24px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  outline: none;
+  position: relative;
+  transition: border-color 0.2s;
+  letter-spacing: 0.02em;
+}
+.toolbar-search:focus { border-color: var(--accent); }
+.toolbar-search::placeholder { color: var(--muted); }
+.search-wrap {
+  position: relative;
+  flex: 0;
+  width: 0;
+  overflow: hidden;
+  transition: flex 0.25s cubic-bezier(0.4,0,0.2,1), width 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.search-wrap.open {
+  flex: 1;
+  width: auto;
+}
+.search-icon {
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.toolbar-btn {
+  width: 32px; height: 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.toolbar-btn:hover { color: var(--fg); border-color: var(--border-hi); }
+.toolbar-btn.active-filter { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+#clearBtn {
+  color: var(--danger);
+  opacity: 0.8;
+}
+#clearBtn:hover {
+  color: oklch(65% 0.22 22);
+  border-color: var(--danger);
+  background: oklch(62% 0.22 22 / 0.1);
+  opacity: 1;
+}
+
+/* ===== LIVE BADGE ===== */
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--danger);
+  padding: 3px 7px;
+  background: oklch(62% 0.22 22 / 0.12);
+  border: 1px solid oklch(62% 0.22 22 / 0.3);
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+.live-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: blink 1s ease-in-out infinite;
+}
+
+/* ===== QR MODAL ===== */
+.qr-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 980;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 20px;
+}
+.qr-overlay.open { display: flex; }
+.qr-sheet {
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) var(--r-lg) var(--r-lg);
+  padding: 24px;
+  width: 100%;
+  border: 1px solid var(--border-hi);
+  border-bottom: none;
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+  animation: slideUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.qr-handle {
+  width: 36px; height: 4px;
+  background: var(--border-hi);
+  border-radius: 99px;
+  margin: 0 auto 20px;
+}
+.qr-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.qr-sub {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.qr-box {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 20px;
+  background: #0d0f14;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-hi);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+.scanner-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent);
+  z-index: 5;
+}
+.scanner-corner.tl { top: 16px; left: 16px; border-right: none; border-bottom: none; border-top-left-radius: 4px; }
+.scanner-corner.tr { top: 16px; right: 16px; border-left: none; border-bottom: none; border-top-right-radius: 4px; }
+.scanner-corner.bl { bottom: 16px; left: 16px; border-right: none; border-top: none; border-bottom-left-radius: 4px; }
+.scanner-corner.br { bottom: 16px; right: 16px; border-left: none; border-top: none; border-bottom-right-radius: 4px; }
+
+.qr-scan-line {
+  position: absolute;
+  left: 20px; right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scanLine 2s ease-in-out infinite;
+  border-radius: 1px;
+  z-index: 4;
+}
+@keyframes scanLine {
+  0%   { top: 20px; opacity: 0.8; }
+  50%  { opacity: 1; }
+  100% { top: 200px; opacity: 0.8; }
+}
+
+.scanner-torch-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+  transition: all 0.2s;
+  z-index: 10;
+}
+.scanner-torch-btn:hover {
+  color: #fff;
+  background: rgba(0,0,0,0.8);
+}
+.scanner-torch-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: transparent;
+  box-shadow: 0 0 12px var(--accent);
+}
+.scanner-torch-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.scanner-torch-glow.active {
+  opacity: 1;
+}
+
+.scanner-success-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(34, 197, 94, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 12;
+  backdrop-filter: blur(2px);
+}
+.scanner-success-flash.active {
+  opacity: 1;
+}
+.success-checkmark {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgb(34, 197, 94);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  transform: scale(0.8);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.scanner-success-flash.active .success-checkmark {
+  transform: scale(1);
+}
+.manual-url-container {
+  margin-bottom: 14px;
+  width: 100%;
+}
+.manual-url-title {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+.manual-url-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.manual-url-input:focus {
+  border-color: var(--accent);
+}
+.qr-actions { display: flex; gap: 8px; }
+.qr-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+}
+.qr-btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+.qr-btn-primary:hover { filter: brightness(1.1); }
+.qr-btn-secondary {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hi);
+  color: var(--muted);
+}
+.qr-btn-secondary:hover { color: var(--fg); }
+
+/* ===== LOG DETAIL PAGE (FULL SCREEN) ===== */
+.detail-page {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  z-index: 1010;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.detail-page.open {
+  transform: translateX(0);
+}
+.detail-page-header {
+  padding: 56px 16px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.detail-page-back {
+  width: 32px; height: 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+}
+.detail-page-back:hover { color: var(--fg); border-color: var(--border-hi); }
+.detail-page-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.detail-page-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.detail-page-subtitle {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  margin-top: 1px;
+}
+.detail-page-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.detail-page-body::-webkit-scrollbar { width: 3px; }
+.detail-page-body::-webkit-scrollbar-track { background: transparent; }
+.detail-page-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 99px; }
+
+/* Detail Card Section */
+.detail-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+.detail-section-title {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.detail-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.detail-row {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.detail-row:last-child {
+  border-bottom: none;
+}
+.detail-lbl {
+  color: var(--muted);
+  width: 90px;
+  flex-shrink: 0;
+}
+.detail-code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+}
+
+/* Image Preview CSS */
+.detail-img-preview {
+  width: 100%;
+  height: 160px;
+  background: radial-gradient(circle, var(--surface-2) 0%, var(--bg) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.detail-img-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.detail-img-graphic {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-dim), rgba(255,255,255,0.05));
+  border: 1px dashed var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+.detail-img-name {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+/* Detail Tabs */
+.detail-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.detail-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 2px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.detail-tab:hover {
+  color: var(--fg);
+}
+.detail-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.detail-tab-panel {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.detail-tab-panel.active {
+  display: flex;
+}
+.detail-tab-panel .detail-code {
+  max-height: none;
+  flex: 1;
+}
+
+/* Detail Code Search Bar */
+.detail-code-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+}
+.detail-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.detail-search-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.detail-code-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--fg);
+  outline: none;
+  padding: 2px 0;
+  min-width: 0;
+}
+.detail-code-search-input::placeholder {
+  color: var(--muted);
+}
+.detail-search-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.detail-search-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+.detail-search-nav-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+.detail-search-nav-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-hi);
+}
+.code-match {
+  background: rgba(253, 224, 71, 0.35);
+  color: #000;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.code-match-current {
+  background: var(--accent);
+  color: var(--bg);
+  outline: 1px solid var(--accent);
+}
+
+/* ===== COPY BUTTON ===== */
+.detail-copy-btn {
+  width: 28px; height: 28px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.detail-copy-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.detail-copy-btn.copied {
+  color: var(--success);
+  border-color: var(--success);
+  background: color-mix(in oklab, var(--success) 10%, transparent);
+}
+
+.detail-code-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.detail-code-wrap .detail-code {
+  flex: 1;
+  max-height: none;
+}
+.detail-code-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.detail-code-wrap:hover .detail-code-copy-btn,
+.detail-code-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+/* ===== READ-ONLY BANNER ===== */
+.ro-banner {
+  background: oklch(72% 0.18 60 / 0.12);
+  border-bottom: 1px solid oklch(72% 0.18 60 / 0.3);
+  color: var(--warn);
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  letter-spacing: -0.01em;
+}
+.ro-exit-btn {
+  background: var(--warn);
+  color: var(--bg);
+  border: none;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+.ro-exit-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* ===== COLLAPSIBLE TEST CASE BANNER ===== */
+.active-test-banner {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.active-test-banner.expanded {
+  border-color: var(--accent);
+}
+.active-test-banner.expanded .banner-chevron-btn {
+  transform: rotate(180deg);
+}
+.banner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.banner-indicator {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  background: var(--accent-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.banner-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.banner-chevron-btn {
+  color: var(--muted);
+  transition: transform 0.25s;
+  width: 20px; height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-content {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+/* ===== SESSION HISTORY ITEM ===== */
+.session-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+}
+.session-history-item:hover {
+  border-color: var(--border-hi);
+  background: var(--surface-3);
+}
+.session-history-item.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.session-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.session-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.session-item-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+.session-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.session-item-btn {
+  width: 54px;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.session-item-btn-delete {
+  background: oklch(62% 0.22 22 / 0.1);
+  color: var(--danger);
+  border-color: oklch(62% 0.22 22 / 0.3);
+}
+.session-item-btn-delete:hover {
+  background: oklch(62% 0.22 22 / 0.2);
+}
+.session-item-btn-rename {
+  background: oklch(65% 0.14 250 / 0.1);
+  color: var(--accent);
+  border-color: oklch(65% 0.14 250 / 0.3);
+}
+.session-item-btn-rename:hover {
+  background: oklch(65% 0.14 250 / 0.2);
+}
+.rename-trigger-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  padding: 0 10px;
+  margin-top: -5px;
+  margin-bottom: -5px;
+  margin-right: -10px;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  color: inherit;
+  align-self: stretch;
+  border-top-right-radius: 99px;
+  border-bottom-right-radius: 99px;
+  transition: background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.rename-trigger-btn:hover {
+  background-color: var(--surface-3);
+}
+.rename-trigger-btn:hover .rename-trigger-icon {
+  opacity: 1 !important;
+  color: var(--accent);
+}
+
+
+/* ===== POPUP OVERLAY ===== */
+.popup-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1020;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.popup-overlay.open {
+  display: flex;
+}
+.popup-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border-hi);
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 320px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.popup-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.popup-body {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+.popup-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  border: 1px solid transparent;
+}
+.popup-btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+.popup-btn-secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+/* ===== SORT & FILTER SHEET ===== */
+.sf-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 975;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.sf-backdrop.open { opacity: 1; pointer-events: all; }
+.sf-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border: 1px solid var(--border-hi);
+  border-bottom: none;
+  z-index: 980;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 20px;
+  overflow: hidden;
+}
+.sf-sheet.open { transform: translateY(0); }
+.sf-handle {
+  width: 36px; height: 4px;
+  background: var(--border-hi);
+  border-radius: 2px;
+  margin: 10px auto 4px;
+  flex-shrink: 0;
+}
+.sf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sf-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.sf-reset-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  transition: color 0.15s, background 0.15s;
+}
+.sf-reset-btn:hover {
+  color: var(--fg);
+  background: var(--surface-3);
+}
+.sf-section-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 16px 6px;
+}
+.sf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 4px;
+}
+.sf-chip {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-chip.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.sf-row {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px;
+  flex-wrap: wrap;
+}
+.sf-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sf-sort-btn.active {
+  color: var(--fg);
+  border-color: var(--border-hi);
+  background: var(--surface-2);
+}
+.sf-status-btn {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.sf-status-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.sf-status-btn.sf-err.active {
+  color: var(--danger, #f0614a);
+  border-color: var(--danger, #f0614a);
+  background: color-mix(in oklab, var(--danger, #f0614a) 12%, transparent);
+}
+.sf-status-btn.sf-warn.active {
+  color: var(--warn);
+  border-color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 12%, transparent);
+}
+.sf-apply {
+  margin: 14px 16px 0;
+  background: var(--accent);
+  color: var(--text-on);
+  border: none;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sf-apply:hover { opacity: 0.85; }
+.toolbar-btn.active-filter svg { stroke: var(--accent); }
+
+/* ===== LOG ENTRY ANIMATIONS ===== */
+@keyframes logSlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.log-row.new-entry, .lc-row.new-entry {
+  animation: logSlideIn 0.25s ease-out forwards;
+}
+
+/* ===== SUMMARY CHIPS in standalone mode ===== */
+.summary-strip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.summary-chip {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  text-align: center;
+}
+.summary-chip-val {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  letter-spacing: -0.02em;
+}
+.summary-chip-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-weight: 600;
+}
+.chip-accent { color: var(--accent); }
+.chip-warn   { color: var(--warn); }
+.chip-danger { color: var(--danger); }
+
+/* ===== MODE SWITCHER (floating) ===== */
+.mode-switcher {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+.mode-switch-btn {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 99px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.mode-switch-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.empty-icon {
+  width: 48px; height: 48px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.empty-title { font-size: 13px; font-weight: 600; color: var(--fg); letter-spacing: -0.01em; }
+.empty-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* ===== LOG COUNTER ===== */
+.log-counter {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  flex-shrink: 0;
+  z-index: 5;
+}
+.log-count-num { color: var(--fg); font-weight: 600; }
+
+/* Clear btn */
+.clear-btn {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--danger);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  font-family: var(--font-mono);
+}
+.clear-btn:hover { opacity: 1; }
+
+/* ===== TOAST NOTIFICATION ===== */
+.toast-notification {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(20, 20, 20, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 10px 18px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 11000;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-notification.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== EMPTY STATE KEYFRAMES ===== */
+@keyframes emptyFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.empty-state {
+  animation: emptyFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+</style>
+</head>
+<body>
+
+<div class="phone-wrap">
+  <div class="phone-frame theme-dev-dark" id="phoneFrame" data-od-id="phone-frame">
+
+    <!-- Dynamic Island -->
+    <div class="dynamic-island" data-od-id="dynamic-island"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" data-od-id="status-bar">
+      <span class="status-time" id="statusTime">10:38</span>
+      <div class="status-icons">
+        <!-- Signal -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" style="color: var(--fg)">
+          <rect x="0" y="8" width="3" height="4" fill="currentColor" rx="0.5"/>
+          <rect x="4" y="5.5" width="3" height="6.5" fill="currentColor" rx="0.5"/>
+          <rect x="8" y="3" width="3" height="9" fill="currentColor" rx="0.5"/>
+          <rect x="12" y="0" width="3" height="12" fill="currentColor" rx="0.5" opacity="0.35"/>
+        </svg>
+        <!-- WiFi -->
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor" style="color: var(--fg)">
+          <path d="M7.5 8.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/>
+          <path d="M7.5 6C5.9 6 4.5 6.65 3.5 7.7l1.1 1.1A3.7 3.7 0 0 1 7.5 7.7c.95 0 1.82.37 2.46.98l1.1-1.1A5.25 5.25 0 0 0 7.5 6z" opacity="0.7"/>
+          <path d="M7.5 3.5c-2.35 0-4.46.95-6 2.5l1.1 1.1A6.75 6.75 0 0 1 7.5 5.2c1.9 0 3.62.78 4.86 2.03L13.46 6A8.24 8.24 0 0 0 7.5 3.5z" opacity="0.4"/>
+        </svg>
+        <!-- Battery -->
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none" style="color: var(--fg)">
+          <rect x="0.5" y="0.5" width="20" height="11" rx="3.5" stroke="currentColor" stroke-opacity="0.35"/>
+          <rect x="2" y="2" width="16" height="8" rx="2" fill="currentColor"/>
+          <path d="M22 4v4a2 2 0 0 0 0-4z" fill="currentColor" opacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- HOST APP CONTENT -->
+    <div class="app-screen" data-od-id="host-app-screen">
+      <div class="app-nav" data-od-id="app-nav">
+        <div class="app-nav-logo">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <rect x="1" y="1" width="5" height="5" rx="1"/>
+            <rect x="8" y="1" width="5" height="5" rx="1"/>
+            <rect x="1" y="8" width="5" height="5" rx="1"/>
+            <rect x="8" y="8" width="5" height="5" rx="1"/>
+          </svg>
+        </div>
+        <div>
+          <div class="app-nav-title">ShopCore App</div>
+          <div class="app-nav-sub">v2.4.1 · debug build</div>
+        </div>
+      </div>
+
+      <div class="app-content" data-od-id="app-content">
+        <!-- Section title for Network Actions -->
+        <div class="host-section-title" style="margin-top: 4px; margin-bottom: 12px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: space-between;">
+          <span>Network Actions</span>
+          <span style="font-size: 9px; font-weight: 500; text-transform: none; opacity: 0.7;">Click to trigger API call</span>
+        </div>
+
+        <div class="mock-row clickable" onclick="triggerHostRequest(0, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Product Feed</div>
+            <div class="mock-row-sub">GET /api/v2/products</div>
+          </div>
+          <span class="mock-row-badge badge-ok">200</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostRequest(1, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><path d="M8 5v3l2 2"/></svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Session Restore</div>
+            <div class="mock-row-sub">POST /api/auth/refresh</div>
+          </div>
+          <span class="mock-row-badge badge-err">401</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostRequest(2, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L14 7v7H2V7z"/></svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Checkout Flow</div>
+            <div class="mock-row-sub">POST /api/orders</div>
+          </div>
+          <span class="mock-row-badge badge-ok">201</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostRequest(3, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round"><path d="M3 13s1-2 5-2 5 2 5 2M8 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">User Profile</div>
+            <div class="mock-row-sub">GET /api/user/me</div>
+          </div>
+          <span class="mock-row-badge badge-warn">304</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostRequest(4, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 7h6M5 10h4"/></svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Inventory Check</div>
+            <div class="mock-row-sub">GET /api/inventory/stock</div>
+          </div>
+          <span class="mock-row-badge badge-err">500</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostRequest(5, this)">
+          <div class="mock-row-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7a8196" stroke-width="1.5" stroke-linecap="round">
+              <rect x="2" y="2" width="12" height="12" rx="1.5"/>
+              <circle cx="5.5" cy="5.5" r="1.5"/>
+              <path d="M2 11l3-3 4 4 2-2 3 3"/>
+            </svg>
+          </div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Load Product Image</div>
+            <div class="mock-row-sub">GET /assets/product_shoe_red.png</div>
+          </div>
+          <span class="mock-row-badge badge-ok">200</span>
+        </div>
+
+        <!-- Section title for Logcat Triggers -->
+        <div class="host-section-title" style="margin-top: 24px; margin-bottom: 12px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: space-between;">
+          <span>Logcat Events</span>
+          <span style="font-size: 9px; font-weight: 500; text-transform: none; opacity: 0.7;">Click to print app log</span>
+        </div>
+
+        <div class="mock-row clickable" onclick="triggerHostLog(0, this)">
+          <div class="mock-row-icon log-icon-d">D</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">ViewPager Tab Navigation</div>
+            <div class="mock-row-sub">debug · ViewPager</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(1, this)">
+          <div class="mock-row-icon log-icon-i">I</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Cart State Flow Emit</div>
+            <div class="mock-row-sub">info · ViewModel</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(2, this)">
+          <div class="mock-row-icon log-icon-d">D</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Retrofit Response Payload</div>
+            <div class="mock-row-sub">debug · Retrofit</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(3, this)">
+          <div class="mock-row-icon log-icon-w">W</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Glide Image Cache Miss</div>
+            <div class="mock-row-sub">warn · GlideImg</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(4, this)">
+          <div class="mock-row-icon log-icon-i">I</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Analytics Screen View Event</div>
+            <div class="mock-row-sub">info · Analytics</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(5, this)">
+          <div class="mock-row-icon log-icon-w">W</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">Non-fatal NullPointer Exception</div>
+            <div class="mock-row-sub">warn · CrashRep</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+        <div class="mock-row clickable" onclick="triggerHostLog(6, this)">
+          <div class="mock-row-icon log-icon-e">E</div>
+          <div class="mock-row-text">
+            <div class="mock-row-label">OkHttp Socket Timeout</div>
+            <div class="mock-row-sub">error · OkHttp</div>
+          </div>
+          <span class="mock-row-badge badge-log">Log</span>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="host-section-title" style="margin-top: 28px; margin-bottom: 12px; font-size: 11px; font-weight: 700; color: var(--danger); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: space-between;">
+          <span>Danger Zone</span>
+          <span style="font-size: 9px; font-weight: 500; text-transform: none; opacity: 0.7;">Simulate app failure</span>
+        </div>
+        <div class="crash-btn" onclick="simulateCrash(this)">
+          <div class="crash-btn-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="6"/>
+              <path d="M8 5v3M8 11h0"/>
+            </svg>
+          </div>
+          <div class="crash-btn-text">
+            <div class="mock-row-label" style="color: var(--danger);">Do Crash</div>
+            <div class="mock-row-sub">Force app crash &amp; recover</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--danger)" stroke-width="1.5" stroke-linecap="round"><path d="M4 2l4 4-4 4"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FAB ===== -->
+    <div class="fab idle fab-right" id="fab" data-od-id="fab" role="button" aria-label="Open QA Tools SDK">
+      <div class="fab-ring"></div>
+      <div class="fab-inner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="8" height="14" x="8" y="6" rx="4"/>
+          <path d="m19 7-3 2"/>
+          <path d="m5 7 3 2"/>
+          <path d="m19 19-3-2"/>
+          <path d="m5 19 3-2"/>
+          <path d="M20 13h-4"/>
+          <path d="M4 13h4"/>
+          <path d="m10 4 1 2"/>
+          <path d="m14 4-1 2"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ===== SDK BACKDROP ===== -->
+    <div class="cs-backdrop" id="sdkBackdrop" onclick="closeSDK()"></div>
+
+    <!-- ===== SDK OVERLAY ===== -->
+    <div class="sdk-overlay" id="sdkOverlay" data-od-id="sdk-overlay">
+      <div class="sf-handle" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 990; pointer-events: none; margin: 0;"></div>
+
+      <!-- Header -->
+      <div class="sdk-header" data-od-id="sdk-header">
+        <div class="sdk-top-row">
+          <div class="sdk-brand">
+            <div class="sdk-logo-mark">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-on)" stroke-width="1.8" stroke-linecap="round">
+                <path d="M2 12L6 4l2 4 2-2 4 4"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sdk-brand-name">QA Tools</div>
+              <div class="sdk-brand-version">SDK v1.4.0</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="sdk-theme-toggle-btn" id="sdkThemeToggleBtn" onclick="toggleTheme()" title="Switch Theme">
+              <svg class="theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+              </svg>
+              <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <path d="M12 3a6.364 6.364 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+            </div>
+            <div class="sdk-theme-toggle-btn" id="crashHistHeaderBtn" onclick="showCrashHistory()" title="Crash History">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="8" r="5"/>
+                <path d="M8 5v3l2 2"/>
+              </svg>
+            </div>
+            <div class="sdk-close-btn" id="sdkCloseBtn">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M2 2l10 10M12 2L2 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session + Mode -->
+        <div class="sdk-session-strip" data-od-id="session-strip">
+          <div class="session-chip" onclick="openSessionHistory()" style="cursor: pointer; display: flex; align-items: center;" title="View Session History">
+            <div class="dot"></div>
+            <span id="sessionTime">Session · 10:38:22</span>
+            <button class="rename-trigger-btn" onclick="event.stopPropagation(); openRenameSession(event, state.viewingSessionId || 'sess_active')" title="Rename Session">
+              <svg class="rename-trigger-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85; transition: opacity 0.2s; pointer-events: none;">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Connection Row (Unified Component) -->
+        <div class="sdk-conn-row state-disconnected clickable" id="connection-row" onclick="handleConnClick(event)" data-od-id="connection-row">
+          <div class="conn-status">
+            <div class="conn-dot disconnected" id="connDot"></div>
+            <span id="connLabel">Not connected · Scan QR</span>
+          </div>
+          <div id="connAction" class="conn-action">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <rect x="1" y="1" width="4" height="4" rx="0.5"/>
+              <rect x="8" y="1" width="4" height="4" rx="0.5"/>
+              <rect x="1" y="8" width="4" height="4" rx="0.5"/>
+              <rect x="8.5" y="8.5" width="1.5" height="1.5" rx="0.25" fill="currentColor"/>
+              <path d="M10.5 8.5v2M10.5 10.5h-2"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Collapsible Test Case Banner -->
+        <div class="active-test-banner" id="activeTestBanner" onclick="toggleTestBanner(event)" data-od-id="active-test-banner">
+          <div class="banner-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="banner-indicator">● TEST RUNNING</div>
+              <span class="banner-title" id="bannerTitle">TC-042: Checkout Flow</span>
+            </div>
+            <div class="banner-chevron-btn" id="bannerChevronBtn">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M2 4l4 4 4-4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="banner-content" id="bannerContent" style="display:none;"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="sdk-tabs" data-od-id="sdk-tabs">
+          <div class="sdk-tab active" id="tabNetwork" onclick="switchTab('network')">
+            Network
+          </div>
+          <div class="sdk-tab" id="tabLogcat" onclick="switchTab('logcat')">
+            Logcat
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="sdk-toolbar" data-od-id="sdk-toolbar">
+        <div class="search-wrap open" style="flex: 1;">
+          <svg class="search-icon" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l2.5 2.5"/>
+          </svg>
+          <input class="toolbar-search" placeholder="Search logs…" id="searchInput" oninput="filterLogs()"/>
+        </div>
+        <div class="toolbar-btn" id="sortFilterBtn" onclick="openSortFilter()" title="Sort & Filter" data-od-id="sort-filter-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h10M4 7h6M6 11h2"/>
+          </svg>
+        </div>
+        <div class="toolbar-btn" id="clearBtn" onclick="showClearConfirm()" title="Clear Logs" data-od-id="clear-btn-toolbar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        </div>
+        </div>
+
+      <!-- Body -->
+      <div class="sdk-body" data-od-id="sdk-body">
+
+        <!-- Read-only Banner (if active) -->
+        <div class="ro-banner" id="roBanner" style="display:none;" data-od-id="ro-banner">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <rect x="2" y="5" width="12" height="9" rx="2"/>
+              <path d="M5 5V4a3 3 0 1 1 6 0v1"/>
+            </svg>
+            <span>Read-Only Session Archive</span>
+          </div>
+          <button class="ro-exit-btn" onclick="exitReadOnly()">Exit Archive</button>
+        </div>
+
+        <!-- Tab Content Wrapper -->
+        <div class="tab-panels-wrapper" style="flex: 1; position: relative; width: 100%; min-height: 0;" data-od-id="tab-panels-wrapper">
+          <!-- NETWORK TAB -->
+          <div class="tab-panel active" id="panel-network">
+            <div class="summary-strip" data-od-id="summary-strip">
+              <div class="summary-chip">
+                <div class="summary-chip-val" id="statTotal">16</div>
+                <div class="summary-chip-label">Total</div>
+              </div>
+              <div class="summary-chip">
+                <div class="summary-chip-val chip-accent" id="statSuccess">12</div>
+                <div class="summary-chip-label">Success</div>
+              </div>
+              <div class="summary-chip">
+                <div class="summary-chip-val chip-danger" id="statError">4</div>
+                <div class="summary-chip-label">Errors</div>
+              </div>
+            </div>
+            <div id="networkLogs" data-od-id="network-log-list"></div>
+            <div style="height:44px; flex-shrink:0;"></div>
+          </div>
+
+          <!-- LOGCAT TAB -->
+          <div class="tab-panel" id="panel-logcat">
+            <div id="logcatLogs" data-od-id="logcat-list"></div>
+            <div style="height:44px; flex-shrink:0;"></div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- QR OVERLAY -->
+      <div class="qr-overlay" id="qrOverlay" data-od-id="qr-overlay" onclick="handleQROverlayClick(event)">
+        <div class="qr-sheet" data-od-id="qr-sheet">
+          <div class="qr-handle"></div>
+          <div class="qr-title">Scan Desktop QR Code</div>
+          <div class="qr-sub">Align the QR code displayed on the QA Tool Desktop App<br>within the camera viewfinder frame below</div>
+          <div class="qr-box" onclick="simulateScanTap(event)">
+            <!-- Viewfinder Corner Accents -->
+            <div class="scanner-corner tl"></div>
+            <div class="scanner-corner tr"></div>
+            <div class="scanner-corner bl"></div>
+            <div class="scanner-corner br"></div>
+            
+            <!-- Simulated Camera Stream showing a Desktop Screen displaying a QR Code -->
+            <svg width="220" height="220" viewBox="0 0 220 220" style="display:block; width:100%; height:100%;" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="camera-scan-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <circle cx="1" cy="1" r="0.5" fill="rgba(255,255,255,0.06)" />
+                </pattern>
+              </defs>
+              <rect width="220" height="220" fill="url(#camera-scan-grid)"/>
+              
+              <!-- Faint desk line -->
+              <line x1="10" y1="180" x2="210" y2="180" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+              
+              <!-- Stylized Desktop Monitor -->
+              <rect x="40" y="45" width="140" height="92" rx="6" fill="#1b1d24" stroke="#2b313d" stroke-width="2"/>
+              <rect x="45" y="50" width="130" height="82" rx="3" fill="#090a0f"/>
+              
+              <!-- Monitor Stand -->
+              <path d="M100 137h20v25h-20z" fill="#2b313d"/>
+              <path d="M80 162h60v4H80z" fill="#3b4352" rx="1.5"/>
+              
+              <!-- QR Code displayed on screen -->
+              <g transform="translate(95, 76)">
+                <rect width="30" height="30" fill="white" rx="1.5"/>
+                <!-- Top-Left Finder -->
+                <rect x="2" y="2" width="8" height="8" fill="#12131a"/>
+                <rect x="3" y="3" width="6" height="6" fill="white"/>
+                <rect x="4" y="4" width="4" height="4" fill="#12131a"/>
+                <!-- Top-Right Finder -->
+                <rect x="20" y="2" width="8" height="8" fill="#12131a"/>
+                <rect x="21" y="3" width="6" height="6" fill="white"/>
+                <rect x="22" y="4" width="4" height="4" fill="#12131a"/>
+                <!-- Bottom-Left Finder -->
+                <rect x="2" y="20" width="8" height="8" fill="#12131a"/>
+                <rect x="3" y="21" width="6" height="6" fill="white"/>
+                <rect x="4" y="22" width="4" height="4" fill="#12131a"/>
+                <!-- Modules -->
+                <rect x="12" y="4" width="4" height="4" fill="#12131a"/>
+                <rect x="16" y="8" width="4" height="4" fill="#12131a"/>
+                <rect x="12" y="16" width="4" height="4" fill="#12131a"/>
+                <rect x="20" y="16" width="4" height="4" fill="#12131a"/>
+                <rect x="16" y="20" width="4" height="8" fill="#12131a"/>
+                <rect x="24" y="24" width="4" height="4" fill="#12131a"/>
+              </g>
+              
+              <!-- Target alignment circle -->
+              <circle cx="110" cy="91" r="30" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3, 3" opacity="0.6"/>
+              
+              <!-- Hint text -->
+              <text x="110" y="196" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle" font-family="monospace" letter-spacing="0.05em">TAP TO SIMULATE SCAN</text>
+            </svg>
+            
+            <div class="qr-scan-line"></div>
+            
+            <!-- Flashlight Button -->
+            <div class="scanner-torch-btn" id="scannerTorchBtn" onclick="toggleTorch(event)" title="Toggle Flashlight">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 17H9l1.5-6h3L15 17z"/>
+                <path d="M18 6h-3.5L13 2.5a1 1 0 0 0-1.4 0L10.1 5.5H6.5a1 1 0 0 0-1 1v4a1 1 0 0 0 .5.9L9 15h6l3-3.1a1 1 0 0 0 .5-.9V7.5a1 1 0 0 0-1-1.5z"/>
+                <circle cx="12" cy="11" r="1.5"/>
+              </svg>
+            </div>
+            
+            <!-- Torch Light Glow Effect -->
+            <div class="scanner-torch-glow" id="scannerTorchGlow"></div>
+            
+            <!-- Scan Success Feedback Overlay -->
+            <div class="scanner-success-flash" id="scannerSuccessFlash">
+              <div class="success-checkmark">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div class="manual-url-container">
+            <div class="manual-url-title">or input the websocket url manual here</div>
+            <input type="text" class="manual-url-input" id="manualUrlInput" value="ws://192.168.1.42:9871/qa-tools" placeholder="ws://..." onkeydown="if(event.key==='Enter')simulateConnect()" />
+          </div>
+          <div class="qr-actions">
+            <div class="qr-btn qr-btn-secondary" onclick="closeQR()">Cancel</div>
+            <div class="qr-btn qr-btn-primary" onclick="simulateConnect()">Simulate Scan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SESSION HISTORY SHEET -->
+      <div class="sf-backdrop" id="sessionBackdrop" onclick="closeSessionHistory()"></div>
+      <div class="sf-sheet" id="sessionSheet" data-od-id="session-history-sheet">
+        <div class="sf-handle"></div>
+        <div class="sf-header">
+          <span class="sf-title">Session History</span>
+          <div class="detail-close" onclick="closeSessionHistory()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+          </div>
+        </div>
+        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto;" id="sessionHistoryList">
+          <!-- Dynamic session items -->
+        </div>
+      </div>
+
+      <!-- TEST CASE PROMPT POPUP -->
+      <div class="popup-overlay" id="testPromptPopup" data-od-id="test-prompt-popup">
+        <div class="popup-card">
+          <div class="popup-title">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round">
+              <circle cx="8" cy="8" r="7"/>
+              <path d="M8 5v4M8 11h.01"/>
+            </svg>
+            Incoming Test Case
+          </div>
+          <div class="popup-body">
+            <p style="font-weight: 600; color: var(--fg); margin-bottom: 8px;">TC-042: Checkout Flow — Payment Validation</p>
+            <p>Accept running this test case from your desktop app? This will monitor live network constraints.</p>
+            <div class="tc-constraints" style="margin-top: 10px; font-family: var(--font-mono); font-size: 10px; gap: 4px;">
+              <div style="display:flex; align-items:center; gap:6px;">✓ POST /api/orders → 201</div>
+              <div style="display:flex; align-items:center; gap:6px;">✓ Response time &lt; 800ms</div>
+              <div style="display:flex; align-items:center; gap:6px;">✓ No 5xx on payment endpoint</div>
+            </div>
+          </div>
+          <div class="popup-actions">
+            <div class="popup-btn popup-btn-secondary" onclick="declineTestCase()">Decline</div>
+            <div class="popup-btn popup-btn-primary" onclick="acceptTestCase()">Accept</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLEAR CONFIRMATION POPUP -->
+      <div class="popup-overlay" id="clearConfirmPopup" data-od-id="clear-confirm-popup">
+        <div class="popup-card">
+          <div class="popup-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Clear logs
+          </div>
+          <div class="popup-body" id="clearConfirmMsg">
+            Are you sure you want to clear all logs? This action cannot be undone.
+          </div>
+          <div class="popup-actions">
+            <div class="popup-btn popup-btn-secondary" onclick="closeClearConfirm()">Cancel</div>
+            <div class="popup-btn popup-btn-primary" style="background: var(--danger); color: white;" onclick="confirmClearTab()">Clear</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENAME SESSION POPUP -->
+      <div class="popup-overlay" id="renameSessionPopup" data-od-id="rename-session-popup">
+        <div class="popup-card">
+          <div class="popup-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
+            </svg>
+            Rename Session
+          </div>
+          <div class="popup-body">
+            <input type="text" id="renameSessionInput" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); font-size: 13px; outline: none; margin-top: 10px; box-sizing: border-box;" placeholder="Enter session name..." onkeydown="if(event.key === 'Enter') confirmRenameSession()" />
+          </div>
+          <div class="popup-actions">
+            <div class="popup-btn popup-btn-secondary" onclick="closeRenameSession()">Cancel</div>
+            <div class="popup-btn popup-btn-primary" onclick="confirmRenameSession()">Save</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOAST NOTIFICATION -->
+      <div id="toastNotification" class="toast-notification" data-od-id="toast-notification">
+        <span id="toastMessage"></span>
+      </div>
+
+      <!-- SORT & FILTER SHEET -->
+      <div class="sf-backdrop" id="sfBackdrop" onclick="closeSortFilter()"></div>
+      <div class="sf-sheet" id="sfSheet" data-od-id="sort-filter-sheet">
+        <div class="sf-handle"></div>
+        <div class="sf-header" data-od-id="path-0-0-4-9-1" data-od-source-path="path-0-0-4-9-1">
+          <span class="sf-title" id="sfTitle">Sort &amp; Filter</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="sf-reset-btn" onclick="resetFilters()">Reset</button>
+            <div class="detail-close" onclick="closeSortFilter()">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Endpoint/Tag filter -->
+        <div class="sf-section-label" id="sfGroupLabel">Endpoint</div>
+        <div class="sf-chips" id="sfEndpointChips"></div>
+
+        <!-- Sort order -->
+        <div class="sf-section-label">Sort by time</div>
+        <div class="sf-row">
+          <div class="sf-sort-btn active" id="sfSortDesc" onclick="setSortOrder('desc')">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v8M3 7l3 3 3-3"/></svg>
+            Newest first
+          </div>
+          <div class="sf-sort-btn" id="sfSortAsc" onclick="setSortOrder('asc')">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10V2M3 5l3-3 3 3"/></svg>
+            Oldest first
+          </div>
+        </div>
+
+        <!-- Status/Level filter -->
+        <div class="sf-section-label" id="sfFilterLabel">Status</div>
+        <div class="sf-row" id="sfStatusRow">
+          <div class="sf-status-btn active" id="sfStatusAll" data-val="all" onclick="setStatusFilter('all')">All</div>
+          <div class="sf-status-btn" id="sfStatusSuccess" data-val="success" onclick="setStatusFilter('success')">Success</div>
+          <div class="sf-status-btn sf-err" id="sfStatusErr" data-val="err" onclick="setStatusFilter('err')">Errors</div>
+        </div>
+        <button class="sf-apply" onclick="applySortFilter()">Apply Filters</button>
+      </div>
+
+      </div>
+
+    <!-- DETAIL PAGE (phone-frame level) -->
+    <div class="detail-page" id="detailPage" data-od-id="detail-page">
+      <div class="detail-page-header">
+        <div class="detail-page-back" onclick="closeDetailPage()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M10 3L5 8l5 5"/>
+          </svg>
+        </div>
+        <div class="detail-page-title-wrap">
+          <div class="detail-page-title" id="detailPageTitle">GET /api/user/me</div>
+          <div class="detail-page-subtitle" id="detailPageSubtitle">10:38:07 · 28ms</div>
+        </div>
+        <div id="detailPageBadge"></div>
+      </div>
+      <div class="detail-tabs" id="detailTabs" style="display: none;">
+        <div class="detail-tab active" onclick="switchDetailTab('general')" id="tab-det-general">General</div>
+        <div class="detail-tab" onclick="switchDetailTab('request')" id="tab-det-request">Request</div>
+        <div class="detail-tab" onclick="switchDetailTab('response')" id="tab-det-response">Response</div>
+        <div class="detail-tab" onclick="switchDetailTab('curl')" id="tab-det-curl">cURL</div>
+      </div>
+      <div class="detail-page-body" id="detailPageBody"></div>
+    </div>
+
+    <!-- CRASH HISTORY BOTTOM SHEET (phone-frame level) -->
+    <div class="sf-backdrop" id="crashHistBackdrop" onclick="closeCrashHistory()"></div>
+    <div class="sf-sheet" id="crashHistorySheetSdk" style="max-height: 70%;">
+      <div class="sf-handle"></div>
+      <div class="sf-header">
+        <span class="sf-title">Crash History</span>
+        <div class="detail-close" onclick="closeCrashHistory()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+        </div>
+      </div>
+      <div style="padding: 12px 16px; overflow-y: auto; flex: 1; max-height: 280px;" id="crashHistoryBodySdk"></div>
+    </div>
+
+    <!-- CRASH RECOVERY SHEET (host-app level, outside SDK) -->
+    <div class="cs-backdrop" id="crashBackdrop" onclick="dismissCrashSheet()"></div>
+    <div class="cs-sheet" id="crashSheet">
+      <div class="cs-handle"></div>
+      <div class="cs-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--danger)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="6"/>
+            <path d="M8 5v3M8 11h0"/>
+          </svg>
+          <span class="cs-title">App Crashed</span>
+        </div>
+        <div class="detail-close" onclick="dismissCrashSheet()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+        </div>
+      </div>
+      <div class="cs-body" id="crashSheetBody">
+        <!-- Dynamic content -->
+      </div>
+      <div class="cs-footer">
+        <button class="cs-dismiss-btn" onclick="dismissCrashSheet()">Close</button>
+      </div>
+    </div>
+
+    <script>
+(function() {
+  'use strict';
+
+  function formatTime(date) {
+    var h = String(date.getHours()).padStart(2, '0');
+    var m = String(date.getMinutes()).padStart(2, '0');
+    var s = String(date.getSeconds()).padStart(2, '0');
+    return h + ':' + m + ':' + s;
+  }
+
+  var initialStart = new Date(Date.now() - 12 * 60 * 1000); // starts 12 minutes ago
+  var initialStartStr = formatTime(initialStart);
+
+  // ── STATE ──────────────────────────────────────────────────────────────
+  var state = {
+    sdkOpen: false,
+    crashData: null,
+    crashHistory: [],
+    mode: 'standalone',       // standalone | ws | tc
+    theme: 'dev-dark',        // dev-dark | clean-pro
+    connected: false,
+    connecting: false,
+    wsUrl: 'ws://192.168.1.42:9871',
+    activeTab: 'network',
+    errFilterOn: false,       
+    sortOrder: 'desc',        // 'asc' | 'desc'
+    statusFilter: 'all',      // 'all' | 'success' | 'err'
+    endpointFilter: null,     
+    logcatSortOrder: 'desc',   // 'asc' | 'desc'
+    logcatLevelFilter: 'all',  // 'all' | 'v' | 'd' | 'i' | 'w' | 'e'
+    logcatTagFilter: null,     // string or null
+    networkLogs: [],
+    logcatLogs: [],
+    logIntervalNet: null,
+    logIntervalLc: null,
+    
+    // Session history
+    viewingSessionId: null,
+    renameTargetId: null,
+    sessionStartTimestamp: initialStart.getTime(),
+    sessionHistory: [
+      { id: 'sess_active', name: 'Session (Current)', time: initialStartStr, active: true, logsCount: 8 },
+      { id: 'sess_1015', name: 'Session #04', time: '10:15:22', active: false, logsCount: 2 },
+      { id: 'sess_0930', name: 'Session #03', time: '09:30:10', active: false, logsCount: 3 }
+    ],
+    activeSessionLogs: { net: [], lc: [] }
+  };
+
+  // ── CLOCK ─────────────────────────────────────────────────────────────
+  function updateClock() {
+    var now = new Date();
+    var h = String(now.getHours()).padStart(2,'0');
+    var m = String(now.getMinutes()).padStart(2,'0');
+    var s = String(now.getSeconds()).padStart(2,'0');
+    var el = document.getElementById('statusTime');
+    if (el) el.textContent = h + ':' + m;
+    
+    var se = document.getElementById('sessionTime');
+    if (se && state.viewingSessionId === null) {
+      var activeSess = state.sessionHistory.find(function(item) { return item.active; });
+      var prefix = activeSess ? activeSess.name : 'Session';
+      
+      // Calculate running duration
+      var elapsedSecs = Math.floor((Date.now() - state.sessionStartTimestamp) / 1000);
+      var eh = Math.floor(elapsedSecs / 3600);
+      var em = Math.floor((elapsedSecs % 3600) / 60);
+      var es = elapsedSecs % 60;
+      var durationStr = (eh > 0 ? String(eh).padStart(2,'0') + ':' : '') + 
+                        String(em).padStart(2,'0') + ':' + 
+                        String(es).padStart(2,'0');
+                        
+      var startTime = activeSess ? activeSess.time : initialStartStr;
+      se.textContent = prefix + ' · ' + startTime + ' (' + durationStr + ')';
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── SEED DATA ─────────────────────────────────────────────────────────
+  var netSeed = [];
+
+  var lcSeed = [];
+
+  // Session archive seed logs
+  var sessionLogs = {
+    sess_active: { net: [], lc: [] },
+    sess_1015: {
+      net: [
+        { method:'GET',  url:'/api/v2/products', status:200, time:120, size:'3.1 KB', host:'api.shopcore.io', ts:'10:15:23' },
+        { method:'GET',  url:'/api/v2/search?q=shoes', status:200, time:95, size:'2.0 KB', host:'api.shopcore.io', ts:'10:15:27' }
+      ],
+      lc: [
+        { ts:'10:15:23', tag:'NetworkMgr', level:'I', msg:'Connection successful to /products' },
+        { ts:'10:15:27', tag:'GlideImg', level:'D', msg:'Image loaded successfully' }
+      ]
+    },
+    sess_0930: {
+      net: [
+        { method:'GET',  url:'/api/v2/products', status:200, time:110, size:'3.1 KB', host:'api.shopcore.io', ts:'09:30:11' },
+        { method:'POST', url:'/api/auth/refresh', status:401, time:72, size:'0.3 KB', host:'auth.shopcore.io', ts:'09:30:15' },
+        { method:'GET',  url:'/api/user/me', status:401, time:22, size:'—', host:'api.shopcore.io', ts:'09:30:16' }
+      ],
+      lc: [
+        { ts:'09:30:11', tag:'NetworkMgr', level:'I', msg:'Client boot successful' },
+        { ts:'09:30:15', tag:'AuthMgr', level:'E', msg:'Token expired on check' }
+      ]
+    }
+  };
+
+  state.networkLogs = netSeed.slice();
+  state.logcatLogs  = lcSeed.slice();
+
+  // ── RENDER ─────────────────────────────────────────────────────────────
+  function statusClass(s) {
+    if (s >= 200 && s < 300) return 'status-2xx';
+    if (s >= 300 && s < 400) return 'status-3xx';
+    if (s >= 400 && s < 500) return 'status-4xx';
+    return 'status-5xx';
+  }
+  function methodClass(m) {
+    var mp = { GET:'method-get', POST:'method-post', PUT:'method-put', DELETE:'method-del', PATCH:'method-patch' };
+    return mp[m] || 'method-get';
+  }
+  function levelClass(l) { return 'level-' + l.toLowerCase(); }
+
+  function renderNetworkLogs(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var q = (document.getElementById('searchInput') || {}).value || '';
+    var sf = state.statusFilter;
+    var ep = state.endpointFilter;
+    var filtered = state.networkLogs.filter(function(r) {
+      if (sf === 'success' && !(r.status >= 200 && r.status < 400)) return false;
+      if (sf === 'err' && r.status < 400) return false;
+      if (ep && r.url.split('?')[0] !== ep) return false;
+      if (q && r.url.indexOf(q) < 0) return false;
+      return true;
+    });
+    // Sort - default newest first (desc) -> reverse array. oldest first (asc) -> array order.
+    if (state.sortOrder === 'desc') {
+      filtered = filtered.slice().reverse();
+    }
+    container.innerHTML = '';
+    if (state.networkLogs.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <div class="empty-title">No Network Logs</div>
+          <div class="empty-sub">Active HTTP/HTTPS requests from the host app will stream here.</div>
+        </div>
+      `;
+      updateCounts();
+      return;
+    } else if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="empty-title">No Matching Logs</div>
+          <div class="empty-sub">Try modifying your search query or filter options.</div>
+        </div>
+      `;
+      updateCounts();
+      return;
+    }
+    filtered.forEach(function(r, i) {
+      var row = document.createElement('div');
+      row.className = 'log-row';
+      row.setAttribute('data-od-id', 'net-row-' + i);
+      row.innerHTML =
+        '<div class="log-method ' + methodClass(r.method) + '">' + r.method + '</div>' +
+        '<div class="log-main">' +
+          '<div class="log-url">' + r.url + '</div>' +
+          '<div class="log-meta">' +
+            '<span class="log-status ' + statusClass(r.status) + '">' + r.status + '</span>' +
+            '<span class="log-time">' + r.time + 'ms</span>' +
+            '<span class="log-size">' + r.size + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);flex-shrink:0;">' + r.ts + '</div>';
+      row.onclick = function() { showDetail(r); };
+      container.appendChild(row);
+    });
+    updateCounts();
+  }
+
+  function renderLogcat() {
+    var container = document.getElementById('logcatLogs');
+    if (!container) return;
+    var q = (document.getElementById('searchInput') || {}).value || '';
+    var lf = state.logcatLevelFilter;
+    var tag = state.logcatTagFilter;
+    
+    var filtered = state.logcatLogs.filter(function(r) {
+      // Level filter
+      if (lf && lf !== 'all') {
+        if (r.level.toLowerCase() !== lf.toLowerCase()) return false;
+      }
+      // Tag filter
+      if (tag && r.tag !== tag) return false;
+      // Search filter
+      if (q && r.msg.toLowerCase().indexOf(q.toLowerCase()) < 0 && r.tag.toLowerCase().indexOf(q.toLowerCase()) < 0) return false;
+      return true;
+    });
+    
+    // Sort - desc (newest first, i.e., reversed) or asc (oldest first, i.e., original chron)
+    if (state.logcatSortOrder === 'desc') {
+      filtered = filtered.slice().reverse();
+    }
+    
+    container.innerHTML = '';
+    if (state.logcatLogs.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+          </div>
+          <div class="empty-title">No Logcat Logs</div>
+          <div class="empty-sub">System standard output (stdout/stderr) and app logs will appear here.</div>
+        </div>
+      `;
+      updateCounts();
+      return;
+    } else if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="empty-title">No Matching Logs</div>
+          <div class="empty-sub">Try modifying your search query or filter options.</div>
+        </div>
+      `;
+      updateCounts();
+      return;
+    }
+    filtered.forEach(function(r) {
+      var row = document.createElement('div');
+      row.className = 'lc-row';
+      row.innerHTML =
+        '<span class="lc-ts">' + r.ts + '</span>' +
+        '<span class="lc-level ' + levelClass(r.level) + '">' + r.level + '</span>' +
+        '<span class="lc-tag">' + r.tag + '</span>' +
+        '<span class="lc-msg">' + r.msg + '</span>';
+      row.onclick = function() { showLogcatDetail(r); };
+      container.appendChild(row);
+    });
+    updateCounts();
+  }
+
+  function renderAll() {
+    renderNetworkLogs('networkLogs');
+    renderLogcat();
+  }
+
+  function updateCounts() {
+    var tab = state.activeTab;
+    var count = tab === 'logcat' ? state.logcatLogs.length : state.networkLogs.length;
+    var cn = document.getElementById('logCountNum');
+    if (cn) cn.textContent = count;
+
+    var success = state.networkLogs.filter(function(r){ return r.status >= 200 && r.status < 400; }).length;
+    var error = state.networkLogs.filter(function(r){ return r.status >= 400; }).length;
+    var els = document.getElementById('statSuccess'); if(els) els.textContent = success;
+    var ele = document.getElementById('statError'); if(ele) ele.textContent = error;
+    var tot = document.getElementById('statTotal'); if(tot) tot.textContent = state.networkLogs.length;
+  }
+
+  // ── FAB LOGIC ──────────────────────────────────────────────────────────
+  var fab = document.getElementById('fab');
+  var frame = document.getElementById('phoneFrame');
+  var idleTimer = null;
+
+  function fabGoIdle() {
+    fab.classList.remove('active-state');
+    fab.classList.add('idle');
+  }
+  function fabWakeUp() {
+    fab.classList.remove('idle');
+    fab.classList.add('active-state');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(fabGoIdle, 3000);
+  }
+
+  // Initial idle position after 2s
+  setTimeout(fabGoIdle, 2000);
+
+  // Drag + click supporting standard MouseEvents and TouchEvents reliably
+  var dragStartX = 0;
+  var dragStartY = 0;
+  var fabStartX = 0;
+  var fabStartY = 0;
+  var isDragging = false;
+  var isPointerActive = false;
+  var clickThreshold = 8;
+
+  function getEventCoords(e) {
+    if (e.touches && e.touches.length) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    if (e.changedTouches && e.changedTouches.length) {
+      return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  // Register mouse and touch events directly on the fab
+  fab.addEventListener('mousedown', onFabDown);
+  fab.addEventListener('touchstart', onFabDown, { passive: false });
+  
+  // Prevent native drag operations
+  fab.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+  });
+
+  function onFabDown(e) {
+    // For touch, prevent default immediately to stop browser gestures/scrolling
+    if (e.type === 'touchstart') {
+      if (e.cancelable) e.preventDefault();
+    } else {
+      // For mouse, only handle left button
+      if (e.button !== 0) return;
+      if (e.cancelable) e.preventDefault();
+    }
+    
+    // Safety check - if already active, do cleanup first to be safe
+    if (isPointerActive) {
+      cleanupPointer();
+    }
+    
+    isPointerActive = true;
+    isDragging = false;
+    fabWakeUp();
+    
+    // Switch styling dynamically to left positioning for smooth dragging/snapping
+    var currentLeft = fab.offsetLeft;
+    fab.style.left = currentLeft + 'px';
+    fab.style.right = 'auto';
+    fab.style.transition = 'none';
+    
+    var coords = getEventCoords(e);
+    dragStartX = coords.x;
+    dragStartY = coords.y;
+    fabStartX = currentLeft;
+    fabStartY = fab.offsetTop;
+    
+    if (e.type === 'touchstart') {
+      document.addEventListener('touchmove', onFabMove, { passive: false });
+      document.addEventListener('touchend', onFabUp, { passive: false });
+      document.addEventListener('touchcancel', onFabCancel, { passive: false });
+    } else {
+      document.addEventListener('mousemove', onFabMove, { passive: false });
+      document.addEventListener('mouseup', onFabUp, { passive: false });
+    }
+  }
+
+  function onFabMove(e) {
+    var coords = getEventCoords(e);
+    
+    // Account for CSS transform scaling on the parent phone-frame
+    var frameRect = frame.getBoundingClientRect();
+    var scaleX = frame.offsetWidth ? (frameRect.width / frame.offsetWidth) : 1;
+    var scaleY = frame.offsetHeight ? (frameRect.height / frame.offsetHeight) : 1;
+    if (!scaleX || isNaN(scaleX) || !isFinite(scaleX)) scaleX = 1;
+    if (!scaleY || isNaN(scaleY) || !isFinite(scaleY)) scaleY = 1;
+    
+    var dx = (coords.x - dragStartX) / scaleX;
+    var dy = (coords.y - dragStartY) / scaleY;
+    
+    if (Math.abs(dx) > clickThreshold || Math.abs(dy) > clickThreshold) {
+      isDragging = true;
+    }
+    
+    if (isDragging) {
+      if (e.cancelable) e.preventDefault();
+      
+      var fabW = fab.offsetWidth;
+      var fabH = fab.offsetHeight;
+      
+      var newLeft = fabStartX + dx;
+      var newTop = fabStartY + dy;
+      
+      // Boundary checks in CSS pixels
+      var maxLeft = frame.offsetWidth - fabW;
+      var maxTop = frame.offsetHeight - fabH - 80;
+      
+      newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+      newTop = Math.max(80, Math.min(maxTop, newTop));
+      
+      fab.style.left = newLeft + 'px';
+      fab.style.right = 'auto';
+      fab.style.top = newTop + 'px';
+    }
+  }
+
+  function snapFAB(toLeft) {
+    fab.style.transition = 'opacity 0.4s, transform 0.3s, left 0.3s, right 0.3s, top 0.3s, box-shadow 0.3s';
+    
+    if (toLeft) {
+      fab.classList.remove('fab-right');
+      fab.classList.add('fab-left');
+      fab.style.left = '0px';
+      fab.style.right = 'auto';
+      
+      // Swap to CSS clean class positioning after transition
+      setTimeout(function() {
+        if (!isPointerActive && fab.classList.contains('fab-left')) {
+          fab.style.transition = 'none';
+          fab.style.left = '';
+          fab.style.right = '';
+          fab.offsetHeight; // Force layout recalculation
+          fab.style.transition = 'opacity 0.4s, transform 0.3s, left 0.3s, right 0.3s, top 0.3s, box-shadow 0.3s';
+        }
+      }, 300);
+    } else {
+      var maxLeft = frame.offsetWidth - fab.offsetWidth;
+      fab.style.left = maxLeft + 'px';
+      fab.style.right = 'auto';
+      
+      // Swap to CSS-based right:0 position after transition completes for proper idle offsets
+      setTimeout(function() {
+        if (!isPointerActive && fab.classList.contains('fab-right')) {
+          fab.style.transition = 'none';
+          fab.style.left = '';
+          fab.style.right = '';
+          fab.offsetHeight; // Force layout recalculation
+          fab.style.transition = 'opacity 0.4s, transform 0.3s, left 0.3s, right 0.3s, top 0.3s, box-shadow 0.3s';
+        }
+      }, 300);
+      
+      fab.classList.remove('fab-left');
+      fab.classList.add('fab-right');
+    }
+    fabWakeUp();
+  }
+
+  function onFabUp(e) {
+    var coords = getEventCoords(e);
+    cleanupPointer();
+    
+    var frameRect = frame.getBoundingClientRect();
+    var scaleX = frame.offsetWidth ? (frameRect.width / frame.offsetWidth) : 1;
+    var scaleY = frame.offsetHeight ? (frameRect.height / frame.offsetHeight) : 1;
+    if (!scaleX || isNaN(scaleX) || !isFinite(scaleX)) scaleX = 1;
+    if (!scaleY || isNaN(scaleY) || !isFinite(scaleY)) scaleY = 1;
+    
+    var dx = (coords.x - dragStartX) / scaleX;
+    var dy = (coords.y - dragStartY) / scaleY;
+    var distance = Math.sqrt(dx * dx + dy * dy);
+    
+    var isRealDrag = isDragging && (distance > 12);
+    
+    if (isRealDrag) {
+      var currentLeft = fab.offsetLeft;
+      var midX = (frame.offsetWidth - fab.offsetWidth) / 2;
+      snapFAB(currentLeft < midX);
+    } else {
+      snapFAB(fab.classList.contains('fab-left'));
+      toggleSDK();
+    }
+  }
+
+  function onFabCancel(e) {
+    cleanupPointer();
+    snapFAB(fab.classList.contains('fab-left'));
+  }
+
+  function cleanupPointer() {
+    isPointerActive = false;
+    
+    document.removeEventListener('touchmove', onFabMove);
+    document.removeEventListener('touchend', onFabUp);
+    document.removeEventListener('touchcancel', onFabCancel);
+    
+    document.removeEventListener('mousemove', onFabMove);
+    document.removeEventListener('mouseup', onFabUp);
+  }
+
+  // Initial vertical position
+  fab.style.top = '48%';
+
+  // ── SDK OPEN/CLOSE ─────────────────────────────────────────────────────
+  function toggleSDK() {
+    if (state.sdkOpen) closeSDK();
+    else openSDK();
+  }
+
+  function openSDK() {
+    state.sdkOpen = true;
+    state.sdkExpanded = false;
+    var overlay = document.getElementById('sdkOverlay');
+    overlay.classList.remove('expanded');
+    overlay.style.height = '';
+    overlay.style.transition = '';
+    overlay.classList.add('open');
+    fab.style.display = 'none';
+    
+    var backdrop = document.getElementById('sdkBackdrop');
+    if (backdrop) backdrop.classList.add('open');
+    
+    renderAll();
+    if (state.viewingSessionId === null) {
+      startLiveStream();
+    }
+
+    // Show crash recovery sheet if crash data exists
+    if (state.crashData) {
+      setTimeout(showCrashSheet, 300);
+    }
+  }
+
+  function closeSDK() {
+    state.sdkOpen = false;
+    state.sdkExpanded = false;
+    var overlay = document.getElementById('sdkOverlay');
+    overlay.classList.remove('open');
+    overlay.classList.remove('expanded');
+    overlay.style.height = '';
+    overlay.style.transition = '';
+    fab.style.display = '';
+    
+    var backdrop = document.getElementById('sdkBackdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(fabGoIdle, 1500);
+    stopLiveStream();
+    closeDetailPage();
+  }
+
+  document.getElementById('sdkCloseBtn').onclick = closeSDK;
+
+  // ── GESTURE BOTTOM SHEET LOGIC ──────────────────────────────────────────
+  (function() {
+    var overlay = document.getElementById('sdkOverlay');
+    var frame = document.getElementById('phoneFrame');
+    
+    var startX = 0;
+    var startY = 0;
+    var startHeight = 0;
+    var isDragging = false;
+    var gestureDecided = false;
+    var activeScrollParent = null;
+    
+    function findScrollableParent(el) {
+      while (el && el !== overlay) {
+        var style = window.getComputedStyle(el);
+        var overflowY = style.getPropertyValue('overflow-y') || style.getPropertyValue('overflow');
+        if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+          return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    }
+    
+    function onPointerDown(e) {
+      var target = e.target;
+      
+      // Do not drag if interaction is on buttons, inputs, tabs, or scrollbars/pills
+      if (
+        target.closest('button') || 
+        target.closest('a') || 
+        target.closest('input') || 
+        target.closest('select') || 
+        target.closest('.sdk-close-btn') || 
+        target.closest('.sdk-theme-toggle-btn') || 
+        target.closest('.rename-trigger-btn') || 
+        target.closest('.tab-btn') ||
+        target.closest('.sf-status-btn') ||
+        target.closest('.session-chip') ||
+        target.closest('.detail-close')
+      ) {
+        return;
+      }
+      
+      var touch = (e.touches && e.touches[0]) || e;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startHeight = overlay.offsetHeight;
+      isDragging = false;
+      gestureDecided = false;
+      
+      activeScrollParent = findScrollableParent(target);
+      
+      if (e.type === 'touchstart') {
+        document.addEventListener('touchmove', onPointerMove, { passive: false });
+        document.addEventListener('touchend', onPointerUp);
+      } else {
+        document.addEventListener('mousemove', onPointerMove);
+        document.addEventListener('mouseup', onPointerUp);
+      }
+    }
+    
+    function onPointerMove(e) {
+      var touch = (e.touches && e.touches[0]) || e;
+      var deltaX = touch.clientX - startX;
+      var deltaY = touch.clientY - startY;
+      
+      if (!gestureDecided) {
+        // If horizontal movement is significantly higher than vertical, ignore this drag
+        if (Math.abs(deltaX) > Math.abs(deltaY) + 5) {
+          onPointerUp();
+          return;
+        }
+        gestureDecided = true;
+      }
+      
+      if (activeScrollParent) {
+        // Scroll container logic: only drag the sheet if we're pulling down at scrollTop === 0
+        if (deltaY > 0 && activeScrollParent.scrollTop <= 0) {
+          isDragging = true;
+        }
+      } else {
+        isDragging = true;
+      }
+      
+      if (isDragging) {
+        if (e.cancelable) e.preventDefault();
+        overlay.style.transition = 'none';
+        
+        var newHeight = startHeight - deltaY;
+        var maxH = frame.clientHeight;
+        
+        if (newHeight > maxH) {
+          newHeight = maxH + (newHeight - maxH) * 0.25; // Rubber banding
+        }
+        if (newHeight < 0) newHeight = 0;
+        
+        overlay.style.height = newHeight + 'px';
+        
+        if (newHeight >= maxH) {
+          overlay.style.borderRadius = '0';
+          overlay.style.borderTopColor = 'transparent';
+        } else {
+          overlay.style.borderRadius = '16px 16px 0 0';
+          overlay.style.borderTopColor = '';
+        }
+      }
+    }
+    
+    function onPointerUp(e) {
+      document.removeEventListener('touchmove', onPointerMove);
+      document.removeEventListener('touchend', onPointerUp);
+      document.removeEventListener('mousemove', onPointerMove);
+      document.removeEventListener('mouseup', onPointerUp);
+      
+      if (isDragging) {
+        overlay.style.transition = '';
+        var finalHeight = overlay.offsetHeight;
+        var maxH = frame.clientHeight;
+        
+        overlay.style.borderRadius = '';
+        overlay.style.borderTopColor = '';
+        
+        if (finalHeight < maxH * 0.35) {
+          closeSDK();
+        } else if (finalHeight > maxH * 0.75) {
+          overlay.style.height = '';
+          overlay.classList.add('expanded');
+          state.sdkExpanded = true;
+        } else {
+          overlay.style.height = '';
+          overlay.classList.remove('expanded');
+          state.sdkExpanded = false;
+        }
+      }
+      isDragging = false;
+      gestureDecided = false;
+      activeScrollParent = null;
+    }
+    
+    overlay.addEventListener('mousedown', onPointerDown);
+    overlay.addEventListener('touchstart', onPointerDown, { passive: true });
+  })();
+
+  // Gesture handler for crashSheet
+  (function() {
+    var sheet = document.getElementById('crashSheet');
+    var frame = document.querySelector('.device-frame') || document.body;
+    if (!sheet) return;
+    
+    var startY, startHeight;
+    var isDragging = false;
+    var gestureDecided = false;
+    var activeScrollParent = null;
+    
+    function onPointerDown(e) {
+      var target = e.target;
+      if (target.closest('.cs-dismiss-btn') || target.closest('.detail-close') || target.closest('button') || target.closest('a')) {
+        return;
+      }
+      
+      var touch = (e.touches && e.touches[0]) || e;
+      startY = touch.clientY;
+      startHeight = sheet.offsetHeight;
+      isDragging = false;
+      gestureDecided = false;
+      
+      activeScrollParent = findScrollableParent(target);
+      
+      if (e.type === 'touchstart') {
+        document.addEventListener('touchmove', onPointerMove, { passive: false });
+        document.addEventListener('touchend', onPointerUp);
+      } else {
+        document.addEventListener('mousemove', onPointerMove);
+        document.addEventListener('mouseup', onPointerUp);
+      }
+    }
+    
+    function onPointerMove(e) {
+      var touch = (e.touches && e.touches[0]) || e;
+      var deltaY = touch.clientY - startY;
+      
+      if (!gestureDecided) {
+        gestureDecided = true;
+      }
+      
+      if (activeScrollParent) {
+        if (deltaY > 0 && activeScrollParent.scrollTop <= 0) {
+          isDragging = true;
+        }
+      } else {
+        isDragging = true;
+      }
+      
+      if (isDragging) {
+        if (e.cancelable) e.preventDefault();
+        sheet.style.transition = 'none';
+        
+        var newHeight = startHeight - deltaY;
+        var maxH = frame.clientHeight;
+        
+        if (newHeight > maxH) {
+          newHeight = maxH + (newHeight - maxH) * 0.25;
+        }
+        if (newHeight < 0) newHeight = 0;
+        
+        sheet.style.height = newHeight + 'px';
+        
+        if (newHeight >= maxH) {
+          sheet.style.borderRadius = '0';
+          sheet.style.borderTopColor = 'transparent';
+        } else {
+          sheet.style.borderRadius = '16px 16px 0 0';
+          sheet.style.borderTopColor = '';
+        }
+      }
+    }
+    
+    function onPointerUp(e) {
+      document.removeEventListener('touchmove', onPointerMove);
+      document.removeEventListener('touchend', onPointerUp);
+      document.removeEventListener('mousemove', onPointerMove);
+      document.removeEventListener('mouseup', onPointerUp);
+      
+      if (isDragging) {
+        sheet.style.transition = '';
+        var finalHeight = sheet.offsetHeight;
+        var maxH = frame.clientHeight;
+        
+        sheet.style.borderRadius = '';
+        sheet.style.borderTopColor = '';
+        
+        if (finalHeight < maxH * 0.35) {
+          dismissCrashSheet();
+        } else if (finalHeight > maxH * 0.75) {
+          sheet.style.height = '';
+          sheet.classList.add('expanded');
+        } else {
+          sheet.style.height = '';
+          sheet.classList.remove('expanded');
+        }
+      }
+      isDragging = false;
+      gestureDecided = false;
+      activeScrollParent = null;
+    }
+    
+    sheet.addEventListener('mousedown', onPointerDown);
+    sheet.addEventListener('touchstart', onPointerDown, { passive: true });
+  })();
+
+  // ── TABS ────────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    state.activeTab = tab;
+    ['network','logcat'].forEach(function(t) {
+      var btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+      var panel = document.getElementById('panel-' + t);
+      if (btn) btn.classList.toggle('active', t === tab);
+      if (panel) { panel.classList.toggle('active', t === tab); }
+    });
+    
+    // Hide crash history sheet when switching to a tab
+    var crashBackdrop = document.getElementById('crashHistBackdrop');
+    var crashSheet = document.getElementById('crashHistorySheetSdk');
+    if (crashBackdrop) crashBackdrop.classList.remove('open');
+    if (crashSheet) crashSheet.classList.remove('open');
+    
+    updateSortFilterBtnState();
+    renderAll();
+  }
+
+  // ── THEME SWITCHING ─────────────────────────────────────────────────────
+  function toggleTheme() {
+    var frame = document.getElementById('phoneFrame');
+    var darkIcon = document.querySelector('.theme-icon-dark');
+    var lightIcon = document.querySelector('.theme-icon-light');
+    if (frame.classList.contains('theme-clean-pro')) {
+      frame.classList.remove('theme-clean-pro');
+      frame.classList.add('theme-dev-dark');
+      if (darkIcon) darkIcon.style.display = 'none';
+      if (lightIcon) lightIcon.style.display = 'block';
+      state.theme = 'dev-dark';
+    } else {
+      frame.classList.remove('theme-dev-dark');
+      frame.classList.add('theme-clean-pro');
+      if (darkIcon) darkIcon.style.display = 'block';
+      if (lightIcon) lightIcon.style.display = 'none';
+      state.theme = 'clean-pro';
+    }
+  }
+
+  // ── MODE SWITCHING ─────────────────────────────────────────────────────
+  function switchMode(m) {
+    state.mode = m;
+    
+    // Update mode chip
+    var chip = document.getElementById('modeChip');
+    var testBanner = document.getElementById('activeTestBanner');
+    var bContent = document.getElementById('bannerContent');
+    var connRow = document.getElementById('connection-row');
+
+    if (m === 'standalone') {
+      if (chip) {
+        chip.className = 'mode-chip mode-standalone';
+        chip.textContent = '● STANDALONE';
+      }
+      if (connRow) connRow.style.display = 'flex';
+      if (testBanner) testBanner.style.display = 'none';
+    } else if (m === 'ws') {
+      if (chip) {
+        chip.className = 'mode-chip mode-ws';
+        chip.textContent = '⬡ WS DESKTOP';
+      }
+      if (connRow) connRow.style.display = 'flex';
+      if (testBanner) testBanner.style.display = 'none';
+    } else if (m === 'tc') {
+      if (chip) {
+        chip.className = 'mode-chip mode-ws-tc';
+        chip.textContent = '◈ WS + TEST CASE';
+      }
+      if (connRow) connRow.style.display = 'flex';
+      if (testBanner) testBanner.style.display = 'flex';
+      
+      // Setup banner content
+      if (bContent) {
+        bContent.innerHTML = 
+          '<div class="tc-constraints">' +
+            '<div class="tc-constraint">' +
+              '<div class="tc-constraint-check"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4l2 2 3-3"/></svg></div>' +
+              '<span>POST /api/orders → must return 201</span>' +
+            '</div>' +
+            '<div class="tc-constraint">' +
+              '<div class="tc-constraint-check"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4l2 2 3-3"/></svg></div>' +
+              '<span>Response time &lt; 800ms</span>' +
+            '</div>' +
+            '<div class="tc-constraint">' +
+              '<div class="tc-constraint-check"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4l2 2 3-3"/></svg></div>' +
+              '<span>No 5xx on payment endpoint</span>' +
+            '</div>' +
+            '<div class="tc-constraint">' +
+              '<div class="tc-constraint-check" style="background:color-mix(in oklab, var(--danger) 15%, transparent); border-color:var(--danger);"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M2 2l4 4M6 2L2 6"/></svg></div>' +
+              '<span style="color:var(--danger);">401 on /auth/refresh — FAIL</span>' +
+            '</div>' +
+          '</div>';
+      }
+    }
+    updateConnUI();
+  }
+
+  // Initial mode setup
+  switchMode('standalone');
+
+  // ── CONNECTION ──────────────────────────────────────────────────────────
+  function updateConnUI() {
+    var row = document.getElementById('connection-row');
+    var dot = document.getElementById('connDot');
+    var label = document.getElementById('connLabel');
+    var action = document.getElementById('connAction');
+    
+    if (!row) return;
+
+    if (state.connecting) {
+      row.className = 'sdk-conn-row state-connecting';
+      if (dot) dot.className = 'conn-dot connecting';
+      if (label) label.textContent = 'Connecting to desktop…';
+      if (action) {
+        action.innerHTML = '<div class="conn-spinner"></div>';
+        action.style.color = 'var(--warn)';
+      }
+    } else if (state.connected) {
+      row.className = 'sdk-conn-row state-connected clickable';
+      if (dot) dot.className = 'conn-dot connected';
+      if (label) label.textContent = state.wsUrl;
+      if (action) {
+        action.innerHTML = '<span style="font-size: 11px; font-weight: 500; color: var(--danger); display: flex; align-items: center; gap: 4px;">Disconnect <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l8 8M10 2L2 8"/></svg></span>';
+      }
+    } else {
+      row.className = 'sdk-conn-row state-disconnected clickable';
+      if (dot) dot.className = 'conn-dot disconnected';
+      if (label) label.textContent = 'Not connected · Scan QR';
+      if (action) {
+        action.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="1" width="4" height="4" rx="0.5"/><rect x="8" y="1" width="4" height="4" rx="0.5"/><rect x="1" y="8" width="4" height="4" rx="0.5"/><rect x="8.5" y="8.5" width="1.5" height="1.5" rx="0.25" fill="currentColor"/><path d="M10.5 8.5v2M10.5 10.5h-2"/></svg>';
+        action.style.color = 'var(--accent)';
+      }
+    }
+  }
+
+  function handleConnClick(e) {
+    if (state.viewingSessionId !== null) return;
+    if (state.connecting) return;
+    if (state.connected) {
+      simulateDisconnect();
+    } else {
+      openQR();
+    }
+  }
+  window.handleConnClick = handleConnClick;
+
+  function openQR() {
+    if (state.viewingSessionId !== null) return;
+    var o = document.getElementById('qrOverlay');
+    if (o) o.classList.add('open');
+  }
+  function closeQR() {
+    var o = document.getElementById('qrOverlay');
+    if (o) o.classList.remove('open');
+    
+    // Reset torch states
+    var torchBtn = document.getElementById('scannerTorchBtn');
+    var torchGlow = document.getElementById('scannerTorchGlow');
+    if (torchBtn) torchBtn.classList.remove('active');
+    if (torchGlow) torchGlow.classList.remove('active');
+    
+    // Reset success flash
+    var successFlash = document.getElementById('scannerSuccessFlash');
+    if (successFlash) successFlash.classList.remove('active');
+  }
+  function handleQROverlayClick(e) {
+    if (e.target === document.getElementById('qrOverlay')) closeQR();
+  }
+  window.openQR = openQR;
+  window.closeQR = closeQR;
+  window.handleQROverlayClick = handleQROverlayClick;
+
+  function toggleTorch(e) {
+    if (e) e.stopPropagation();
+    var torchBtn = document.getElementById('scannerTorchBtn');
+    var torchGlow = document.getElementById('scannerTorchGlow');
+    if (torchBtn && torchGlow) {
+      var isActive = torchBtn.classList.contains('active');
+      torchBtn.classList.toggle('active', !isActive);
+      torchGlow.classList.toggle('active', !isActive);
+    }
+  }
+  window.toggleTorch = toggleTorch;
+
+  function simulateScanTap(e) {
+    if (e && e.target.closest('#scannerTorchBtn')) return;
+    simulateConnect();
+  }
+  window.simulateScanTap = simulateScanTap;
+
+  function simulateConnect() {
+    var manualInput = document.getElementById('manualUrlInput');
+    if (manualInput && manualInput.value) {
+      state.wsUrl = manualInput.value.trim() || 'ws://192.168.1.42:9871';
+    }
+    // Show green success flash scan animation in the camera viewfinder first
+    var successFlash = document.getElementById('scannerSuccessFlash');
+    if (successFlash) {
+      successFlash.classList.add('active');
+    }
+
+    setTimeout(function() {
+      closeQR();
+      state.connecting = true;
+      updateConnUI();
+      setTimeout(function() {
+        state.connecting = false;
+        state.connected = true;
+        switchMode('ws');
+        updateConnUI();
+        // Auto trigger test case popup after 2.5s
+        setTimeout(function() {
+          if (state.connected) {
+            showTestPromptPopup();
+          }
+        }, 2500);
+      }, 1800);
+    }, 850);
+  }
+  function simulateDisconnect() {
+    state.connected = false;
+    state.connecting = false;
+    switchMode('standalone');
+    updateConnUI();
+  }
+  window.simulateConnect = simulateConnect;
+  window.simulateDisconnect = simulateDisconnect;
+
+  // ── COLLAPSIBLE TEST CASE BANNER ──────────────────────────────────────────
+  function toggleTestBanner(e) {
+    if (e.target.closest('.ro-exit-btn')) return; 
+    // Ignore toggling when clicking inside the constraints list container
+    if (e.target.closest('#bannerContent')) return;
+    
+    var banner = document.getElementById('activeTestBanner');
+    var content = document.getElementById('bannerContent');
+    var isExpanded = banner.classList.contains('expanded');
+    
+    if (isExpanded) {
+      banner.classList.remove('expanded');
+      content.style.display = 'none';
+    } else {
+      banner.classList.add('expanded');
+      content.style.display = 'block';
+    }
+  }
+  window.toggleTestBanner = toggleTestBanner;
+
+  function showTestPromptPopup() {
+    var p = document.getElementById('testPromptPopup');
+    if (p) p.classList.add('open');
+  }
+  function declineTestCase() {
+    var p = document.getElementById('testPromptPopup');
+    if (p) p.classList.remove('open');
+  }
+  function acceptTestCase() {
+    var p = document.getElementById('testPromptPopup');
+    if (p) p.classList.remove('open');
+    switchMode('tc');
+  }
+  window.showTestPromptPopup = showTestPromptPopup;
+  window.declineTestCase = declineTestCase;
+  window.acceptTestCase = acceptTestCase;
+
+  // ── SESSION HISTORY ARCHIVE ────────────────────────────────────────────────
+  function openSessionHistory() {
+    var backdrop = document.getElementById('sessionBackdrop');
+    var sheet = document.getElementById('sessionSheet');
+    if (backdrop && sheet) {
+      renderSessionHistoryList();
+      backdrop.classList.add('open');
+      sheet.classList.add('open');
+    }
+  }
+  function closeSessionHistory() {
+    var backdrop = document.getElementById('sessionBackdrop');
+    var sheet = document.getElementById('sessionSheet');
+    if (backdrop && sheet) {
+      backdrop.classList.remove('open');
+      sheet.classList.remove('open');
+    }
+  }
+  window.openSessionHistory = openSessionHistory;
+  window.closeSessionHistory = closeSessionHistory;
+
+  function renderSessionHistoryList() {
+    var list = document.getElementById('sessionHistoryList');
+    if (!list) return;
+    list.innerHTML = '';
+    state.sessionHistory.forEach(function(s) {
+      var item = document.createElement('div');
+      item.className = 'session-history-item' + (state.viewingSessionId === s.id || (state.viewingSessionId === null && s.active) ? ' active' : '');
+      
+      var inner = 
+        '<div class="session-item-info" onclick="selectSession(\'' + s.id + '\')">' +
+          '<div class="session-item-title">' + s.name + '</div>' +
+          '<div class="session-item-sub">Started at ' + s.time + ' · ' + s.logsCount + ' entries</div>' +
+        '</div>' +
+        '<div class="session-item-actions">' +
+          '<button class="session-item-btn session-item-btn-rename" onclick="openRenameSession(event, \'' + s.id + '\')">Rename</button>';
+        
+      if (!s.active) {
+        inner += '<button class="session-item-btn session-item-btn-delete" onclick="deleteSession(event, \'' + s.id + '\')">Delete</button>';
+      }
+      inner += '</div>';
+      item.innerHTML = inner;
+      list.appendChild(item);
+    });
+  }
+
+  function selectSession(id) {
+    closeSessionHistory();
+    if (id === 'sess_active') {
+      exitReadOnly();
+      return;
+    }
+    
+    // Store current active session logs if we haven't already
+    if (state.viewingSessionId === null) {
+      state.activeSessionLogs = {
+        net: state.networkLogs.slice(),
+        lc: state.logcatLogs.slice()
+      };
+    }
+    
+    state.viewingSessionId = id;
+    
+    // Load session logs
+    var data = sessionLogs[id] || { net: [], lc: [] };
+    state.networkLogs = data.net.slice();
+    state.logcatLogs = data.lc.slice();
+    
+    // Show banner
+    var banner = document.getElementById('roBanner');
+    if (banner) banner.style.display = 'flex';
+    
+    // Update sessionTime display
+    var nowSession = state.sessionHistory.find(function(s) { return s.id === id; });
+    var se = document.getElementById('sessionTime');
+    if (se && nowSession) se.textContent = nowSession.name + ' · ' + nowSession.time;
+    
+    // Pause live stream
+    stopLiveStream();
+    
+    // Disable connect buttons
+    var connRow = document.getElementById('connection-row');
+    if (connRow) {
+      connRow.style.pointerEvents = 'none';
+      connRow.style.opacity = '0.5';
+    }
+    
+    renderAll();
+  }
+
+  function exitReadOnly() {
+    state.viewingSessionId = null;
+    
+    // Restore active logs
+    var data = state.activeSessionLogs;
+    state.networkLogs = data.net.length > 0 ? data.net.slice() : netSeed.slice();
+    state.logcatLogs = data.lc.length > 0 ? data.lc.slice() : lcSeed.slice();
+    
+    // Hide banner
+    var banner = document.getElementById('roBanner');
+    if (banner) banner.style.display = 'none';
+    
+    // Enable connect buttons
+    var connRow = document.getElementById('connection-row');
+    if (connRow) {
+      connRow.style.pointerEvents = '';
+      connRow.style.opacity = '';
+    }
+    
+    // Resume live stream if SDK is open and not standalone
+    if (state.sdkOpen) {
+      startLiveStream();
+    }
+    
+    // Restore clock title
+    updateClock();
+    
+    renderAll();
+  }
+
+  function deleteSession(e, id) {
+    e.stopPropagation(); // prevent selectSession
+    state.sessionHistory = state.sessionHistory.filter(function(s) { return s.id !== id; });
+    delete sessionLogs[id];
+    
+    if (state.viewingSessionId === id) {
+      exitReadOnly();
+    }
+    renderSessionHistoryList();
+  }
+  
+  function openRenameSession(e, sessionId) {
+    if (e) e.stopPropagation();
+    state.renameTargetId = sessionId;
+    var session = state.sessionHistory.find(function(s) { return s.id === sessionId; });
+    var name = session ? session.name : '';
+    
+    var input = document.getElementById('renameSessionInput');
+    if (input) {
+      input.value = name;
+      setTimeout(function() {
+        input.focus();
+        input.select();
+      }, 100);
+    }
+    
+    var p = document.getElementById('renameSessionPopup');
+    if (p) p.classList.add('open');
+  }
+  
+  function closeRenameSession() {
+    var p = document.getElementById('renameSessionPopup');
+    if (p) p.classList.remove('open');
+    state.renameTargetId = null;
+  }
+  
+  function confirmRenameSession() {
+    var input = document.getElementById('renameSessionInput');
+    if (!input || !state.renameTargetId) return;
+    
+    var newName = input.value.trim();
+    if (newName === '') return;
+    
+    var session = state.sessionHistory.find(function(s) { return s.id === state.renameTargetId; });
+    if (session) {
+      session.name = newName;
+    }
+    
+    renderSessionHistoryList();
+    
+    if (state.viewingSessionId === state.renameTargetId) {
+      var se = document.getElementById('sessionTime');
+      if (se) se.textContent = session.name + ' · ' + session.time;
+    } else if (state.viewingSessionId === null && session && session.active) {
+      updateClock();
+    }
+    
+    closeRenameSession();
+  }
+  
+  window.selectSession = selectSession;
+  window.deleteSession = deleteSession;
+  window.exitReadOnly = exitReadOnly;
+  window.openRenameSession = openRenameSession;
+  window.closeRenameSession = closeRenameSession;
+  window.confirmRenameSession = confirmRenameSession;
+
+  // ── LIVE LOG STREAM ────────────────────────────────────────────────────
+  var netTemplates = [
+    { method:'GET',  url:'/api/v2/search?q=', extra: ['shoes','bags','hats','belts'], status:200, time:[80,300], size:'2.1 KB' },
+    { method:'GET',  url:'/assets/product_shoe_red.png', status:200, time:[150,220], size:'48.3 KB' },
+    { method:'GET',  url:'/user/avatar_active.jpg', status:200, time:[90,140], size:'12.5 KB' },
+    { method:'POST', url:'/api/events/track', status:200, time:[20,60], size:'0.1 KB' },
+    { method:'GET',  url:'/api/promotions/active', status:200, time:[120,400], size:'3.3 KB' },
+    { method:'GET',  url:'/api/user/wishlist', status:200, time:[60,180], size:'1.8 KB' },
+    { method:'POST', url:'/api/analytics/batch', status:202, time:[40,90], size:'0.4 KB' },
+    { method:'GET',  url:'/api/payment/methods', status:401, time:[55,80], size:'0.2 KB' },
+    { method:'POST', url:'/api/cart/checkout/validate', status:422, time:[200,350], size:'0.9 KB' },
+  ];
+  var lcTemplates = [
+    { tag:'ViewPager', level:'D', msgs:['onPageSelected: tab=1', 'onPageScrolled: offset=0.0'] },
+    { tag:'ViewModel', level:'I', msgs:['StateFlow emit: ProductList(20 items)', 'Cart updated — subtotal ₹1,249'] },
+    { tag:'Retrofit',  level:'D', msgs:['Request enqueued: /api/v2/search', 'Response received in 142ms'] },
+    { tag:'GlideImg',  level:'D', msgs:['Cache MISS — downloading product thumbnail', 'Cache HIT for user avatar'] },
+    { tag:'Analytics', level:'I', msgs:['Event: screen_view{name=ProductDetail}', 'Event: add_to_cart{sku=SKU-4421}'] },
+    { tag:'CrashRep',  level:'W', msgs:['Non-fatal: NullPointerException at CartFragment:87', 'Rethrowing as handled exception'] },
+    { tag:'OkHttp',    level:'E', msgs:['Connect timeout after 30s: api.shopcore.io', 'SocketException: Connection reset'] },
+  ];
+
+  function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+  function randOf(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+  function spawnNetEntry() {
+    if (state.viewingSessionId !== null) return;
+    var tpl = randOf(netTemplates);
+    var extra = tpl.extra ? randOf(tpl.extra) : '';
+    var now = new Date();
+    var h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0'), s = String(now.getSeconds()).padStart(2,'0');
+    var entry = {
+      method: tpl.method,
+      url: tpl.url + extra,
+      status: Array.isArray(tpl.status) ? randOf(tpl.status) : tpl.status,
+      time: randInt(tpl.time[0], tpl.time[1]),
+      size: tpl.size,
+      host: 'api.shopcore.io',
+      ts: h + ':' + m + ':' + s
+    };
+    state.networkLogs.push(entry);
+    renderNetworkLogs('networkLogs');
+  }
+
+  function spawnLcEntry() {
+    if (state.viewingSessionId !== null) return;
+    var tpl = randOf(lcTemplates);
+    var msg = randOf(tpl.msgs);
+    var now = new Date();
+    var h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0'), s = String(now.getSeconds()).padStart(2,'0');
+    var entry = {
+      ts: h + ':' + m + ':' + s,
+      tag: tpl.tag,
+      level: tpl.level,
+      msg: msg
+    };
+    state.logcatLogs.push(entry);
+    renderLogcat();
+  }
+
+  function startLiveStream() {
+    stopLiveStream();
+  }
+  function stopLiveStream() {
+    if (state.logIntervalNet) { clearInterval(state.logIntervalNet); state.logIntervalNet = null; }
+    if (state.logIntervalLc)  { clearInterval(state.logIntervalLc);  state.logIntervalLc  = null; }
+  }
+
+  function triggerHostRequest(index, el) {
+    if (state.viewingSessionId !== null) return;
+    
+    var badge = el.querySelector('.mock-row-badge');
+    var origText = badge.textContent;
+    var origClass = badge.className;
+    
+    badge.textContent = '...';
+    badge.className = 'mock-row-badge';
+    el.classList.add('loading-pulse');
+    
+    var netTemplatesTriggers = [
+      { method:'GET',  url:'/api/v2/products', status:200, time:[50,150], size:'12.4 KB', host:'api.shopcore.io' },
+      { method:'POST', url:'/api/auth/refresh', status:401, time:[80,180], size:'0.8 KB', host:'api.shopcore.io' },
+      { method:'POST', url:'/api/orders', status:201, time:[250,450], size:'1.2 KB', host:'api.shopcore.io' },
+      { method:'GET',  url:'/api/user/me', status:304, time:[40,90], size:'0.0 KB', host:'api.shopcore.io' },
+      { method:'GET',  url:'/api/inventory/stock', status:500, time:[100,200], size:'0.4 KB', host:'api.shopcore.io' },
+      { method:'GET',  url:'/assets/product_shoe_red.png', status:200, time:[60,120], size:'48.3 KB', host:'api.shopcore.io' }
+    ];
+    
+    var tpl = netTemplatesTriggers[index];
+    
+    setTimeout(function() {
+      badge.textContent = origText;
+      badge.className = origClass;
+      el.classList.remove('loading-pulse');
+      
+      el.classList.add('flash-success');
+      setTimeout(function() { el.classList.remove('flash-success'); }, 600);
+      
+      var now = new Date();
+      var h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0'), s = String(now.getSeconds()).padStart(2,'0');
+      
+      var entry = {
+        method: tpl.method,
+        url: tpl.url,
+        status: tpl.status,
+        time: randInt(tpl.time[0], tpl.time[1]),
+        size: tpl.size,
+        host: tpl.host,
+        ts: h + ':' + m + ':' + s,
+        _new: true
+      };
+      
+      state.networkLogs.push(entry);
+      if (state.networkLogs.length > 80) state.networkLogs.shift();
+      renderNetworkLogs('networkLogs');
+      
+      var curSess = state.sessionHistory.find(function(s) { return s.id === 'sess_active'; });
+      if (curSess) curSess.logsCount = state.networkLogs.length;
+      
+      if (!state.sdkOpen) {
+        showFabUnreadDot();
+      }
+    }, 450);
+  }
+  window.triggerHostRequest = triggerHostRequest;
+
+  function triggerHostLog(index, el) {
+    if (state.viewingSessionId !== null) return;
+    
+    el.classList.add('flash-log-active');
+    var badge = el.querySelector('.mock-row-badge');
+    var origText = badge.textContent;
+    badge.textContent = 'Sent';
+    badge.style.color = 'var(--accent)';
+    
+    setTimeout(function() {
+      el.classList.remove('flash-log-active');
+      badge.textContent = origText;
+      badge.style.color = '';
+    }, 500);
+    
+    var logTemplatesTriggers = [
+      { tag:'ViewPager', level:'D', msg:'ViewPager Navigation: onPageSelected: tab=1' },
+      { tag:'ViewModel', level:'I', msg:'ViewModel State Update: Cart updated — subtotal ₹1,249' },
+      { tag:'Retrofit',  level:'D', msg:'Retrofit Client: Response received in 142ms' },
+      { tag:'GlideImg',  level:'W', msg:'Glide Image Loader: Cache MISS — downloading product thumbnail' },
+      { tag:'Analytics', level:'I', msg:'Analytics Tracker: Event: screen_view{name=ProductDetail}' },
+      { tag:'CrashRep',  level:'W', msg:'Crash Reporter: Non-fatal: NullPointerException at CartFragment:87' },
+      { tag:'OkHttp',    level:'E', msg:'OkHttp Client: Connect timeout after 30s: api.shopcore.io' }
+    ];
+    
+    var tpl = logTemplatesTriggers[index];
+    var now = new Date();
+    var h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0'), s = String(now.getSeconds()).padStart(2,'0');
+    
+    var entry = {
+      tag: tpl.tag,
+      level: tpl.level,
+      msg: tpl.msg,
+      ts: h + ':' + m + ':' + s,
+      _new: true
+    };
+    
+    state.logcatLogs.push(entry);
+    if (state.logcatLogs.length > 120) state.logcatLogs.shift();
+    renderLogcat();
+  }
+  window.triggerHostLog = triggerHostLog;
+
+  // ── CRASH SIMULATION ────────────────────────────────────────────────────
+  function simulateCrash(btnEl) {
+    if (btnEl) {
+      btnEl.classList.add('loading-pulse');
+    }
+
+    var crashNet = state.networkLogs.slice(-15);
+    var crashLc = state.logcatLogs.slice(-15);
+    var now = new Date();
+    var h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0'), s = String(now.getSeconds()).padStart(2,'0');
+    var ts = h + ':' + m + ':' + s;
+
+    var exceptions = [
+      { type: 'NullPointerException', pkg: 'com.shopcore.ui.cart', method: 'CartFragment.updateTotal()', line: 87 },
+      { type: 'IndexOutOfBoundsException', pkg: 'com.shopcore.data.adapter', method: 'ProductAdapter.onBindViewHolder()', line: 42 },
+      { type: 'IllegalStateException', pkg: 'com.shopcore.ui.checkout', method: 'PaymentFragment.processPayment()', line: 156 },
+      { type: 'RuntimeException', pkg: 'com.shopcore.network', method: 'ApiClient.executeRequest()', line: 203 }
+    ];
+    var exc = exceptions[Math.floor(Math.random() * exceptions.length)];
+    var excMsg = exc.type + ': Unable to resolve resource - unexpected null reference';
+    var stackTrace = [
+      'at ' + exc.pkg + '.' + exc.method + ' (' + exc.pkg.replace(/\./g, '/') + '.java:' + exc.line + ')',
+      'at com.shopcore.ui.base.BaseFragment.onViewCreated(BaseFragment.java:53)',
+      'at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1128)',
+      'at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2989)',
+      'at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1832)',
+      'at android.os.Handler.dispatchMessage(Handler.java:106)',
+      'at android.os.Looper.loop(Looper.java:214)',
+      'at android.app.ActivityThread.main(ActivityThread.java:7123)',
+      'at java.lang.reflect.Method.invoke(Native Method)'
+    ].join('\n');
+
+    var crashEntry = {
+      id: 'crash_' + Date.now(),
+      ts: ts,
+      date: now.toLocaleDateString(),
+      exception: excMsg,
+      stack: stackTrace,
+      networkLogs: crashNet,
+      logcatLogs: crashLc,
+      memoryUsage: Math.floor(Math.random() * 80 + 20) + '%',
+      appVersion: '2.4.1'
+    };
+
+    state.crashData = crashEntry;
+    state.crashHistory.unshift(crashEntry);
+    if (state.crashHistory.length > 20) state.crashHistory.pop();
+
+    setTimeout(function() {
+      if (btnEl) {
+        btnEl.classList.remove('loading-pulse');
+      }
+
+      // Close SDK if open
+      if (state.sdkOpen) {
+        closeSDK();
+      }
+
+      // Simulate app closing: hide host app screen
+      var appScreen = document.querySelector('.app-screen');
+      var appContent = document.querySelector('.app-content');
+      var fab = document.getElementById('fab');
+      if (appScreen) appScreen.classList.add('app-closed');
+      if (fab) fab.style.display = 'none';
+
+      // After a brief pause, "reopen" the app and show crash sheet
+      setTimeout(function() {
+        if (appScreen) appScreen.classList.remove('app-closed');
+        if (appContent) appContent.scrollTop = 0;
+        if (fab) {
+          fab.classList.remove('idle');
+          fab.style.display = '';
+        }
+
+        // Show crash recovery sheet directly on host app
+        showCrashSheet();
+      }, 800);
+    }, 600);
+  }
+  window.simulateCrash = simulateCrash;
+
+  function showCrashSheet() {
+    var data = state.crashData;
+    if (!data) return;
+
+    var body = document.getElementById('crashSheetBody');
+    if (!body) return;
+
+    var netHtml = '';
+    if (data.networkLogs.length === 0) {
+      netHtml = '<div class="cs-empty" style="padding:16px;text-align:center;color:var(--muted);font-size:10px;">No network logs recorded</div>';
+    } else {
+      data.networkLogs.forEach(function(r, i) {
+        netHtml += '<div class="log-row" onclick="showCrashNetDetail(' + i + ')">' +
+          '<div class="log-method ' + methodClass(r.method) + '">' + r.method + '</div>' +
+          '<div class="log-main">' +
+            '<div class="log-url">' + escapeHtml(r.url) + '</div>' +
+            '<div class="log-meta">' +
+              '<span class="log-status ' + statusClass(r.status) + '">' + r.status + '</span>' +
+              '<span class="log-time">' + r.time + 'ms</span>' +
+              '<span class="log-size">' + r.size + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);flex-shrink:0;">' + r.ts + '</div>' +
+        '</div>';
+      });
+    }
+
+    var lcHtml = '';
+    if (data.logcatLogs.length === 0) {
+      lcHtml = '<div class="cs-empty" style="padding:16px;text-align:center;color:var(--muted);font-size:10px;">No logcat entries recorded</div>';
+    } else {
+      data.logcatLogs.forEach(function(r, i) {
+        lcHtml += '<div class="lc-row" onclick="showCrashLcDetail(' + i + ')">' +
+          '<span class="lc-ts">' + r.ts + '</span>' +
+          '<span class="lc-level ' + levelClass(r.level) + '">' + r.level + '</span>' +
+          '<span class="lc-tag">' + escapeHtml(r.tag) + '</span>' +
+          '<span class="lc-msg">' + escapeHtml(r.msg) + '</span>' +
+        '</div>';
+      });
+    }
+
+    body.innerHTML =
+      '<div class="cs-exception">' +
+        '<div class="cs-exception-label">Unhandled Exception</div>' +
+        '<div class="cs-exception-msg">' + escapeHtml(data.exception) + '</div>' +
+        '<div class="cs-exception-stack">' + escapeHtml(data.stack) + '</div>' +
+      '</div>' +
+      '<div class="cs-section">' +
+        '<div class="cs-section-label">Details</div>' +
+        '<div class="cs-log-entry">Time: ' + data.ts + ' - ' + data.date + '</div>' +
+        '<div class="cs-log-entry">Memory: ' + data.memoryUsage + '</div>' +
+        '<div class="cs-log-entry">App Version: ' + data.appVersion + '</div>' +
+      '</div>' +
+      '<div class="cs-section" style="display:flex; flex-direction:column; flex:1; min-height:0;">' +
+        '<div style="display:flex; gap:0; border-bottom:1px solid var(--border);">' +
+          '<div class="cs-log-tab active" data-cstab="net" onclick="switchCrashTab(\'net\')">Network (' + data.networkLogs.length + ')</div>' +
+          '<div class="cs-log-tab" data-cstab="lc" onclick="switchCrashTab(\'lc\')">Logcat (' + data.logcatLogs.length + ')</div>' +
+        '</div>' +
+        '<div class="cs-log-panel active" data-cstab="net">' + netHtml + '</div>' +
+        '<div class="cs-log-panel" data-cstab="lc">' + lcHtml + '</div>' +
+      '</div>';
+
+    var backdrop = document.getElementById('crashBackdrop');
+    var sheet = document.getElementById('crashSheet');
+    if (backdrop && sheet) {
+      backdrop.classList.add('open');
+      sheet.classList.add('open');
+    }
+  }
+  window.showCrashSheet = showCrashSheet;
+
+  function switchCrashTab(tab) {
+    var sheet = document.getElementById('crashSheet');
+    if (!sheet) return;
+    var tabs = sheet.querySelectorAll('.cs-log-tab');
+    var panels = sheet.querySelectorAll('.cs-log-panel');
+    tabs.forEach(function(t) {
+      t.classList.toggle('active', t.getAttribute('data-cstab') === tab);
+    });
+    panels.forEach(function(p) {
+      p.classList.toggle('active', p.getAttribute('data-cstab') === tab);
+    });
+  }
+  window.switchCrashTab = switchCrashTab;
+
+  function showCrashNetDetail(idx) {
+    var data = state.crashData;
+    if (!data || !data.networkLogs[idx]) return;
+    showDetail(data.networkLogs[idx]);
+  }
+  window.showCrashNetDetail = showCrashNetDetail;
+
+  function showCrashLcDetail(idx) {
+    var data = state.crashData;
+    if (!data || !data.logcatLogs[idx]) return;
+    showLogcatDetail(data.logcatLogs[idx]);
+  }
+  window.showCrashLcDetail = showCrashLcDetail;
+
+  function dismissCrashSheet() {
+    var backdrop = document.getElementById('crashBackdrop');
+    var sheet = document.getElementById('crashSheet');
+    if (backdrop && sheet) {
+      backdrop.classList.remove('open');
+      sheet.classList.remove('open');
+    }
+    state.crashData = null;
+  }
+  window.dismissCrashSheet = dismissCrashSheet;
+
+  // ── CRASH HISTORY ──────────────────────────────────────────────────────
+  function showCrashHistory() {
+    var container = document.getElementById('crashHistoryBodySdk');
+    if (!container) return;
+
+    if (state.crashHistory.length === 0) {
+      container.innerHTML = '<div class="cs-empty" style="padding: 40px 0; text-align: center;">No crashes recorded yet</div>';
+    } else {
+      var html = '';
+      state.crashHistory.forEach(function(c, i) {
+        var excType = c.exception.split(':')[0];
+        var dateLabel = c.date + ' ' + c.ts;
+        html +=
+          '<div class="ch-entry" onclick="showCrashFromHistory(\'' + c.id + '\')" data-od-id="crash-hist-' + i + '">' +
+            '<div class="ch-entry-icon">⚡</div>' +
+            '<div class="ch-entry-body">' +
+              '<div class="ch-entry-title">' + escapeHtml(excType) + '</div>' +
+              '<div class="ch-entry-sub">' + dateLabel + ' · ' + c.networkLogs.length + ' net · ' + c.logcatLogs.length + ' logs</div>' +
+            '</div>' +
+            '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"><path d="M3 1l4 4-4 4"/></svg>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    var backdrop = document.getElementById('crashHistBackdrop');
+    var panel = document.getElementById('crashHistorySheetSdk');
+    if (backdrop) backdrop.classList.add('open');
+    if (panel) panel.classList.add('open');
+  }
+  window.showCrashHistory = showCrashHistory;
+
+  function closeCrashHistory() {
+    var backdrop = document.getElementById('crashHistBackdrop');
+    var panel = document.getElementById('crashHistorySheetSdk');
+    if (backdrop) backdrop.classList.remove('open');
+    if (panel) panel.classList.remove('open');
+  }
+  window.closeCrashHistory = closeCrashHistory;
+
+  function showCrashFromHistory(id) {
+    var entry = null;
+    for (var i = 0; i < state.crashHistory.length; i++) {
+      if (state.crashHistory[i].id === id) {
+        entry = state.crashHistory[i];
+        break;
+      }
+    }
+    if (!entry) return;
+
+    // Close history sheet first
+    closeCrashHistory();
+
+    // Set as current crashData and show the crash detail sheet
+    state.crashData = entry;
+    setTimeout(showCrashSheet, 300);
+  }
+  window.showCrashFromHistory = showCrashFromHistory;
+
+  // ── DETAIL PAGE (FULL SCREEN) ──────────────────────────────────────────
+  var searchState = {
+    'request': { query: '', currentIndex: -1, rawText: '' },
+    'response': { query: '', currentIndex: -1, rawText: '', headers: '', body: '' }
+  };
+
+  function switchDetailTab(tabId) {
+    var tabs = document.querySelectorAll('.detail-tab');
+    var panels = document.querySelectorAll('.detail-tab-panel');
+    
+    tabs.forEach(function(tab) {
+      var isMatch = tab.id === 'tab-det-' + tabId;
+      tab.classList.toggle('active', isMatch);
+    });
+    
+    panels.forEach(function(panel) {
+      var isMatch = panel.id === 'det-panel-' + tabId;
+      panel.classList.toggle('active', isMatch);
+    });
+
+    var body = document.getElementById('detailPageBody');
+    if (body) body.scrollTop = 0;
+  }
+  window.switchDetailTab = switchDetailTab;
+
+  function searchCodeText(input, type) {
+    var query = input.value;
+    var stateItem = searchState[type];
+    stateItem.query = query;
+    stateItem.currentIndex = -1;
+    
+    var nav = input.closest('.detail-code-search-bar').querySelector('.detail-search-nav');
+    var countLabel = nav.querySelector('.detail-search-count');
+    
+    if (!query) {
+      nav.style.display = 'none';
+      if (type === 'response') {
+        document.getElementById('code-view-response').innerHTML = escapeHtml(stateItem.headers);
+        document.getElementById('code-view-response-body').innerHTML = escapeHtml(stateItem.body);
+      } else {
+        document.getElementById('code-view-' + type).innerHTML = escapeHtml(stateItem.rawText);
+      }
+      return;
+    }
+    
+    var escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    var regex = new RegExp(escapedQuery, 'gi');
+    
+    var matchCount = 0;
+    
+    if (type === 'response') {
+      var hdrEscaped = escapeHtml(stateItem.headers);
+      var bodyEscaped = escapeHtml(stateItem.body);
+      var hdrHighlighted = hdrEscaped.replace(regex, function(m) {
+        var idx = matchCount++;
+        return '<mark class="code-match" data-match-index="' + idx + '">' + m + '</mark>';
+      });
+      var bodyHighlighted = bodyEscaped.replace(regex, function(m) {
+        var idx = matchCount++;
+        return '<mark class="code-match" data-match-index="' + idx + '">' + m + '</mark>';
+      });
+      document.getElementById('code-view-response').innerHTML = hdrHighlighted;
+      document.getElementById('code-view-response-body').innerHTML = bodyHighlighted;
+    } else {
+      var rawEscaped = escapeHtml(stateItem.rawText);
+      var highlighted = rawEscaped.replace(regex, function(m) {
+        var idx = matchCount++;
+        return '<mark class="code-match" data-match-index="' + idx + '">' + m + '</mark>';
+      });
+      document.getElementById('code-view-' + type).innerHTML = highlighted;
+    }
+    
+    if (matchCount > 0) {
+      nav.style.display = 'flex';
+      stateItem.currentIndex = 0;
+      updateSearchHighlight(type);
+    } else {
+      nav.style.display = 'flex';
+      countLabel.textContent = '0/0';
+    }
+  }
+  window.searchCodeText = searchCodeText;
+
+  function updateSearchHighlight(type) {
+    var stateItem = searchState[type];
+    var nav, countLabel;
+    if (type === 'response') {
+      nav = document.querySelector('#det-panel-response .detail-search-nav');
+      countLabel = nav.querySelector('.detail-search-count');
+    } else {
+      var container = document.getElementById('code-view-' + type);
+      nav = container.previousElementSibling.querySelector('.detail-search-nav');
+      countLabel = nav.querySelector('.detail-search-count');
+    }
+    
+    var query = (type === 'response') ? '#det-panel-response .code-match' : '#code-view-' + type + ' .code-match';
+    var matches = document.querySelectorAll(query);
+    matches.forEach(function(el, i) {
+      var isCurrent = i === stateItem.currentIndex;
+      el.classList.toggle('code-match-current', isCurrent);
+      if (isCurrent) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+    
+    countLabel.textContent = (stateItem.currentIndex + 1) + '/' + matches.length;
+  }
+
+  function navigateCodeSearch(type, direction) {
+    var stateItem = searchState[type];
+    var query = (type === 'response') ? '#det-panel-response .code-match' : '#code-view-' + type + ' .code-match';
+    var matches = document.querySelectorAll(query);
+    if (matches.length === 0) return;
+    
+    stateItem.currentIndex += direction;
+    if (stateItem.currentIndex < 0) {
+      stateItem.currentIndex = matches.length - 1;
+    } else if (stateItem.currentIndex >= matches.length) {
+      stateItem.currentIndex = 0;
+    }
+    
+    updateSearchHighlight(type);
+  }
+  window.navigateCodeSearch = navigateCodeSearch;
+
+  function showDetail(r) {
+    var page = document.getElementById('detailPage');
+    var title = document.getElementById('detailPageTitle');
+    var subtitle = document.getElementById('detailPageSubtitle');
+    var badge = document.getElementById('detailPageBadge');
+    var body = document.getElementById('detailPageBody');
+    var tabs = document.getElementById('detailTabs');
+
+    if (tabs) tabs.style.display = 'flex';
+
+    title.textContent = r.method + ' ' + r.url.split('?')[0];
+    subtitle.textContent = r.ts + ' · ' + r.time + 'ms';
+
+    badge.innerHTML = '<span class="log-status ' + statusClass(r.status) + '" style="font-size:12px; font-weight:700;">' + r.status + '</span>';
+
+    var isImage = /\.(png|jpg|jpeg|gif|webp)/i.test(r.url);
+    var imgPreviewHtml = '';
+    if (isImage) {
+      var icon = '🖼️';
+      if (r.url.indexOf('avatar') >= 0) icon = '👤';
+      else if (r.url.indexOf('shoe') >= 0) icon = '👟';
+      
+      imgPreviewHtml = 
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">Image Preview</div>' +
+          '<div class="detail-img-preview">' +
+            '<div class="detail-img-box">' +
+              '<div class="detail-img-graphic">' +
+                '<span style="font-size: 32px;">' + icon + '</span>' +
+              '</div>' +
+              '<div class="detail-img-name">' + r.url.split('/').pop() + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    var requestHeaders = 'Host: ' + (r.host || 'api.shopcore.io') + '\nAccept: application/json\nUser-Agent: QA-Tools/1.4.0 (Android; SDK 33)\nConnection: Keep-Alive';
+    var responseHeaders = 'Content-Type: ' + (isImage ? 'image/png' : 'application/json') + '\nCache-Control: no-cache\nContent-Length: ' + r.size + '\nServer: ShopCoreBackend/2.4';
+
+    var responseBody = isImage ? '[Binary Image Data]' : '{\n  "status": "success",\n  "data": {\n    "id": "item_' + randInt(100, 999) + '",\n    "name": "Sample Object",\n    "timestamp": "' + r.ts + '"\n  }\n}';
+
+    searchState['request'].rawText = requestHeaders;
+    searchState['request'].query = '';
+    searchState['request'].currentIndex = -1;
+    
+    searchState['response'].rawText = responseHeaders + '\n\n' + responseBody;
+    searchState['response'].headers = responseHeaders;
+    searchState['response'].body = responseBody;
+    var curlText = "curl -X " + r.method + " \\\n  \"https://" + (r.host || 'api.shopcore.io') + r.url + "\"";
+    if (r.method !== 'GET') {
+      curlText += " \\\n  -H \"Content-Type: application/json\"";
+    }
+    state._curlText = curlText;
+    searchState['response'].query = '';
+    searchState['response'].currentIndex = -1;
+
+    body.innerHTML = 
+      '<div class="detail-tab-panel active" id="det-panel-general">' +
+        (isImage ? imgPreviewHtml : '') +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">General</div>' +
+          '<div class="detail-section-body">' +
+            '<div class="detail-row"><span class="detail-lbl">Request URL</span><span class="detail-val">' + r.url + '</span></div>' +
+            '<div class="detail-row"><span class="detail-lbl">Request Method</span><span class="detail-val">' + r.method + '</span></div>' +
+            '<div class="detail-row"><span class="detail-lbl">Status Code</span><span class="detail-val ' + statusClass(r.status) + '">' + r.status + '</span></div>' +
+            '<div class="detail-row"><span class="detail-lbl">Duration</span><span class="detail-val">' + r.time + 'ms</span></div>' +
+            '<div class="detail-row"><span class="detail-lbl">Response Size</span><span class="detail-val">' + r.size + '</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      
+      '<div class="detail-tab-panel" id="det-panel-request">' +
+        '<div class="detail-code-search-bar">' +
+          '<div class="detail-search-input-wrap">' +
+            '<svg class="detail-search-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>' +
+            '<input type="text" placeholder="Search request headers..." class="detail-code-search-input" oninput="searchCodeText(this, \'request\')">' +
+          '</div>' +
+          '<div class="detail-search-nav" style="display: none;">' +
+            '<span class="detail-search-count">0/0</span>' +
+            '<button class="detail-search-nav-btn" onclick="navigateCodeSearch(\'request\', -1)">▲</button>' +
+            '<button class="detail-search-nav-btn" onclick="navigateCodeSearch(\'request\', 1)">▼</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-code-wrap">' +
+          '<pre class="detail-code" id="code-view-request">' + escapeHtml(requestHeaders) + '</pre>' +
+          '<button class="detail-copy-btn detail-code-copy-btn" onclick="copyCode(\'request\')" title="Copy to clipboard">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+            '</svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      
+      '<div class="detail-tab-panel" id="det-panel-response">' +
+        '<div class="detail-code-search-bar" style="margin-bottom: 12px;">' +
+          '<div class="detail-search-input-wrap" style="width: 100%;">' +
+            '<svg class="detail-search-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>' +
+            '<input type="text" placeholder="Search headers & body..." class="detail-code-search-input" oninput="searchCodeText(this, \'response\')" style="width: 100%;">' +
+          '</div>' +
+          '<div class="detail-search-nav" style="display: none;">' +
+            '<span class="detail-search-count">0/0</span>' +
+            '<button class="detail-search-nav-btn" onclick="navigateCodeSearch(\'response\', -1)">▲</button>' +
+            '<button class="detail-search-nav-btn" onclick="navigateCodeSearch(\'response\', 1)">▼</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">Headers</div>' +
+          '<div class="detail-code-wrap">' +
+            '<pre class="detail-code" id="code-view-response">' + escapeHtml(responseHeaders) + '</pre>' +
+            '<button class="detail-copy-btn detail-code-copy-btn" onclick="copyCode(\'response\')" title="Copy to clipboard">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+              '</svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-section" style="margin-top: 12px;">' +
+          '<div class="detail-section-title">Body</div>' +
+          '<div class="detail-code-wrap">' +
+            '<pre class="detail-code" id="code-view-response-body" style="max-height: 300px;">' + escapeHtml(responseBody) + '</pre>' +
+            '<button class="detail-copy-btn detail-code-copy-btn" onclick="copyCode(\'response\')" title="Copy to clipboard">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+              '</svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      
+      '<div class="detail-tab-panel" id="det-panel-curl">' +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">cURL Command</div>' +
+          '<div class="detail-code-wrap" style="margin-bottom: 12px;">' +
+            '<pre class="detail-code" id="code-view-curl" style="max-height: 240px;">' + escapeHtml('curl ' + r.method + ' "https://' + (r.host || 'api.shopcore.io') + r.url + '"') + '</pre>' +
+            '<button class="detail-copy-btn detail-code-copy-btn" onclick="detailCopyCurl()" title="Copy to clipboard">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+              '</svg>' +
+            '</button>' +
+          '</div>' +
+          '<div style="display:flex; gap:8px;">' +
+            '<button class="popup-btn popup-btn-primary" onclick="detailCopyCurl()" style="flex:1; font-size:11px;">' +
+              '<span style="display:flex; align-items:center; justify-content:center; gap:6px;">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                'Copy' +
+              '</span>' +
+            '</button>' +
+            '<button class="popup-btn popup-btn-primary" onclick="detailShareCurl()" style="flex:1; font-size:12px;">' +
+              '<span style="display:flex; align-items:center; justify-content:center; gap:6px;">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' +
+                'Share' +
+              '</span>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    switchDetailTab('general');
+    page.classList.add('open');
+  }
+
+  function showLogcatDetail(r) {
+    var page = document.getElementById('detailPage');
+    var title = document.getElementById('detailPageTitle');
+    var subtitle = document.getElementById('detailPageSubtitle');
+    var badge = document.getElementById('detailPageBadge');
+    var body = document.getElementById('detailPageBody');
+    var tabs = document.getElementById('detailTabs');
+
+    if (tabs) tabs.style.display = 'none';
+
+    title.textContent = r.tag;
+    subtitle.textContent = r.ts + ' · Level ' + r.level;
+
+    var levelBadgeClass = levelClass(r.level);
+    badge.innerHTML = '<span class="lc-level ' + levelBadgeClass + '" style="font-size:12px; padding:2px 6px; border-radius:4px; font-weight:700;">' + r.level + '</span>';
+
+    body.innerHTML = 
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">Log Metadata</div>' +
+        '<div class="detail-section-body">' +
+          '<div class="detail-row"><span class="detail-lbl">Timestamp</span><span class="detail-val">' + r.ts + '</span></div>' +
+          '<div class="detail-row"><span class="detail-lbl">Level</span><span class="detail-val">' + r.level + ' (' + getLevelName(r.level) + ')</span></div>' +
+          '<div class="detail-row"><span class="detail-lbl">Tag</span><span class="detail-val">' + r.tag + '</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">Message</div>' +
+        '<div class="detail-code">' + escapeHtml(r.msg) + '</div>' +
+      '</div>';
+
+    page.classList.add('open');
+  }
+
+  function getLevelName(l) {
+    var names = { V: 'Verbose', D: 'Debug', I: 'Info', W: 'Warn', E: 'Error' };
+    return names[l] || 'Unknown';
+  }
+
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function copyCode(type) {
+    var text = searchState[type] ? searchState[type].rawText : '';
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('Copied to clipboard');
+      }).catch(function() {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showToast('Copied to clipboard');
+    } catch(e) {
+      showToast('Failed to copy');
+    }
+    document.body.removeChild(ta);
+  }
+  window.copyCode = copyCode;
+
+  function clipboardWrite(text, msg) {
+    msg = msg || 'Copied to clipboard';
+    return new Promise(function(resolve) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          showToast(msg);
+          resolve();
+        }).catch(function() {
+          fallbackCopy(text);
+          resolve();
+        });
+      } else {
+        fallbackCopy(text);
+        resolve();
+      }
+    });
+  }
+
+  function detailCopyCurl() {
+    if (state._curlText) {
+      clipboardWrite(state._curlText, 'cURL copied to clipboard');
+    }
+  }
+  function detailShareCurl() {
+    if (state._curlText) {
+      if (navigator.share) {
+        navigator.share({ title: 'cURL Request', text: state._curlText }).catch(function(){});
+      } else {
+        clipboardWrite(state._curlText, 'cURL copied to clipboard (share not available)');
+      }
+    }
+  }
+  window.detailCopyCurl = detailCopyCurl;
+  window.detailShareCurl = detailShareCurl;
+
+  function closeDetailPage() {
+    var page = document.getElementById('detailPage');
+    if (page) page.classList.remove('open');
+  }
+  window.showDetail = showDetail;
+  window.showLogcatDetail = showLogcatDetail;
+  window.closeDetailPage = closeDetailPage;
+
+  // ── FILTERS ─────────────────────────────────────────────────────────────
+  window.filterLogs = function() { renderAll(); };
+  window.switchTab = switchTab;
+  window.switchMode = switchMode;
+  window.toggleTheme = toggleTheme;
+
+  // ── SEARCH TOGGLE ────────────────────────────────────────────────────
+  window.toggleSearch = function() {
+    // Search is always open as a text field now, searchToggleBtn is removed.
+  };
+
+  function updateSortFilterBtnState() {
+    var btn = document.getElementById('sortFilterBtn');
+    if (!btn) return;
+    var hasFilter = false;
+    if (state.activeTab === 'network') {
+      hasFilter = state.statusFilter !== 'all' || state.endpointFilter !== null || state.sortOrder !== 'desc';
+    } else {
+      hasFilter = state.logcatLevelFilter !== 'all' || state.logcatTagFilter !== null || state.logcatSortOrder !== 'desc';
+    }
+    btn.classList.toggle('active-filter', hasFilter);
+  }
+
+  window.openSortFilter = function() {
+    var isNet = (state.activeTab === 'network');
+    
+    // 1. Update Title and Section Labels
+    var sfTitle = document.getElementById('sfTitle');
+    var sfGroupLabel = document.getElementById('sfGroupLabel');
+    var sfFilterLabel = document.getElementById('sfFilterLabel');
+    
+    if (sfTitle) sfTitle.textContent = isNet ? 'Network Sort & Filter' : 'Logcat Sort & Filter';
+    if (sfGroupLabel) sfGroupLabel.textContent = isNet ? 'Endpoint' : 'Tag';
+    if (sfFilterLabel) sfFilterLabel.textContent = isNet ? 'Status' : 'Level';
+    
+    // 2. Populate Chips (Endpoints for Net, Tags for Logcat)
+    var chipsContainer = document.getElementById('sfEndpointChips');
+    if (chipsContainer) {
+      chipsContainer.innerHTML = '';
+      if (isNet) {
+        var endpoints = {};
+        state.networkLogs.forEach(function(log) {
+          var path = log.url.split('?')[0];
+          endpoints[path] = true;
+        });
+        var endpointList = Object.keys(endpoints);
+        if (endpointList.length === 0) {
+          chipsContainer.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0;">No active logs</div>';
+        } else {
+          endpointList.forEach(function(ep) {
+            var chip = document.createElement('div');
+            chip.className = 'sf-chip' + (state.endpointFilter === ep ? ' active' : '');
+            chip.textContent = ep;
+            chip.setAttribute('data-ep', ep);
+            chip.onclick = function() { toggleEndpointChip(chip); };
+            chipsContainer.appendChild(chip);
+          });
+        }
+      } else {
+        var tags = {};
+        state.logcatLogs.forEach(function(log) {
+          if (log.tag) tags[log.tag] = true;
+        });
+        var tagList = Object.keys(tags);
+        if (tagList.length === 0) {
+          chipsContainer.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0;">No active logs</div>';
+        } else {
+          tagList.forEach(function(tag) {
+            var chip = document.createElement('div');
+            chip.className = 'sf-chip' + (state.logcatTagFilter === tag ? ' active' : '');
+            chip.textContent = tag;
+            chip.setAttribute('data-tag', tag);
+            chip.onclick = function() { toggleTagChip(chip); };
+            chipsContainer.appendChild(chip);
+          });
+        }
+      }
+    }
+    
+    // 3. Set Active Sort Order Buttons
+    var sortOrder = isNet ? state.sortOrder : state.logcatSortOrder;
+    var desc = document.getElementById('sfSortDesc');
+    var asc  = document.getElementById('sfSortAsc');
+    if (desc) desc.classList.toggle('active', sortOrder === 'desc');
+    if (asc)  asc.classList.toggle('active', sortOrder === 'asc');
+    
+    // 4. Populate Status/Level Buttons
+    var statusRow = document.getElementById('sfStatusRow');
+    if (statusRow) {
+      statusRow.innerHTML = '';
+      if (isNet) {
+        var statuses = [
+          { id: 'All', label: 'All', value: 'all' },
+          { id: 'Success', label: 'Success', value: 'success' },
+          { id: 'Err', label: 'Errors', value: 'err', class: 'sf-err' }
+        ];
+        statuses.forEach(function(s) {
+          var btn = document.createElement('div');
+          btn.className = 'sf-status-btn' + (s.class ? ' ' + s.class : '') + (state.statusFilter === s.value ? ' active' : '');
+          btn.id = 'sfStatus' + s.id;
+          btn.setAttribute('data-val', s.value);
+          btn.textContent = s.label;
+          btn.onclick = function() { setStatusFilter(s.value); };
+          statusRow.appendChild(btn);
+        });
+      } else {
+        var levels = [
+          { id: 'All', label: 'All', value: 'all' },
+          { id: 'V', label: 'Verbose', value: 'v' },
+          { id: 'D', label: 'Debug', value: 'd' },
+          { id: 'I', label: 'Info', value: 'i' },
+          { id: 'W', label: 'Warn', value: 'w', class: 'sf-warn' },
+          { id: 'E', label: 'Error', value: 'e', class: 'sf-err' }
+        ];
+        levels.forEach(function(l) {
+          var btn = document.createElement('div');
+          btn.className = 'sf-status-btn' + (l.class ? ' ' + l.class : '') + (state.logcatLevelFilter === l.value ? ' active' : '');
+          btn.id = 'sfLevel' + l.id;
+          btn.setAttribute('data-val', l.value);
+          btn.textContent = l.label;
+          btn.onclick = function() { setLevelFilter(l.value); };
+          statusRow.appendChild(btn);
+        });
+      }
+    }
+
+    document.getElementById('sfBackdrop').classList.add('open');
+    document.getElementById('sfSheet').classList.add('open');
+  };
+
+  window.closeSortFilter = function() {
+    document.getElementById('sfBackdrop').classList.remove('open');
+    document.getElementById('sfSheet').classList.remove('open');
+  };
+
+  window.toggleEndpointChip = function(el) {
+    var ep = el.getAttribute('data-ep');
+    if (state.endpointFilter === ep) {
+      state.endpointFilter = null;
+      el.classList.remove('active');
+    } else {
+      state.endpointFilter = ep;
+      var chips = document.getElementById('sfEndpointChips');
+      if (chips) chips.querySelectorAll('.sf-chip').forEach(function(c) { c.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  };
+
+  window.toggleTagChip = function(el) {
+    var tag = el.getAttribute('data-tag');
+    if (state.logcatTagFilter === tag) {
+      state.logcatTagFilter = null;
+      el.classList.remove('active');
+    } else {
+      state.logcatTagFilter = tag;
+      var chips = document.getElementById('sfEndpointChips');
+      if (chips) chips.querySelectorAll('.sf-chip').forEach(function(c) { c.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  };
+
+  window.setSortOrder = function(order) {
+    if (state.activeTab === 'network') {
+      state.sortOrder = order;
+    } else {
+      state.logcatSortOrder = order;
+    }
+    var desc = document.getElementById('sfSortDesc');
+    var asc  = document.getElementById('sfSortAsc');
+    if (desc) desc.classList.toggle('active', order === 'desc');
+    if (asc)  asc.classList.toggle('active', order === 'asc');
+  };
+
+  window.setStatusFilter = function(val) {
+    state.statusFilter = val;
+    var statusRow = document.getElementById('sfStatusRow');
+    if (statusRow) {
+      statusRow.querySelectorAll('.sf-status-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+      });
+    }
+  };
+
+  window.setLevelFilter = function(val) {
+    state.logcatLevelFilter = val;
+    var statusRow = document.getElementById('sfStatusRow');
+    if (statusRow) {
+      statusRow.querySelectorAll('.sf-status-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+      });
+    }
+  };
+
+  window.applySortFilter = function() {
+    updateSortFilterBtnState();
+    closeSortFilter();
+    renderAll();
+  };
+
+  window.resetFilters = function() {
+    var isNet = (state.activeTab === 'network');
+    if (isNet) {
+      state.statusFilter = 'all';
+      state.endpointFilter = null;
+      state.sortOrder = 'desc';
+    } else {
+      state.logcatLevelFilter = 'all';
+      state.logcatTagFilter = null;
+      state.logcatSortOrder = 'desc';
+    }
+    openSortFilter();
+    updateSortFilterBtnState();
+    renderAll();
+  };
+
+  // Legacy kept for logcat errFilter compat
+  window.toggleErrFilter = function() {
+    state.errFilterOn = !state.errFilterOn;
+    renderAll();
+  };
+
+  window.clearCurrentTab = function() {
+    if (state.activeTab === 'logcat') {
+      state.logcatLogs = [];
+      renderLogcat();
+    } else {
+      state.networkLogs = [];
+      renderNetworkLogs('networkLogs');
+    }
+    updateCounts();
+  };
+
+  window.showToast = function(message) {
+    var toast = document.getElementById('toastNotification');
+    var toastMsg = document.getElementById('toastMessage');
+    if (!toast || !toastMsg) return;
+    toastMsg.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(function() {
+      toast.classList.remove('show');
+    }, 2500);
+  };
+
+  window.showClearConfirm = function() {
+    var isEmpty = false;
+    if (state.activeTab === 'network') {
+      isEmpty = state.networkLogs.length === 0;
+    } else {
+      isEmpty = state.logcatLogs.length === 0;
+    }
+
+    if (isEmpty) {
+      window.showToast("Data already empty");
+      return;
+    }
+
+    const popup = document.getElementById('clearConfirmPopup');
+    const msg = document.getElementById('clearConfirmMsg');
+    if (msg) {
+      if (state.activeTab === 'network') {
+        msg.textContent = 'Are you sure you want to clear all network logs? This action cannot be undone.';
+      } else {
+        msg.textContent = 'Are you sure you want to clear all Logcat logs? This action cannot be undone.';
+      }
+    }
+    if (popup) popup.classList.add('open');
+  };
+
+  window.closeClearConfirm = function() {
+    const popup = document.getElementById('clearConfirmPopup');
+    if (popup) popup.classList.remove('open');
+  };
+
+  window.confirmClearTab = function() {
+    window.clearCurrentTab();
+    window.closeClearConfirm();
+  };
+
+  // ── INITIAL RENDER ─────────────────────────────────────────────────────
+  renderAll();
+  updateConnUI();
+
+  // Auto-sync SDK backdrop state on startup
+  var overlay = document.getElementById('sdkOverlay');
+  var backdrop = document.getElementById('sdkBackdrop');
+  if (overlay && backdrop && overlay.classList.contains('open')) {
+    backdrop.classList.add('open');
+  }
+
+  // ── FAB hover events ───────────────────────────────────────────────────
+  fab.addEventListener('mouseenter', fabWakeUp);
+
+})();
+</script>
+</body>
+</html>

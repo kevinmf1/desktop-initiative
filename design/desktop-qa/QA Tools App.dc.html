@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; background:#F5F7FA; font-family:'IBM Plex Sans', system-ui, sans-serif; }
+    a { color:#2563EB; text-decoration:none; }
+    a:hover { color:#1D4ED8; text-decoration:underline; }
+    ::-webkit-scrollbar { width:7px; height:7px; }
+    ::-webkit-scrollbar-thumb { background:rgba(17,24,39,0.18); border-radius:4px; }
+  </style>
+</helmet>
+
+<div style="display:flex; width:1440px; height:900px; margin:0 auto; background:#F5F7FA; font-family:'IBM Plex Sans', system-ui, sans-serif; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); border-radius:10px; position:relative;">
+
+  <!-- NAV RAIL -->
+  <div style="width:{{ sidebarWidth }}px; flex-shrink:0; background:#1A2233; border-right:1px solid #243044; display:flex; flex-direction:column; padding:12px 0; transition:width 0.15s;">
+    <div style="display:flex; align-items:center; gap:8px; padding:0 12px; margin-bottom:14px;">
+      <div style="width:34px; height:34px; border-radius:6px; background:#2563EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <span style="color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700;">QA</span>
+      </div>
+      <sc-if value="{{ sidebarExpanded }}" hint-placeholder-val="{{ false }}">
+        <span style="color:#E6EDF3; font-size:13.5px; font-weight:700;">QA Tools</span>
+      </sc-if>
+    </div>
+    <sc-if value="{{ sidebarExpanded }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ toggleWorkspace }}" style="display:flex; align-items:center; gap:8px; margin:0 10px 10px; padding:8px 10px; border-radius:6px; background:#0D1117; border:1px solid #243044; cursor:pointer;">
+        <div style="width:20px; height:20px; border-radius:4px; background:#2D3D5A; display:flex; align-items:center; justify-content:center; color:#8B9BB8; font-size:10px; font-weight:700; flex-shrink:0;">A</div>
+        <div style="flex:1; min-width:0;"><div style="font-size:11.5px; font-weight:600; color:#E6EDF3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Acme Commerce</div><div style="font-size:9.5px; color:#7A8BA8;">Workspace</div></div>
+        <span style="font-size:9px; color:#7A8BA8;">{{ workspaceGlyph }}</span>
+      </div>
+      <sc-if value="{{ workspaceOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:0 10px 10px; padding:4px; border-radius:6px; background:#0D1117; border:1px solid #243044;">
+          <div style="padding:7px 10px; border-radius:4px; background:rgba(56,139,253,0.14); font-size:11.5px; color:#93C5FD; font-weight:600;">Acme Commerce</div>
+          <div style="padding:7px 10px; border-radius:4px; font-size:11.5px; color:#7A8BA8; cursor:pointer;">+ Create workspace</div>
+        </div>
+      </sc-if>
+    </sc-if>
+    <div style="width:100%; height:1px; background:#243044; margin-bottom:8px;"></div>
+    <div style="display:flex; flex-direction:column; gap:2px; flex:1; width:100%; padding:0 8px; overflow-y:auto;">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="7">
+        <div onClick="{{ item.go }}" title="{{ item.label }}" style="width:100%; height:40px; border-radius:5px; display:flex; align-items:center; justify-content:{{ sidebarJustify }}; gap:10px; padding:0 10px; cursor:pointer; background:{{ item.bg }}; border-left:2px solid {{ item.borderColor }};">
+          <span style="display:flex; align-items:center; justify-content:center; width:16px; height:16px; flex-shrink:0; color:{{ item.textColor }};">
+            <sc-if value="{{ item.isCases }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"></rect><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.3"></line><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.3"></line><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.3"></line></svg></sc-if>
+            <sc-if value="{{ item.isPlans }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"></rect><line x1="2" y1="6.5" x2="14" y2="6.5" stroke="currentColor" stroke-width="1.3"></line><line x1="6" y1="2.5" x2="6" y2="13.5" stroke="currentColor" stroke-width="1.3"></line></svg></sc-if>
+            <sc-if value="{{ item.isRunner }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><polygon points="4,2.5 13,8 4,13.5" fill="currentColor"></polygon></svg></sc-if>
+            <sc-if value="{{ item.isLogs }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="1.5" y="1.5" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"></rect><polyline points="4.5,5.5 7,8 4.5,10.5" fill="none" stroke="currentColor" stroke-width="1.3"></polyline><line x1="9" y1="10.5" x2="12" y2="10.5" stroke="currentColor" stroke-width="1.3"></line></svg></sc-if>
+            <sc-if value="{{ item.isDevices }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="4" y="1" width="8" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"></rect><line x1="6.5" y1="3" x2="9.5" y2="3" stroke="currentColor" stroke-width="1.3"></line><circle cx="8" cy="12.5" r="0.75" fill="currentColor"></circle></svg></sc-if>
+            <sc-if value="{{ item.isBugs }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.3"></circle><path d="M5.5 5A2.5 2.5 0 0111 5" fill="none" stroke="currentColor" stroke-width="1.3"></path><line x1="8" y1="6" x2="8" y2="11" stroke="currentColor" stroke-width="1.3"></line><line x1="4" y1="8" x2="2" y2="8" stroke="currentColor" stroke-width="1.3"></line><line x1="12" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.3"></line><line x1="4.5" y1="11.5" x2="2.5" y2="13" stroke="currentColor" stroke-width="1.3"></line><line x1="11.5" y1="11.5" x2="13.5" y2="13" stroke="currentColor" stroke-width="1.3"></line></svg></sc-if>
+            <sc-if value="{{ item.isReports }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16"><line x1="3" y1="13" x2="3" y2="7" stroke="currentColor" stroke-width="1.6"></line><line x1="8" y1="13" x2="8" y2="3" stroke="currentColor" stroke-width="1.6"></line><line x1="13" y1="13" x2="13" y2="9" stroke="currentColor" stroke-width="1.6"></line></svg></sc-if>
+          </span>
+          <sc-if value="{{ sidebarExpanded }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12.5px; font-weight:{{ item.weight }}; color:{{ item.textColor }}; white-space:nowrap;">{{ item.label }}</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding:8px; display:flex; flex-direction:column; gap:8px; align-items:{{ sidebarAlign }};">
+      <div onClick="{{ toggleSidebar }}" style="width:28px; height:28px; border-radius:6px; background:#0D1117; border:1px solid #243044; display:flex; align-items:center; justify-content:center; color:#7A8BA8; font-size:12px; cursor:pointer;">{{ sidebarToggleGlyph }}</div>
+      <div style="width:28px; height:28px; border-radius:50%; background:#2D3D5A; display:flex; align-items:center; justify-content:center; color:#8B9BB8; font-size:11px; font-weight:600;">M</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0;">
+   <div style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0;">
+
+    <!-- ============ TEST CASES ============ -->
+    <sc-if value="{{ isCases }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; flex-shrink:0;">
+        <div style="padding:0 24px; height:56px; display:flex; align-items:center; gap:10px;">
+          <div style="flex:1;">
+            <div style="font-size:15px; font-weight:600; color:#111827;">Test Cases</div>
+            <div style="font-size:12px; color:#6B7280; margin-top:2px;">8 cases · 14 plan instances · Workspace: Acme Commerce</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; width:190px; height:32px; padding:0 10px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px;"><span style="font-size:13px; color:#9CA3AF;">Search cases…</span></div>
+          <div style="padding:5px 11px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Filter</div>
+          <div style="padding:5px 11px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Sort: Updated</div>
+          <div onClick="{{ openImport }}" style="padding:6px 12px; border-radius:6px; border:1px solid #DDE3EB; background:#FFFFFF; font-size:12.5px; font-weight:500; color:#111827; cursor:pointer;">Import</div>
+          <div style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">+ New Case</div>
+        </div>
+        <div style="display:flex; padding-left:24px; border-top:1px solid #DDE3EB;">
+          <sc-for list="{{ caseTabs }}" as="tab" hint-placeholder-count="4">
+            <div onClick="{{ tab.go }}" style="padding:0 16px; height:36px; display:flex; align-items:center; font-size:13px; font-weight:{{ tab.weight }}; color:{{ tab.color }}; border-bottom:2px solid {{ tab.border }}; cursor:pointer;">{{ tab.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 24px; background:#EEF2F7; border-top:1px solid #DDE3EB;">
+          <span style="font-size:11px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Filter</span>
+          <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Plan: All</span>
+          <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Status: Any</span>
+          <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Platform: All</span>
+          <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; font-size:12px; color:#374151;">Build: 2.4.1</span>
+          <span style="margin-left:auto; font-size:11.5px; color:#9CA3AF;">Platform &amp; build reported by the SDK · click ▸ to expand instances</span>
+        </div>
+      </div>
+
+      <div style="flex:1; display:flex; overflow:hidden;">
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+          <div style="display:flex; align-items:center; height:34px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace; flex-shrink:0;">
+            <div style="width:30px;"></div>
+            <div style="width:84px;">ID</div>
+            <div style="flex:1;">Title</div>
+            <div style="width:120px;">Status</div>
+            <div style="width:56px;">Plans</div>
+            <div style="width:84px;">Platform</div>
+            <div style="width:90px;">Updated</div>
+            <div style="width:70px;">PIC</div>
+            <div style="width:26px;"></div>
+          </div>
+          <div style="flex:1; overflow-y:auto; background:#F5F7FA;">
+            <sc-for list="{{ cases }}" as="c" hint-placeholder-count="8">
+              <div style="border-bottom:1px solid #EEF2F7; background:{{ c.rowBg }};">
+                <div onClick="{{ c.select }}" style="display:flex; align-items:center; height:50px; cursor:pointer; border-left:3px solid {{ c.rowBorder }};">
+                  <div onClick="{{ c.toggleExpand }}" style="width:30px; display:flex; justify-content:center; cursor:pointer; font-size:12px; color:#9CA3AF;">{{ c.expandGlyph }}</div>
+                  <div style="width:84px; flex-shrink:0;">
+                    <span style="font-size:11px; color:{{ c.idColor }}; font-family:'IBM Plex Mono',monospace; font-weight:{{ c.idWeight }};">{{ c.id }}</span>
+                  </div>
+                  <div style="flex:1; min-width:0; padding-right:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <span style="font-size:13px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.title }}</span>
+                      <sc-if value="{{ c.draft }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:10px; font-weight:600; color:#6B7280;">Draft</span></sc-if>
+                    </div>
+                    <sc-if value="{{ c.forkedFrom }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:10.5px; color:#7C3AED; font-family:'IBM Plex Mono',monospace; margin-top:2px;">⑂ forked from {{ c.forkedFrom }}</div>
+                    </sc-if>
+                  </div>
+                  <div style="width:120px;"><span style="display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:{{ c.summary.bg }}; color:{{ c.summary.color }}; border:1px solid {{ c.summary.border }}; font-size:10.5px; font-weight:600;"><span style="width:5px; height:5px; border-radius:50%; background:{{ c.summary.color }};"></span>{{ c.summary.label }}</span></div>
+                  <div style="width:56px; font-size:11px; font-weight:700; color:#6B7280; font-family:'IBM Plex Mono',monospace;">{{ c.instanceCount }}</div>
+                  <div style="width:84px; display:flex; align-items:center; gap:5px; font-size:10.5px; color:#374151;">
+                    <sc-if value="{{ c.showIos }}" hint-placeholder-val="{{ false }}"><div title="iOS" style="width:15px; height:15px; border-radius:4px; border:1.5px solid #64748B; flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{ c.showAndroid }}" hint-placeholder-val="{{ false }}"><div title="Android" style="width:15px; height:15px; border-radius:4px; border:1.5px solid #16A34A; flex-shrink:0;"></div></sc-if>
+                    <span>{{ c.platform }}</span>
+                  </div>
+                  <div style="width:90px; font-size:11px; color:#9CA3AF;">{{ c.updated }}</div>
+                  <div style="width:70px; display:flex; align-items:center;">
+                    <sc-for list="{{ c.avatars }}" as="av" hint-placeholder-count="2">
+                      <div title="{{ av.name }}" style="width:20px; height:20px; border-radius:50%; background:{{ av.color }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-weight:700; margin-left:-6px; border:1.5px solid #F5F7FA; flex-shrink:0;">{{ av.initials }}</div>
+                    </sc-for>
+                  </div>
+                  <div onClick="{{ c.toggleMenu }}" style="width:26px; height:26px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#9CA3AF; flex-shrink:0; position:relative;">
+                    ⋮
+                    <sc-if value="{{ c.menuOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute; top:26px; right:0; width:160px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); z-index:40; padding:4px 0; text-align:left;">
+                        <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#111827; cursor:pointer;"><span style="width:12px; text-align:center;">✎</span>Edit case</div>
+                        <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#111827; cursor:pointer;"><span style="width:12px; text-align:center;">▤</span>Add to plan…</div>
+                        <div style="height:1px; background:#DDE3EB; margin:4px 0;"></div>
+                        <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#DC2626; cursor:pointer;"><span style="width:12px; text-align:center;">🗑</span>Delete</div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+                <sc-if value="{{ c.expanded }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding-bottom:6px;">
+                    <div style="padding:5px 16px 5px 50px; font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Instances · {{ c.instanceCount }} plans</div>
+                    <sc-for list="{{ c.instances }}" as="inst" hint-placeholder-count="2">
+                      <div style="display:flex; align-items:center; gap:10px; padding:7px 16px 7px 50px; background:rgba(37,99,235,0.02); border-bottom:1px solid #EEF2F7;">
+                        <div style="flex:1; font-size:12.5px; color:#111827;">{{ inst.plan }}</div>
+                        <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; background:{{ inst.style.bg }}; color:{{ inst.style.color }}; border:1px solid {{ inst.style.border }}; font-size:10px; font-weight:600;"><span style="width:5px; height:5px; border-radius:50%; background:{{ inst.style.color }};"></span>{{ inst.statusLabel }}</span>
+                        <span style="width:70px; font-size:11px; color:#374151;">{{ inst.pic }}</span>
+                        <span style="width:60px; font-size:10.5px; color:#9CA3AF;">{{ inst.updated }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="height:42px; background:#FFFFFF; border-top:1px solid #DDE3EB; display:flex; align-items:center; justify-content:space-between; padding:0 16px; flex-shrink:0;">
+            <span style="font-size:12px; color:#374151;">8 cases · 14 instances</span>
+            <span style="font-size:11.5px; color:#9CA3AF;">1 case forked · 4 shared across plans</span>
+          </div>
+        </div>
+
+        <!-- Detail panel -->
+        <div style="width:400px; border-left:1px solid #DDE3EB; background:#FFFFFF; display:flex; flex-direction:column; flex-shrink:0;">
+          <div style="padding:14px 18px; border-bottom:1px solid #DDE3EB;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+              <span style="font-size:12px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace; font-weight:600;">{{ selectedCase.id }}</span>
+              <sc-if value="{{ selectedCase.forkedFrom }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px; color:#7C3AED; font-family:'IBM Plex Mono',monospace;">⑂ from {{ selectedCase.forkedFrom }}</span></sc-if>
+            </div>
+            <div style="font-size:15px; font-weight:700; color:#111827; line-height:1.3; margin-bottom:10px;">{{ selectedCase.title }}</div>
+            <div style="display:flex; gap:8px;">
+              <div style="padding:6px 12px; border-radius:6px; background:#2563EB; color:#fff; font-size:12.5px; font-weight:600; cursor:pointer;">▶ Run Test</div>
+              <div style="display:flex; align-items:center; gap:5px; padding:6px 10px; border-radius:6px; border:1px solid #DDE3EB; font-size:12px; color:#111827; cursor:pointer;"><span>✎</span>Edit</div>
+              <div style="display:flex; align-items:center; gap:5px; padding:6px 10px; border-radius:6px; border:1px solid #DDE3EB; font-size:12px; color:#111827; cursor:pointer;"><span>⧉</span>Duplicate</div>
+            </div>
+          </div>
+          <div style="display:flex; padding-left:8px; border-bottom:1px solid #DDE3EB;">
+            <sc-for list="{{ detailTabs }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.go }}" style="padding:0 12px; height:38px; display:flex; align-items:center; font-size:12.5px; font-weight:{{ t.weight }}; color:{{ t.color }}; border-bottom:2px solid {{ t.border }}; cursor:pointer; white-space:nowrap;">{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <div style="flex:1; overflow-y:auto;">
+            <sc-if value="{{ isDetailInfo }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:16px 18px;">
+                <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Table Information</div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12.5px; color:#6B7280;">ID</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#111827;">{{ selectedCase.id }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12.5px; color:#6B7280;">Status</span><span style="display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:999px; background:{{ selectedCase.summary.bg }}; color:{{ selectedCase.summary.color }}; border:1px solid {{ selectedCase.summary.border }}; font-size:11px; font-weight:600;"><span style="width:5px; height:5px; border-radius:50%; background:{{ selectedCase.summary.color }};"></span>{{ selectedCase.summary.label }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12.5px; color:#6B7280;">Platform</span><span style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#111827;">
+                  <sc-if value="{{ selectedCase.showIos }}" hint-placeholder-val="{{ false }}"><span title="iOS" style="width:14px; height:14px; border-radius:4px; border:1.5px solid #64748B; display:inline-block;"></span></sc-if>
+                  <sc-if value="{{ selectedCase.showAndroid }}" hint-placeholder-val="{{ false }}"><span title="Android" style="width:14px; height:14px; border-radius:4px; border:1.5px solid #16A34A; display:inline-block;"></span></sc-if>
+                  {{ selectedCase.platform }} <span style="font-size:10px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">SDK</span></span></div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12.5px; color:#6B7280;">Test Build <span style="color:#9CA3AF;">(optional)</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#111827;">{{ selectedCase.buildDisplay }}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12.5px; color:#6B7280;">Test Plans</span><span style="font-size:12.5px; color:#111827;">{{ selectedCase.instanceCount }} linked</span></div>
+                <div style="display:flex; justify-content:space-between; padding:9px 0;"><span style="font-size:12.5px; color:#6B7280;">Last Updated</span><span style="font-size:12.5px; color:#111827;">{{ selectedCase.updated }}</span></div>
+                <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin:18px 0 8px;">Tags</div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;">
+                  <sc-for list="{{ selectedCase.tags }}" as="tag" hint-placeholder-count="2"><span style="padding:3px 10px; border-radius:999px; background:#EFF6FF; color:#1E40AF; border:1px solid #BFDBFE; font-size:11px; font-weight:500;">{{ tag }}</span></sc-for>
+                </div>
+                <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">PIC · People in Charge</div>
+                <sc-for list="{{ selectedCase.picList }}" as="p" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; background:#F5F7FA; border:1px solid #DDE3EB; margin-bottom:8px;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:{{ p.color }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700; flex-shrink:0;">{{ p.initials }}</div>
+                    <div style="min-width:0;"><div style="font-size:13px; font-weight:600; color:#111827;">{{ p.name }}</div><div style="font-size:11px; color:#9CA3AF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.plans }}</div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isDetailSteps }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:16px 18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace;">Test Steps · 4</span><span style="font-size:11px; color:#2563EB; cursor:pointer;">+ Add Step</span></div>
+                <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+                  <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px solid #EEF2F7;">
+                    <div style="width:22px; height:22px; border-radius:50%; background:#EFF6FF; border:1px solid #BFDBFE; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><span style="font-size:11px; font-weight:700; color:#1E40AF; font-family:'IBM Plex Mono',monospace;">{{ st.n }}</span></div>
+                    <div style="flex:1;"><div style="font-size:13px; color:#111827; font-weight:500; margin-bottom:3px;">{{ st.action }}</div><div style="font-size:12px; color:#6B7280;">✓ {{ st.expect }}</div></div>
+                  </div>
+                </sc-for>
+                <div style="margin-top:16px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:6px;">Description</div><div style="font-size:13px; color:#6B7280; line-height:1.6;">Verify that registered users can reset their password using the emailed link, and that expired tokens are rejected with a clear error.</div></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isDetailChangelog }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:16px 18px;">
+                <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:10px;">Change Log</div>
+                <div style="position:relative;">
+                <sc-for list="{{ changelog }}" as="e" hint-placeholder-count="5">
+                  <div style="display:flex; gap:10px; padding-bottom:16px; position:relative;">
+                    <sc-if value="{{ e.showLine }}" hint-placeholder-val="{{ true }}"><div style="position:absolute; left:12px; top:26px; bottom:-16px; width:1px; background:#DDE3EB;"></div></sc-if>
+                    <div style="width:26px; height:26px; border-radius:50%; background:{{ e.color }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10.5px; font-weight:700; flex-shrink:0; position:relative; z-index:1;">{{ e.initials }}</div>
+                    <div style="flex:1;"><div style="font-size:12.5px; color:#111827; line-height:1.5;"><strong>{{ e.who }}</strong> {{ e.action }} <strong>{{ e.target }}</strong></div><div style="font-size:11px; color:#9CA3AF; margin-top:2px;">{{ e.when }}</div></div>
+                  </div>
+                </sc-for>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isDetailRelated }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:16px 18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace;">Related Test Plans · {{ selectedCase.instanceCount }}</span><div onClick="{{ openAddToPlan }}" style="padding:5px 10px; border-radius:6px; border:1px solid #DDE3EB; font-size:11.5px; color:#111827; cursor:pointer;">+ Add to plan</div></div>
+                <sc-for list="{{ selectedCase.instances }}" as="inst" hint-placeholder-count="2">
+                  <div style="padding:12px 14px; border-radius:6px; background:#F5F7FA; border:1px solid #DDE3EB; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><span style="font-size:13px; font-weight:600; color:#111827;">{{ inst.plan }}</span><span style="display:inline-flex; padding:2px 8px; border-radius:999px; background:{{ inst.style.bg }}; color:{{ inst.style.color }}; border:1px solid {{ inst.style.border }}; font-size:10px; font-weight:600;">{{ inst.statusLabel }}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="font-size:11.5px; color:#6B7280;">{{ inst.pic }}</span><span style="font-size:11px; color:#9CA3AF;">{{ inst.updated }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add-to-Plan modal (original) -->
+      <sc-if value="{{ addToPlanOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:50;">
+          <div style="width:560px; background:#FFFFFF; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10); border:1px solid #DDE3EB; overflow:hidden;">
+            <div style="padding:18px 22px; border-bottom:1px solid #DDE3EB; display:flex; justify-content:space-between; align-items:flex-start;">
+              <div><div style="font-size:16px; font-weight:700; color:#111827;">Add Test Case to Plan</div><div style="font-size:12.5px; color:#6B7280; margin-top:3px;">Target plan: <strong style="color:#111827;">Checkout Flow</strong></div></div>
+              <div onClick="{{ closeAddToPlan }}" style="width:28px; height:28px; border-radius:4px; border:1px solid #DDE3EB; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#6B7280;">×</div>
+            </div>
+            <div style="padding:18px 22px;">
+              <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Test case title</div>
+              <div style="display:flex; align-items:center; gap:8px; height:40px; padding:0 12px; border-radius:6px; border:1.5px solid #2563EB; margin-bottom:6px;"><span style="font-size:13.5px; color:#111827;">Checkout with saved</span></div>
+              <div style="font-size:11px; color:#9CA3AF; margin-bottom:14px;">Type to search existing cases, or create a brand-new one.</div>
+              <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Existing matches · 3</div>
+              <sc-for list="{{ matches }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:6px; border:1px solid {{ m.border }}; background:{{ m.bg }}; margin-bottom:6px;">
+                  <div style="flex:1; min-width:0;"><div style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ m.id }}</div><div style="font-size:13px; color:#111827; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.title }}</div></div>
+                  <span style="font-size:10.5px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">in {{ m.plans }}</span>
+                  <div style="padding:4px 10px; border-radius:4px; border:1px solid #DDE3EB; font-size:11.5px; font-weight:600; color:#374151; cursor:pointer;">Link</div>
+                  <div style="padding:4px 10px; border-radius:4px; border:1px solid #DDD6FE; background:#F5F3FF; font-size:11.5px; font-weight:600; color:#7C3AED; cursor:pointer;">Duplicate</div>
+                </div>
+              </sc-for>
+              <div style="display:flex; gap:8px; padding:10px 12px; border-radius:6px; background:#FFFBEB; border:1px solid #FDE68A; margin-top:8px;"><span style="font-size:11.5px; color:#B45309; line-height:1.5;"><strong>Link</strong> shares the same case — edits apply to every plan. <strong>Duplicate</strong> forks a new instance you can change independently.</span></div>
+            </div>
+            <div style="padding:14px 22px; border-top:1px solid #DDE3EB; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12.5px; color:#2563EB; font-weight:600; cursor:pointer;">+ Create new case instead</span>
+              <div style="display:flex; gap:8px;"><div onClick="{{ closeAddToPlan }}" style="padding:7px 14px; border-radius:6px; border:1px solid #DDE3EB; font-size:13px; color:#111827; cursor:pointer;">Cancel</div><div style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">Link to Plan</div></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Import modal (ADDED) -->
+      <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:50;">
+          <div style="width:620px; max-height:600px; overflow-y:auto; background:#FFFFFF; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10); border:1px solid #DDE3EB;">
+            <div style="padding:18px 22px; border-bottom:1px solid #DDE3EB; display:flex; justify-content:space-between; align-items:center;">
+              <div><div style="font-size:16px; font-weight:700; color:#111827;">Import Test Cases (CSV / Excel)</div><div style="font-size:12.5px; color:#6B7280; margin-top:3px;">Preview before committing · duplicate titles are allowed</div></div>
+              <div onClick="{{ closeImport }}" style="width:26px; height:26px; border-radius:6px; border:1px solid #DDE3EB; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#6B7280;">×</div>
+            </div>
+            <div style="padding:16px 22px;">
+              <sc-for list="{{ importRows }}" as="row" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:6px; background:{{ row.bg }}; border:1px solid {{ row.border }}; margin-bottom:8px;">
+                  <div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:600; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.title }}</div><div style="font-size:11px; color:#6B7280; margin-top:2px;">{{ row.meta }}</div></div>
+                  <span style="font-size:11px; font-weight:600; color:{{ row.statusColor }};">{{ row.statusLabel }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:14px 22px; border-top:1px solid #DDE3EB; display:flex; justify-content:flex-end; gap:8px;">
+              <div onClick="{{ closeImport }}" style="padding:7px 14px; border-radius:6px; border:1px solid #DDE3EB; font-size:13px; color:#111827; cursor:pointer;">Cancel</div>
+              <div style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">Commit 3 Valid Rows</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ TEST PLANS ============ -->
+    <sc-if value="{{ isPlans }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; padding:0 24px; height:56px; display:flex; align-items:center; gap:16px; flex-shrink:0;">
+        <div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#111827;">Test Plans</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">6 plans · Workspace: Acme Commerce</div></div>
+        <div style="display:flex; align-items:center; gap:8px; width:180px; height:32px; padding:0 10px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px;"><span style="font-size:13px; color:#9CA3AF;">Search plans…</span></div>
+        <div style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">+ New Plan</div>
+      </div>
+      <div style="display:flex; padding-left:24px; background:#FFFFFF; border-bottom:1px solid #DDE3EB;">
+        <sc-for list="{{ planTabs }}" as="tab" hint-placeholder-count="3">
+          <div onClick="{{ tab.go }}" style="padding:0 16px; height:36px; display:flex; align-items:center; font-size:13px; font-weight:{{ tab.weight }}; color:{{ tab.color }}; border-bottom:2px solid {{ tab.border }}; cursor:pointer;">{{ tab.label }}</div>
+        </sc-for>
+      </div>
+      <div style="flex:1; display:flex; overflow:hidden;">
+        <div style="width:300px; border-right:1px solid #DDE3EB; overflow-y:auto; background:#FFFFFF; flex-shrink:0;">
+          <sc-for list="{{ plans }}" as="p" hint-placeholder-count="6">
+            <div onClick="{{ p.select }}" style="padding:12px 16px; border-bottom:1px solid #DDE3EB; cursor:pointer; background:{{ p.rowBg }}; border-left:3px solid {{ p.rowBorder }};">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;"><span style="font-size:13px; font-weight:600; color:#111827;">{{ p.name }}</span><span style="padding:2px 8px; border-radius:999px; font-size:10px; font-weight:600; background:{{ p.statusBg }}; color:{{ p.statusColor }};">{{ p.statusLabel }}</span></div>
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><span style="font-size:11px; color:#374151;">{{ p.cases }} cases</span><span style="font-size:11px; color:#9CA3AF;">·</span><span style="font-size:11px; color:#374151;">{{ p.env }}</span><span style="font-size:11px; color:#9CA3AF;">·</span><span style="font-size:11px; color:#374151; font-family:'IBM Plex Mono',monospace;">{{ p.targetBuildDisplay }}</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><div style="flex:1; height:5px; border-radius:999px; background:#DDE3EB; overflow:hidden;"><div style="width:{{ p.passRate }}%; height:100%; background:{{ p.rateColor }};"></div></div><span style="font-size:11px; font-weight:700; color:{{ p.rateColor }}; font-family:'IBM Plex Mono',monospace;">{{ p.passRate }}%</span></div>
+              <div style="font-size:11px; color:#9CA3AF; margin-top:6px;">Last run: {{ p.lastRun }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1; display:flex; overflow:hidden;">
+          <div style="flex:1; display:flex; flex-direction:column; overflow-y:auto;">
+            <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; padding:16px 24px; flex-shrink:0;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                <div><div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:3px;">{{ selectedPlan.name }}</div><div style="font-size:13px; color:#6B7280;">{{ selectedPlan.notes }}</div></div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <div style="width:32px; height:32px; border-radius:6px; border:1px solid #FECACA; background:#FEF2F2; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#DC2626;">🗑</div>
+                  <div style="display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:6px; border:1px solid #DDE3EB; font-size:12.5px; color:#111827; cursor:pointer;"><span>⧉</span>Duplicate</div>
+                  <div style="display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:6px; border:1px solid #DDE3EB; font-size:12.5px; color:#111827; cursor:pointer;"><span>✎</span>Edit Plan</div>
+                  <div style="padding:6px 12px; border-radius:6px; background:#2563EB; color:#fff; font-size:12.5px; font-weight:600; cursor:pointer;">▶ Run Plan</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:24px; align-items:flex-end;">
+                <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Cases</div><div style="font-size:14px; font-weight:600; color:#111827; margin-top:2px;">{{ selectedPlan.cases }}</div></div>
+                <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Pass Rate</div><div style="font-size:14px; font-weight:600; color:{{ selectedPlan.rateColor }}; margin-top:2px;">{{ selectedPlan.passRate }}%</div></div>
+                <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Target Build <span style="text-transform:none;">(optional)</span></div><div style="font-size:14px; font-weight:600; color:#111827; margin-top:2px; font-family:'IBM Plex Mono',monospace;">{{ selectedPlan.targetBuildDisplay }}</div></div>
+                <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Last Run</div><div style="font-size:14px; font-weight:600; color:#111827; margin-top:2px;">{{ selectedPlan.lastRun }}</div></div>
+                <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Environment</div><div style="display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; border-radius:6px; background:#FFFFFF; border:1px solid #DDE3EB; margin-top:2px;"><span style="width:6px; height:6px; border-radius:50%; background:{{ selectedPlan.envDot }};"></span><span style="font-size:12.5px; font-weight:600; color:#111827;">{{ selectedPlan.env }}</span></div></div>
+              </div>
+            </div>
+            <div style="padding:16px 24px;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><span style="font-size:13px; font-weight:600; color:#111827;">Included Cases</span><span style="padding:2px 8px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:10px; color:#374151;">{{ selectedPlan.caseRows.length }}</span><div style="margin-left:auto; padding:5px 10px; border-radius:6px; border:1px solid #DDE3EB; font-size:11.5px; color:#111827; cursor:pointer;">+ Add Cases</div></div>
+              <sc-for list="{{ selectedPlan.caseRows }}" as="row" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; background:{{ row.rowBg }}; border:1px solid #DDE3EB; margin-bottom:6px; position:relative;">
+                  <div style="width:60px; font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ row.id }}</div>
+                  <div style="flex:1; font-size:13px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.title }}</div>
+                  <span style="padding:2px 8px; border-radius:999px; background:{{ row.style.bg }}; color:{{ row.style.color }}; border:1px solid {{ row.style.border }}; font-size:10px; font-weight:600;">{{ row.resultLabel }}</span>
+                  <div onClick="{{ row.toggleMenu }}" style="width:22px; height:22px; border-radius:4px; border:1px solid #DDE3EB; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#6B7280;">⋮</div>
+                  <sc-if value="{{ row.menuOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; top:28px; right:6px; width:170px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); z-index:40; padding:4px 0;">
+                      <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#111827; cursor:pointer;"><span style="width:12px; text-align:center;">✎</span>Edit case</div>
+                      <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#111827; cursor:pointer;"><span style="width:12px; text-align:center;">▤</span>Add to plan…</div>
+                      <div style="height:1px; background:#DDE3EB; margin:4px 0;"></div>
+                      <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12.5px; color:#DC2626; cursor:pointer;"><span style="width:12px; text-align:center;">✕</span>Remove from plan</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="width:260px; border-left:1px solid #DDE3EB; background:#FFFFFF; padding:16px; overflow-y:auto; flex-shrink:0;">
+            <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Plan Details</div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0;"><span style="font-size:12px; color:#6B7280;">Status</span><span style="padding:2px 8px; border-radius:999px; font-size:10px; font-weight:600; background:{{ selectedPlan.statusBg }}; color:{{ selectedPlan.statusColor }};">{{ selectedPlan.statusLabel }}</span></div>
+            <div style="height:1px; background:#DDE3EB; margin:14px 0;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><span style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace;">Pass Rate</span></div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="flex:1; height:5px; border-radius:999px; background:#DDE3EB; overflow:hidden;"><div style="width:{{ selectedPlan.passRate }}%; height:100%; background:{{ selectedPlan.rateColor }};"></div></div></div>
+            <div style="display:flex; justify-content:space-between;"><span style="font-size:11px; color:#16A34A;">✓ {{ selectedPlan.pass }} Pass</span><span style="font-size:11px; color:#DC2626;">✕ {{ selectedPlan.fail }} Fail</span><span style="font-size:11px; color:#9CA3AF;">— {{ selectedPlan.pending }} Pending</span></div>
+            <div style="height:1px; background:#DDE3EB; margin:14px 0;"></div>
+            <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.7px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Recent Sessions</div>
+            <sc-for list="{{ recentSessions }}" as="rs" hint-placeholder-count="3">
+              <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12px; color:#374151;">{{ rs.time }}</span><span style="padding:2px 8px; border-radius:999px; font-size:10px; font-weight:600; background:{{ rs.bg }}; color:{{ rs.color }};">{{ rs.result }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ RUNNER ============ -->
+    <sc-if value="{{ isRunner }}" hint-placeholder-val="{{ false }}">
+      <div style="height:60px; background:#1A2233; border-bottom:1px solid #243044; display:flex; align-items:center; padding:0 20px; flex-shrink:0;">
+        <div style="flex:1;">
+          <div style="color:#E6EDF3; font-size:14px; font-weight:700;">Regression Suite v2.4</div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:2px;"><span style="font-size:11px; color:#94A3B8;">iOS · Android · 2 devices</span><span style="color:#475569;">·</span><span style="font-size:11px; color:#94A3B8;">Staging</span><span style="color:#475569;">·</span><span style="font-size:11px; color:#94A3B8; font-family:'IBM Plex Mono',monospace;">Build 2.4.1 · SDK</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px; margin-right:14px; padding:2px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);">
+          <sc-for list="{{ runnerModes }}" as="m" hint-placeholder-count="3">
+            <div onClick="{{ m.go }}" style="padding:5px 12px; border-radius:999px; font-size:11.5px; font-weight:600; cursor:pointer; background:{{ m.bg }}; color:{{ m.color }};">{{ m.label }}</div>
+          </sc-for>
+        </div>
+        <div onClick="{{ bugOccurred }}" style="display:flex; align-items:center; gap:6px; margin-right:10px; padding:6px 13px; border-radius:999px; background:rgba(210,153,34,0.15); border:1px solid rgba(210,153,34,0.35); cursor:pointer;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#E3B341;"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M5.5 5A2.5 2.5 0 0111 5" fill="none" stroke="currentColor" stroke-width="1.4"></path><line x1="8" y1="6" x2="8" y2="11" stroke="currentColor" stroke-width="1.4"></line><line x1="4" y1="8" x2="2" y2="8" stroke="currentColor" stroke-width="1.4"></line><line x1="12" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.4"></line><line x1="4.5" y1="11.5" x2="2.5" y2="13" stroke="currentColor" stroke-width="1.4"></line><line x1="11.5" y1="11.5" x2="13.5" y2="13" stroke="currentColor" stroke-width="1.4"></line></svg>Bug Occurred</span></div>
+        <div style="display:flex; align-items:center; gap:6px; margin-right:16px; padding:5px 11px; border-radius:999px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);"><span style="font-size:11px; font-weight:600; color:#93C5FD;">Buffered · uploads on finish</span></div>
+        <div style="display:flex; align-items:center; gap:6px; margin-right:12px; padding:6px 12px; border-radius:6px; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.08);"><span style="font-size:14px; font-weight:700; color:#E2E8F0; font-family:'IBM Plex Mono',monospace;">00:04:32</span></div>
+        <div onClick="{{ openStop }}" style="display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; background:rgba(248,81,73,0.12); border:1px solid rgba(248,81,73,0.25); cursor:pointer;"><span style="font-size:13px; font-weight:600; color:#F85149;">■ Stop</span></div>
+      </div>
+
+      <sc-if value="{{ bugMarkers.length }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFBEB; border-bottom:1px solid #FDE68A; padding:8px 20px; display:flex; align-items:center; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+          <span style="font-size:10.5px; font-weight:700; color:#B45309; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Bug markers this session</span>
+          <sc-for list="{{ bugMarkers }}" as="m" hint-placeholder-count="1">
+            <span style="padding:3px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #FDE68A; font-size:11px; color:#111827;">{{ m.time }} — {{ m.title }}</span>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="flex:1; display:flex; overflow:hidden;">
+        <div style="width:452px; border-right:1px solid #DDE3EB; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;">
+          <div style="padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #DDE3EB; background:#FFFFFF; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:13px; font-weight:600; color:#111827;">Test Cases</span><span style="padding:2px 8px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:10px; color:#374151;">8</span></div>
+            <span style="font-size:10.5px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">iOS · Android →</span>
+          </div>
+          <div style="flex:1; overflow-y:auto; background:#F5F7FA;">
+            <sc-for list="{{ runCases }}" as="rc" hint-placeholder-count="8">
+              <div style="display:flex; align-items:center; gap:10px; padding:9px 16px; background:{{ rc.bg }}; border-left:3px solid {{ rc.border }}; border-bottom:1px solid #EEF2F7;">
+                <span style="width:18px; font-size:11px; font-weight:600; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ rc.n }}</span>
+                <div style="flex:1; min-width:0;"><div style="font-size:13px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ rc.title }}</div><div style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace; margin-top:2px;">{{ rc.code }}</div></div>
+                <span style="padding:2px 7px; border-radius:999px; background:{{ rc.iosStyle.bg }}; border:1px solid {{ rc.iosStyle.border }}; font-size:10px; font-weight:700; color:{{ rc.iosStyle.color }}; opacity:{{ rc.iosOpacity }};">iOS {{ rc.iosLabel }}</span>
+                <span style="padding:2px 7px; border-radius:999px; background:{{ rc.androidStyle.bg }}; border:1px solid {{ rc.androidStyle.border }}; font-size:10px; font-weight:700; color:{{ rc.androidStyle.color }}; opacity:{{ rc.androidOpacity }};">AND {{ rc.androidLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:10px 16px; border-top:1px solid #DDE3EB; background:#FFFFFF; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+            <span style="font-size:12px; color:#374151;">iOS 2/8 · Android 2/8 complete</span>
+            <div style="display:flex; gap:6px;"><span style="padding:2px 8px; border-radius:999px; background:#F0FDF4; border:1px solid #BBF7D0; font-size:10px; font-weight:600; color:#16A34A;">4 Pass</span><span style="padding:2px 8px; border-radius:999px; background:#FFFBEB; border:1px solid #FDE68A; font-size:10px; font-weight:600; color:#B45309;">1 Bug</span></div>
+          </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+          <div style="padding:11px 18px; border-bottom:1px solid #DDE3EB; background:#FFFFFF; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+            <div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace; font-weight:600;">TC-003</span><span style="font-size:10px; font-weight:700; color:#2563EB; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Now testing</span></div><div style="font-size:14.5px; font-weight:700; color:#111827; margin-top:2px;">Password reset via email link</div></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:#9CA3AF;">Apply to both:</span><div style="display:flex; align-items:center; gap:6px; padding:7px 13px; border-radius:6px; background:#F0FDF4; border:1.5px solid #BBF7D0; cursor:pointer;"><span style="font-size:12.5px; font-weight:700; color:#16A34A;">✓ Pass All</span></div><div style="display:flex; align-items:center; gap:6px; padding:7px 13px; border-radius:6px; background:#FEF2F2; border:1.5px solid #FECACA; cursor:pointer;"><span style="font-size:12.5px; font-weight:700; color:#DC2626;">✕ Fail All</span></div></div>
+          </div>
+          <div style="flex:1; display:flex; overflow:hidden;">
+            <sc-for list="{{ platformColumns }}" as="pc" hint-placeholder-count="2">
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; border-right:1px solid {{ pc.borderRight }}; opacity:{{ pc.opacity }}; position:relative; pointer-events:{{ pc.pointerEvents }};">
+                <sc-if value="{{ pc.disabled }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; inset:0; background:rgba(245,247,250,0.55); z-index:5; display:flex; align-items:flex-start; justify-content:center; padding-top:60px;"><span style="font-size:12px; font-weight:600; color:#6B7280; background:#FFFFFF; padding:6px 14px; border-radius:999px; border:1px solid #DDE3EB;">Not testing this platform</span></div>
+                </sc-if>
+                <div style="display:flex; align-items:center; gap:9px; padding:11px 16px; border-bottom:1px solid #DDE3EB; background:#FFFFFF; flex-shrink:0;">
+                  <div><div style="font-size:13.5px; font-weight:700; color:#111827;">{{ pc.platform }}</div><div style="font-size:10.5px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ pc.deviceName }}</div></div>
+                  <div style="margin-left:auto; display:flex; align-items:center; gap:4px;"><span style="width:6px; height:6px; border-radius:50%; background:#16A34A;"></span><span style="font-size:10.5px; font-weight:600; color:#16A34A;">Live</span></div>
+                </div>
+                <div style="padding:12px 16px; border-bottom:1px solid #DDE3EB; background:#FAFBFC; flex-shrink:0;">
+                  <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Verdict</div>
+                  <div style="display:flex; gap:8px;">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:13px 8px; border-radius:6px; background:{{ pc.passActive }}; border:1.5px solid #BBF7D0;"><span style="font-size:13px; font-weight:700; color:{{ pc.passTextColor }};">✓ Pass</span></div>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:13px 8px; border-radius:6px; background:{{ pc.failActive }}; border:1.5px solid #FECACA;"><span style="font-size:13px; font-weight:700; color:{{ pc.failTextColor }};">✕ Fail</span></div>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:13px 8px; border-radius:6px; background:{{ pc.bugActive }}; border:1.5px solid #FDE68A;"><span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:{{ pc.bugTextColor }};"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M5.5 5A2.5 2.5 0 0111 5" fill="none" stroke="currentColor" stroke-width="1.4"></path><line x1="8" y1="6" x2="8" y2="11" stroke="currentColor" stroke-width="1.4"></line><line x1="4" y1="8" x2="2" y2="8" stroke="currentColor" stroke-width="1.4"></line><line x1="12" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.4"></line><line x1="4.5" y1="11.5" x2="2.5" y2="13" stroke="currentColor" stroke-width="1.4"></line><line x1="11.5" y1="11.5" x2="13.5" y2="13" stroke="currentColor" stroke-width="1.4"></line></svg>Bug</span></div>
+                  </div>
+                </div>
+                <div style="flex:1; overflow-y:auto; padding:10px 16px; background:#FFFFFF;">
+                  <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace; margin-bottom:6px;">Steps · for reference</div>
+                  <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+                    <div style="display:flex; gap:9px; padding:8px 0; border-bottom:1px solid #EEF2F7;">
+                      <div style="width:20px; height:20px; border-radius:50%; background:#EEF2F7; border:1px solid #DDE3EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><span style="font-size:10px; font-weight:700; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ st.n }}</span></div>
+                      <div><div style="font-size:12.5px; color:#111827; margin-bottom:2px;">{{ st.action }}</div><div style="font-size:11.5px; color:#9CA3AF;">▸ {{ st.expect }}</div></div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="border-top:1px solid #DDE3EB; background:#FAFBFC; flex-shrink:0;">
+                  <div style="display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid #DDE3EB; background:#FFFFFF;"><span style="width:6px; height:6px; border-radius:50%; background:#16A34A;"></span><span style="font-size:11.5px; color:#374151;">{{ pc.platform }} log · {{ pc.logs.length }}</span></div>
+                  <div style="max-height:110px; overflow-y:auto;">
+                    <sc-for list="{{ pc.logs }}" as="log" hint-placeholder-count="2">
+                      <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid #EEF2F7; opacity:{{ log.opacity }};">
+                        <span style="font-size:10px; font-weight:700; color:{{ log.methodColor }}; width:36px;">{{ log.method }}</span>
+                        <span style="flex:1; font-size:11.5px; color:#111827; font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ log.url }}</span>
+                        <span style="font-size:10.5px; color:{{ log.statusColor }}; font-family:'IBM Plex Mono',monospace;">{{ log.statusLabel }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="height:52px; background:#FFFFFF; border-top:1px solid #DDE3EB; display:flex; align-items:center; justify-content:space-between; padding:0 20px; flex-shrink:0;">
+        <span style="font-size:12.5px; color:#374151;">Results are buffered on each device and <strong style="color:#111827;">uploaded when the session finishes</strong> — nothing is sent mid-run.</span>
+        <div style="display:flex; gap:8px;"><div style="padding:7px 14px; border-radius:6px; border:1px solid #DDE3EB; font-size:13px; color:#111827; cursor:pointer;">Pause</div><div style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">⬆ Finish &amp; Upload Results</div></div>
+      </div>
+
+      <sc-if value="{{ stopModalOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:50;">
+          <div style="width:420px; background:#FFFFFF; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.2); border:1px solid #DDE3EB; padding:22px;">
+            <div style="font-size:15px; font-weight:700; color:#111827; margin-bottom:4px;">Stop session</div>
+            <div style="font-size:12.5px; color:#6B7280; margin-bottom:16px;">Choose an overall result for this session.</div>
+            <div style="display:flex; gap:8px;">
+              <sc-for list="{{ resultOptions }}" as="opt" hint-placeholder-count="4">
+                <div onClick="{{ opt.choose }}" style="flex:1; text-align:center; padding:12px 6px; border-radius:6px; background:{{ opt.bg }}; border:1px solid {{ opt.border }}; color:{{ opt.color }}; font-size:12px; font-weight:700; cursor:pointer;">{{ opt.label }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ closeStop }}" style="margin-top:16px; text-align:center; font-size:12.5px; color:#6B7280; cursor:pointer;">Cancel</div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ DEVICES (ADDED) ============ -->
+    <sc-if value="{{ isDevices }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; padding:0 24px; height:56px; display:flex; align-items:center; gap:16px; flex-shrink:0;">
+        <div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#111827;">Devices</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">Registered devices persist across restarts</div></div>
+        <div onClick="{{ openPairing }}" style="padding:7px 14px; border-radius:6px; background:#2563EB; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">+ Pair Device</div>
+      </div>
+      <div style="padding:16px 24px; overflow-y:auto;">
+        <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:16px;">
+          <div style="font-size:12.5px; font-weight:600; color:#111827;">Device access policy</div>
+          <div style="display:flex; gap:6px;">
+            <div onClick="{{ setAllowlist }}" style="padding:5px 12px; border-radius:999px; font-size:12px; font-weight:600; cursor:pointer; background:{{ allowlistBg }}; color:{{ allowlistColor }}; border:1px solid {{ allowlistBorder }};">Allowlist (default)</div>
+            <div onClick="{{ setOpen }}" style="padding:5px 12px; border-radius:999px; font-size:12px; font-weight:600; cursor:pointer; background:{{ openBg }}; color:{{ openColor }}; border:1px solid {{ openBorder }};">Open</div>
+          </div>
+          <div style="font-size:11.5px; color:#9CA3AF; margin-left:auto;">A device ID is a filtering control only — pairing tokens establish real trust.</div>
+        </div>
+        <sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; gap:14px; padding:14px 18px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; margin-bottom:8px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:{{ d.statusColor }}; flex-shrink:0;"></span>
+            <div style="flex:1; min-width:0;"><div style="font-size:13.5px; font-weight:600; color:#111827;">{{ d.name }}</div><div style="font-size:11px; color:#6B7280; font-family:'IBM Plex Mono',monospace; margin-top:2px;">{{ d.id }} · {{ d.platform }} · last seen {{ d.lastSeen }}</div></div>
+            <span style="font-size:12px; font-weight:600; color:{{ d.statusColor }};">{{ d.statusLabel }}</span>
+            <div onClick="{{ d.toggle }}" style="padding:6px 12px; border-radius:6px; border:1px solid #DDE3EB; font-size:12px; font-weight:600; color:#111827; cursor:pointer;">{{ d.toggleLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Pairing modal shared across screens -->
+    <sc-if value="{{ pairingOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:60;">
+        <div style="width:520px; background:#FFFFFF; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.2); border:1px solid #DDE3EB; padding:20px; display:flex; gap:18px;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="padding:8px; border-radius:6px; background:#fff; border:1px solid #DDE3EB;"><div style="width:104px; height:104px; background:repeating-linear-gradient(45deg,#111827,#111827 6px,#fff 6px,#fff 12px); border-radius:4px;"></div></div>
+            <span style="font-size:10.5px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">Scan with the QA app</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px; font-weight:700; color:#111827; margin-bottom:8px;">Pair a new device</div>
+            <div style="font-size:12px; color:#6B7280; margin-bottom:4px;">or enter code: <strong style="color:#111827; font-family:'IBM Plex Mono',monospace;">7K2-9QF</strong></div>
+            <div style="font-size:11.5px; color:#B45309; font-weight:600; margin-bottom:14px;">Single-use · expires in 04:32</div>
+            <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; background:#0D1117; font-family:'IBM Plex Mono',monospace; font-size:11.5px;"><span style="color:#7EE787;">$</span><span style="color:#E6EDF3;">qa-sdk connect --token qa_live_8f2a3c1e</span></div>
+            <div onClick="{{ closePairing }}" style="margin-top:14px; display:inline-block; padding:7px 16px; border-radius:6px; border:1px solid #DDE3EB; font-size:12.5px; color:#111827; cursor:pointer;">Close</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ BUGS (ADDED) ============ -->
+    <sc-if value="{{ isBugs }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; padding:0 24px; height:56px; display:flex; align-items:center; gap:16px; flex-shrink:0;">
+        <div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#111827;">Bugs</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">{{ bugCount }} bugs · local-first, synced to backend once reachable</div></div>
+        <div style="font-size:12px; color:#6B7280;">Log window default <strong style="color:#111827; font-family:'IBM Plex Mono',monospace;">±30s</strong></div>
+      </div>
+      <div style="flex:1; display:flex; overflow:hidden;">
+        <div style="width:340px; border-right:1px solid #DDE3EB; overflow-y:auto; background:#FFFFFF; flex-shrink:0;">
+          <sc-for list="{{ bugs }}" as="b" hint-placeholder-count="3">
+            <div onClick="{{ b.select }}" style="padding:12px 16px; border-bottom:1px solid #DDE3EB; cursor:pointer; background:{{ b.rowBg }}; border-left:3px solid {{ b.rowBorder }};">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;"><span style="font-size:13px; font-weight:600; color:#111827; line-height:1.3;">{{ b.title }}</span><span style="font-size:10px; font-weight:700; color:{{ b.sevColor }}; flex-shrink:0;">{{ b.severity }}</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; padding:2px 8px; border-radius:999px; background:{{ b.statusStyle.bg }}; color:{{ b.statusStyle.color }}; border:1px solid {{ b.statusStyle.border }}; font-size:10px; font-weight:600;">{{ b.status }}</span><span style="font-size:11px; color:#9CA3AF;">{{ b.env }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:20px 24px; background:#F5F7FA;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;"><span style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ selectedBug.id }}</span><span style="font-size:10px; font-weight:700; color:{{ selectedBug.sevColor }};">{{ selectedBug.severity }}</span></div>
+          <div style="font-size:18px; font-weight:700; color:#111827; margin-bottom:10px;">{{ selectedBug.title }}</div>
+          <div style="font-size:13px; color:#374151; line-height:1.6; margin-bottom:18px;">{{ selectedBug.description }}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Status</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px;">{{ selectedBug.status }}</div></div>
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Environment</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px;">{{ selectedBug.env }}</div></div>
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Build</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px; font-family:'IBM Plex Mono',monospace;">{{ selectedBug.build }}</div></div>
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Device</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px;">{{ selectedBug.device }}</div></div>
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Test Case</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px;">{{ selectedBug.caseId }}</div></div>
+            <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px; padding:10px 14px;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Test Plan</div><div style="font-size:13px; font-weight:600; color:#111827; margin-top:3px;">{{ selectedBug.plan }}</div></div>
+          </div>
+          <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px;">Evidence</div>
+          <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:14px 16px;">
+            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12px; color:#6B7280;">Timeline marker</span><span style="font-size:12px; color:#111827; font-family:'IBM Plex Mono',monospace;">{{ selectedBug.timelineTs }}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #EEF2F7;"><span style="font-size:12px; color:#6B7280;">Log window</span><span style="font-size:12px; color:#111827;">±{{ selectedBug.logWindow }}s ({{ selectedBug.reqCount }} requests captured)</span></div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0;"><span style="font-size:12px; color:#6B7280;">Screenshot</span><span style="font-size:12px; color:#111827;">{{ selectedBug.screenshotLabel }}</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ REPORTS (ADDED) ============ -->
+    <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF; border-bottom:1px solid #DDE3EB; padding:0 24px; height:56px; display:flex; align-items:center; flex-shrink:0;"><div style="font-size:15px; font-weight:600; color:#111827;">Reporting &amp; History</div></div>
+      <div style="flex:1; overflow-y:auto; padding:20px 24px; background:#F5F7FA;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:16px;">
+            <div style="font-size:12.5px; font-weight:600; color:#111827; margin-bottom:12px;">Pass rate by plan</div>
+            <sc-for list="{{ plans }}" as="p" hint-placeholder-count="6">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><span style="width:140px; font-size:11.5px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</span><div style="flex:1; height:6px; border-radius:999px; background:#EEF2F7; overflow:hidden;"><div style="width:{{ p.passRate }}%; height:100%; background:{{ p.rateColor }};"></div></div><span style="width:34px; font-size:11px; font-weight:700; color:{{ p.rateColor }}; font-family:'IBM Plex Mono',monospace;">{{ p.passRate }}%</span></div>
+            </sc-for>
+          </div>
+          <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:16px;">
+            <div style="font-size:12.5px; font-weight:600; color:#111827; margin-bottom:12px;">Failed cases by build</div>
+            <sc-for list="{{ failedByBuild }}" as="row" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><span style="width:80px; font-size:11.5px; color:#374151; font-family:'IBM Plex Mono',monospace;">{{ row.build }}</span><div style="flex:1; height:6px; border-radius:999px; background:#EEF2F7; overflow:hidden;"><div style="width:{{ row.pct }}%; height:100%; background:#DC2626;"></div></div><span style="width:20px; font-size:11px; font-weight:700; color:#DC2626;">{{ row.count }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:16px;">
+            <div style="font-size:12.5px; font-weight:600; color:#111827; margin-bottom:12px;">Bugs by environment</div>
+            <sc-for list="{{ bugsByEnv }}" as="row" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><span style="width:90px; font-size:11.5px; color:#374151;">{{ row.env }}</span><div style="flex:1; height:6px; border-radius:999px; background:#EEF2F7; overflow:hidden;"><div style="width:{{ row.pct }}%; height:100%; background:#B45309;"></div></div><span style="width:20px; font-size:11px; font-weight:700; color:#B45309;">{{ row.count }}</span></div>
+            </sc-for>
+          </div>
+          <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:16px;">
+            <div style="font-size:12.5px; font-weight:600; color:#111827; margin-bottom:6px;">Per-case results across plans</div>
+            <div style="font-size:11.5px; color:#6B7280; margin-bottom:10px;">A case's result is tracked independently per plan — see <span onClick="{{ goCases }}" style="color:#2563EB; cursor:pointer; text-decoration:underline;">Test Cases</span> and expand any row.</div>
+            <div style="font-size:11.5px; color:#111827;">TC-006 (Checkout with saved payment method) is Fail in Checkout Flow but Blocked in Regression Suite v2.4 — tracked independently.</div>
+          </div>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #DDE3EB; border-radius:8px; padding:16px;">
+          <div style="font-size:12.5px; font-weight:600; color:#111827; margin-bottom:12px;">Session history</div>
+          <sc-for list="{{ sessionHistory }}" as="row" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #EEF2F7;"><span style="width:110px; font-size:11.5px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ row.time }}</span><span style="flex:1; font-size:12.5px; color:#111827;">{{ row.plan }} · {{ row.device }}</span><span style="font-size:11px; font-weight:700; color:{{ row.resultColor }};">{{ row.result }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ LOG INSPECTOR ============ -->
+    <sc-if value="{{ isLogs }}" hint-placeholder-val="{{ false }}">
+      <div style="height:44px; background:#FFFFFF; border-bottom:1px solid #DDE3EB; display:flex; align-items:center; gap:12px; padding:0 16px; flex-shrink:0;">
+        <span style="width:8px; height:8px; border-radius:50%; background:#16A34A;"></span><span style="font-size:12px; font-weight:600; color:#16A34A;">Live</span>
+        <div style="width:1px; height:20px; background:#DDE3EB;"></div>
+        <span style="font-size:12px; color:#374151;">Marco's iPhone 14 Pro <span style="padding:2px 7px; border-radius:999px; background:#EEF2F7; border:1px solid #DDE3EB; font-size:10px; color:#374151;">iPhone14,3</span></span>
+        <div style="width:1px; height:20px; background:#DDE3EB;"></div>
+        <span style="font-size:12px; color:#9CA3AF;">Session</span><span style="font-size:12px; color:#111827; font-family:'IBM Plex Mono',monospace;">TC-003</span>
+        <div style="margin-left:auto; display:flex; gap:8px;"><div style="padding:5px 12px; border-radius:6px; border:1px solid #DDE3EB; font-size:12px; color:#111827; cursor:pointer;">↻ Reconnect</div><div onClick="{{ clearLogs }}" style="padding:5px 12px; border-radius:6px; font-size:12px; color:#6B7280; cursor:pointer;">Clear</div></div>
+      </div>
+      <div style="height:44px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; display:flex; align-items:center; gap:8px; padding:0 12px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px; width:260px; height:30px; padding:0 10px; background:#FFFFFF; border:1px solid #DDE3EB; border-radius:6px;"><span style="font-size:12.5px; color:#9CA3AF;">Filter by URL, method, status…</span></div>
+        <span style="padding:4px 10px; border-radius:999px; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; font-size:12px; font-weight:600;">All</span>
+        <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; color:#374151; font-size:12px;">2xx</span>
+        <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; color:#374151; font-size:12px;">4xx</span>
+        <span style="padding:4px 10px; border-radius:999px; background:#FFFFFF; border:1px solid #DDE3EB; color:#374151; font-size:12px;">5xx</span>
+        <span style="margin-left:auto; font-size:12px; color:#9CA3AF;">{{ logCount }} requests · 2 devices · local working data, not persisted to backend</span>
+      </div>
+      <div style="flex:1; display:flex; overflow:hidden;">
+        <div style="width:212px; border-right:1px solid #DDE3EB; background:#FFFFFF; overflow-y:auto; flex-shrink:0;">
+          <sc-for list="{{ sessionGroups }}" as="g" hint-placeholder-count="2">
+            <div>
+              <div style="display:flex; align-items:center; gap:7px; padding:9px 12px 7px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; border-top:1px solid #DDE3EB;">
+                <div style="font-size:11.5px; font-weight:700; color:#111827;">{{ g.name }}</div>
+              </div>
+              <sc-for list="{{ g.sessions }}" as="ss" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; gap:8px; padding:8px 12px 8px 16px; border-bottom:1px solid #EEF2F7; background:{{ ss.bg }}; border-left:3px solid {{ ss.border }};">
+                  <span style="width:6px; height:6px; border-radius:50%; background:{{ ss.dot }}; flex-shrink:0;"></span>
+                  <div style="min-width:0;"><div style="font-size:12px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ ss.label }}</div><div style="font-size:10px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ ss.code }} · {{ ss.reqs }} req</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="width:376px; border-right:1px solid #DDE3EB; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;">
+          <div style="height:36px; display:flex; align-items:center; padding:0 12px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace; flex-shrink:0;">
+            <div style="width:24px;"></div><div style="width:54px;">Method</div><div style="flex:1;">Path</div><div style="width:48px;">Status</div>
+          </div>
+          <div style="flex:1; overflow-y:auto; background:#F5F7FA;">
+            <sc-for list="{{ logs }}" as="log" hint-placeholder-count="8">
+              <div onClick="{{ log.select }}" style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #EEF2F7; cursor:pointer; background:{{ log.rowBg }}; border-left:3px solid {{ log.rowBorder }}; opacity:{{ log.opacity }};">
+                <span style="font-size:10px; color:#9CA3AF; width:24px;">{{ log.device }}</span>
+                <span style="font-size:10px; font-weight:700; color:{{ log.methodColor }}; width:38px;">{{ log.method }}</span>
+                <span style="flex:1; font-size:12px; color:#111827; font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ log.url }}</span>
+                <span style="font-size:11px; color:{{ log.statusColor }}; font-family:'IBM Plex Mono',monospace;">{{ log.statusLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; overflow:hidden; background:#FFFFFF;">
+          <div style="padding:12px 16px; border-bottom:1px solid #DDE3EB; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><span style="font-size:11px; font-weight:700; color:{{ selectedLog.methodColor }}; width:38px;">{{ selectedLog.method }}</span><span style="flex:1; font-size:13px; color:#111827; font-family:'IBM Plex Mono',monospace;">{{ selectedLog.fullUrl }}</span><span style="font-size:12px; color:{{ selectedLog.statusColor }}; font-family:'IBM Plex Mono',monospace;">{{ selectedLog.statusLabel }}</span></div>
+            <div style="display:flex; gap:16px;">
+              <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Timestamp</div><div style="font-size:12px; color:#111827; margin-top:2px;">{{ selectedLog.ts }}</div></div>
+              <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Device</div><div style="font-size:12px; color:#111827; margin-top:2px;">{{ selectedLog.device }}</div></div>
+              <div><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Session</div><div style="font-size:12px; color:#111827; margin-top:2px; font-family:'IBM Plex Mono',monospace;">{{ selectedLog.session }}</div></div>
+            </div>
+          </div>
+          <div style="display:flex; border-bottom:1px solid #DDE3EB; flex-shrink:0;">
+            <sc-for list="{{ logTabs }}" as="t" hint-placeholder-count="3">
+              <div onClick="{{ t.go }}" style="padding:0 18px; height:36px; display:flex; align-items:center; font-size:13px; font-weight:{{ t.weight }}; color:{{ t.color }}; border-bottom:2px solid {{ t.border }}; cursor:pointer;">{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <div style="flex:1; overflow-y:auto; background:#FAFBFC;">
+            <sc-if value="{{ isLogOverview }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:16px;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="padding:12px 14px; border-radius:6px; background:#FFFFFF; border:1px solid #DDE3EB;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Status Code</div><div style="font-size:14px; font-weight:600; color:{{ selectedLog.statusColor }}; margin-top:4px; font-family:'IBM Plex Mono',monospace;">{{ selectedLog.statusLabel }}</div></div>
+                <div style="padding:12px 14px; border-radius:6px; background:#FFFFFF; border:1px solid #DDE3EB;"><div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.5px; font-family:'IBM Plex Mono',monospace;">Duration</div><div style="font-size:14px; font-weight:600; color:#111827; margin-top:4px; font-family:'IBM Plex Mono',monospace;">{{ selectedLog.ms }}ms</div></div>
+              </div></div>
+            </sc-if>
+            <sc-if value="{{ isLogRequest }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="padding:8px 12px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; font-size:11px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Headers · sensitive fields redacted</div>
+                <sc-for list="{{ selectedLog.reqHeaders }}" as="h" hint-placeholder-count="4"><div style="display:flex; gap:16px; padding:7px 16px; border-bottom:1px solid #EEF2F7;"><span style="width:170px; font-size:12px; color:#6B7280; font-family:'IBM Plex Mono',monospace;">{{ h.key }}</span><span style="flex:1; font-size:12px; color:#111827; font-family:'IBM Plex Mono',monospace; word-break:break-all;">{{ h.val }}</span></div></sc-for>
+                <div style="display:flex; align-items:center; padding:8px 12px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; border-top:1px solid #DDE3EB;"><span style="flex:1; font-size:11px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Body · JSON</span><div onClick="{{ toggleBeautify }}" style="padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:600; cursor:pointer; background:{{ beautifyBg }}; color:{{ beautifyColor }}; border:1px solid {{ beautifyBorder }};">{ } Beautify</div></div>
+                <div style="padding:14px 16px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#111827; white-space:pre-wrap; line-height:1.7;">{{ selectedLog.reqBodyDisplay }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isLogResponse }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="padding:8px 12px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; font-size:11px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Headers</div>
+                <sc-for list="{{ selectedLog.resHeaders }}" as="h" hint-placeholder-count="3"><div style="display:flex; gap:16px; padding:7px 16px; border-bottom:1px solid #EEF2F7;"><span style="width:170px; font-size:12px; color:#6B7280; font-family:'IBM Plex Mono',monospace;">{{ h.key }}</span><span style="flex:1; font-size:12px; color:#111827; font-family:'IBM Plex Mono',monospace; word-break:break-all;">{{ h.val }}</span></div></sc-for>
+                <div style="display:flex; align-items:center; padding:8px 12px; background:#EEF2F7; border-bottom:1px solid #DDE3EB; border-top:1px solid #DDE3EB;"><span style="flex:1; font-size:11px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Body · JSON</span><div onClick="{{ toggleBeautify }}" style="padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:600; cursor:pointer; background:{{ beautifyBg }}; color:{{ beautifyColor }}; border:1px solid {{ beautifyBorder }};">{ } Beautify</div></div>
+                <div style="padding:14px 16px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#111827; white-space:pre-wrap; line-height:1.7;">{{ selectedLog.resBodyDisplay }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+   </div>
+
+   <!-- DEVICE DOCK (bottom bar, original) -->
+   <sc-if value="{{ showDock }}" hint-placeholder-val="{{ true }}">
+    <div style="flex-shrink:0; border-top:1px solid #DDE3EB; background:#FFFFFF;">
+      <sc-if value="{{ dockOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; border-bottom:1px solid #DDE3EB;">
+          <div style="width:480px; padding:16px 20px; border-right:1px solid #DDE3EB; display:flex; gap:16px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="padding:8px; border-radius:6px; background:#fff; border:1px solid #DDE3EB;"><div style="width:96px; height:96px; background:repeating-linear-gradient(45deg,#111827,#111827 6px,#fff 6px,#fff 12px); border-radius:4px;"></div></div><span style="font-size:10px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">Scan with the QA app</span></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">How to connect</div>
+              <div style="display:flex; flex-direction:column; gap:6px; margin:8px 0 10px;">
+                <div style="font-size:12px; color:#374151;">1. Install the QA SDK in your app build</div>
+                <div style="font-size:12px; color:#374151;">2. Run the command below, or scan the QR</div>
+                <div style="font-size:12px; color:#374151;">3. Device appears here automatically</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:4px; background:#0D1117; font-family:'IBM Plex Mono',monospace; font-size:11.5px;"><span style="color:#7EE787;">$</span><span style="color:#E6EDF3;">qa-sdk connect --token qa_live_8f2a3c1e</span></div>
+            </div>
+          </div>
+          <div style="flex:1; padding:16px 20px;">
+            <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.6px; font-family:'IBM Plex Mono',monospace;">Connected devices · 2</div>
+            <div style="display:flex; gap:12px; margin-top:10px;">
+              <sc-for list="{{ connectedDevices }}" as="cd" hint-placeholder-count="2">
+                <div style="flex:1; min-width:0; padding:11px 13px; border-radius:6px; background:#F5F7FA; border:1px solid #DDE3EB;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;"><span style="font-size:13px; font-weight:600; color:#111827; flex:1;">{{ cd.name }}</span><span style="width:6px; height:6px; border-radius:50%; background:#16A34A;"></span></div>
+                  <div style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ cd.os }}</div>
+                  <div style="font-size:11px; color:#9CA3AF; font-family:'IBM Plex Mono',monospace;">{{ cd.id }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <div style="height:46px; display:flex; align-items:center; gap:12px; padding:0 16px;">
+        <div style="display:flex; align-items:center; gap:7px;"><span style="width:8px; height:8px; border-radius:50%; background:#16A34A;"></span><span style="font-size:12.5px; font-weight:600; color:#111827;">2 devices connected</span></div>
+        <div style="width:1px; height:20px; background:#DDE3EB;"></div>
+        <sc-for list="{{ connectedDevices }}" as="cd" hint-placeholder-count="2">
+          <div style="display:flex; align-items:center; gap:7px; padding:4px 10px 4px 8px; border-radius:999px; background:#F5F7FA; border:1px solid #DDE3EB;"><span style="font-size:12px; color:#111827; font-weight:500;">{{ cd.name }}</span><span style="width:6px; height:6px; border-radius:50%; background:#16A34A;"></span></div>
+        </sc-for>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+          <div onClick="{{ openPairing }}" style="padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; color:#6B7280; cursor:pointer;">+ Add device</div>
+          <div onClick="{{ toggleDock }}" style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:6px; background:{{ dockOpen && 'rgba(37,99,235,0.08)' || 'transparent' }}; border:1px solid #DDE3EB; cursor:pointer;"><span style="font-size:12.5px; font-weight:600; color:#111827;">How to connect {{ dockGlyph }}</span></div>
+        </div>
+      </div>
+    </div>
+   </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const COL = {
+  pass: { bg:'#F0FDF4', color:'#16A34A', border:'#BBF7D0' },
+  fail: { bg:'#FEF2F2', color:'#DC2626', border:'#FECACA' },
+  blocked: { bg:'#F5F3FF', color:'#7C3AED', border:'#DDD6FE' },
+  accent: { bg:'#EFF6FF', color:'#1E40AF', border:'#BFDBFE' },
+  skip: { bg:'#F9FAFB', color:'#6B7280', border:'#E5E7EB' },
+  warn: { bg:'#FFFBEB', color:'#B45309', border:'#FDE68A' },
+};
+const STATUS_STYLE = { pass:COL.pass, fail:COL.fail, blocked:COL.blocked, running:COL.accent, pending:COL.skip };
+const STATUS_LABEL = { pass:'Pass', fail:'Fail', blocked:'Blocked', running:'Running', pending:'Pending' };
+const PEOPLE = { MK:{name:'Marco K.',color:'#2563EB'}, AR:{name:'Aisha R.',color:'#7C3AED'}, TN:{name:'Tom N.',color:'#0891B2'}, SL:{name:'Sara L.',color:'#DB2777'}, JP:{name:'Jon P.',color:'#059669'} };
+
+const CASES_SEED = [
+  { id:'TC-001', title:'User login with valid credentials', platform:'iOS', tags:['Auth'], build:'2.4.1', updated:'2h ago',
+    instances:[{plan:'Authentication Suite',status:'pass',pic:'AR',updated:'2h ago'},{plan:'Smoke Tests',status:'pass',pic:'MK',updated:'3h ago'},{plan:'Regression Suite v2.4',status:'pass',pic:'MK',updated:'1d ago'}] },
+  { id:'TC-002', title:'Login fails with incorrect password', platform:'iOS', tags:['Auth','Validation'], build:'2.4.1', updated:'2h ago',
+    instances:[{plan:'Authentication Suite',status:'pass',pic:'AR',updated:'2h ago'},{plan:'Regression Suite v2.4',status:'pass',pic:'MK',updated:'1d ago'}] },
+  { id:'TC-003', title:'Password reset via email link', platform:'iOS', tags:['Auth'], build:'2.4.1', updated:'12m ago',
+    instances:[{plan:'Authentication Suite',status:'pass',pic:'AR',updated:'12m ago'},{plan:'Regression Suite v2.4',status:'running',pic:'MK',updated:'1m ago'}] },
+  { id:'TC-004', title:'Product search returns filtered results', platform:'iOS', tags:['Search'], updated:'1d ago',
+    instances:[{plan:'Search & Discovery',status:'pass',pic:'TN',updated:'1d ago'},{plan:'Regression Suite v2.4',status:'pending',pic:'MK',updated:'1d ago'}] },
+  { id:'TC-005', title:'Add item to cart from product detail page', platform:'iOS', tags:['Cart'], build:'2.4.1', updated:'3d ago',
+    instances:[{plan:'Checkout Flow',status:'pass',pic:'SL',updated:'3d ago'},{plan:'Regression Suite v2.4',status:'pending',pic:'MK',updated:'3d ago'}] },
+  { id:'TC-006', title:'Checkout with saved payment method', platform:'iOS', tags:['Checkout','Payments'], build:'2.4.1', updated:'18m ago',
+    instances:[{plan:'Checkout Flow',status:'fail',pic:'SL',updated:'18m ago'},{plan:'Regression Suite v2.4',status:'blocked',pic:'MK',updated:'1d ago'}] },
+  { id:'TC-006·b', title:'Checkout with saved payment — EU VAT variant', platform:'iOS', tags:['Checkout','Payments'], build:'2.4.1', updated:'1d ago', forkedFrom:'TC-006',
+    instances:[{plan:'Checkout Flow',status:'pass',pic:'JP',updated:'1d ago'}] },
+  { id:'TC-007', title:'Apply coupon code at checkout', platform:'Android', tags:['Checkout'], build:'2.3.9', updated:'5d ago',
+    instances:[{plan:'Checkout Flow',status:'pass',pic:'SL',updated:'5d ago'}] },
+  { id:'TC-008', title:'Order confirmation triggers email notification', platform:'iOS', tags:['Orders','Email'], updated:'1w ago', draft:true,
+    instances:[{plan:'Regression Suite v2.4',status:'pending',pic:'MK',updated:'1w ago'}] },
+];
+
+const PLANS_SEED = [
+  { id:1, name:'Regression Suite v2.4', cases:24, pass:20, fail:1, pending:3, lastRun:'Today, 4:23 AM', status:'active', env:'Production', targetBuild:'2.4.1', notes:'Full regression for 2.4 release.' },
+  { id:2, name:'Checkout Flow', cases:8, pass:5, fail:1, pending:2, lastRun:'Yesterday', status:'active', env:'Staging', targetBuild:'2.4.0', notes:'Covers cart, coupons, payments, confirmation.' },
+  { id:3, name:'Authentication Suite', cases:6, pass:6, fail:0, pending:0, lastRun:'2 days ago', status:'active', env:'Staging', targetBuild:'2.4.1', notes:'Login, logout, password reset, token expiry.' },
+  { id:4, name:'Smoke Tests', cases:5, pass:5, fail:0, pending:0, lastRun:'3 hours ago', status:'active', env:'Production', targetBuild:'2.4.1', notes:'Critical path only — run before every deploy.' },
+  { id:5, name:'Search & Discovery', cases:12, pass:9, fail:1, pending:2, lastRun:'4 days ago', status:'active', env:'Staging', targetBuild:'2.3.9', notes:'Search, filters, sort, empty states.' },
+  { id:6, name:'Onboarding Flow', cases:9, pass:8, fail:0, pending:1, lastRun:'1 week ago', status:'archived', env:'Staging', notes:'First-run experience and account setup.' },
+];
+const PLAN_CASES = {
+  1: [ {id:'TC-001',title:'User login with valid credentials',status:'pass'}, {id:'TC-003',title:'Password reset via email link',status:'active'}, {id:'TC-006',title:'Checkout with saved payment method',status:'fail'} ],
+  2: [ {id:'TC-005',title:'Add item to cart from product detail page',status:'pass'}, {id:'TC-006',title:'Checkout with saved payment method',status:'fail'}, {id:'TC-007',title:'Apply coupon code at checkout',status:'pass'} ],
+  3: [ {id:'TC-001',title:'User login with valid credentials',status:'pass'}, {id:'TC-002',title:'Login fails with incorrect password',status:'pass'}, {id:'TC-003',title:'Password reset via email link',status:'pass'} ],
+  4: [ {id:'TC-001',title:'User login with valid credentials',status:'pass'} ],
+  5: [ {id:'TC-004',title:'Product search returns filtered results',status:'pass'} ],
+  6: [ {id:'TC-008',title:'Order confirmation triggers email notification',status:'active'} ],
+};
+const RESULT_STYLE = { pass:COL.pass, fail:COL.fail, active:COL.accent };
+const RESULT_LABEL = { pass:'Pass', fail:'Fail', active:'—' };
+
+const RUN_CASES = [
+  { code:'TC-001', title:'User login with valid credentials', ios:'pass', android:'pass' },
+  { code:'TC-002', title:'Login fails with incorrect password', ios:'pass', android:'pass' },
+  { code:'TC-003', title:'Password reset via email link', ios:'running', android:'bug' },
+  { code:'TC-004', title:'Product search returns filtered results', ios:'pending', android:'running' },
+  { code:'TC-005', title:'Add item to cart from product detail', ios:'pending', android:'pending' },
+  { code:'TC-006', title:'Checkout with saved payment method', ios:'pending', android:'pending' },
+  { code:'TC-007', title:'Apply coupon code at checkout', ios:'pending', android:'pending' },
+  { code:'TC-008', title:'Order confirmation triggers email', ios:'pending', android:'pending' },
+];
+const RUN_STAT = { pass:{c:'#16A34A',bg:'#F0FDF4',b:'#BBF7D0',l:'✓'}, fail:{c:'#DC2626',bg:'#FEF2F2',b:'#FECACA',l:'✕'}, bug:{c:'#B45309',bg:'#FFFBEB',b:'#FDE68A',l:'⚑'}, running:{c:'#2563EB',bg:'#EFF6FF',b:'#BFDBFE',l:'●'}, pending:{c:'#6B7280',bg:'#F9FAFB',b:'#E5E7EB',l:'—'} };
+const ACTIVE_STEPS = [
+  { text:'Navigate to the login screen', expect:'Login form is displayed' },
+  { text:'Tap "Forgot password?" link', expect:'Reset request screen opens' },
+  { text:'Enter registered email & submit', expect:'Confirmation toast appears' },
+  { text:'Open reset link from email', expect:'New-password form is shown' },
+];
+const DEV_LOGS = {
+  ios: [ {method:'POST',url:'/api/v1/auth/forgot-password',status:200,ms:203}, {method:'GET',url:'/api/v1/auth/reset-token/validate',status:200,ms:67}, {method:'POST',url:'/api/v1/auth/reset-password',status:null,ms:null,inProgress:true} ],
+  android: [ {method:'POST',url:'/api/v1/auth/forgot-password',status:200,ms:188}, {method:'GET',url:'/api/v1/auth/reset-token/validate',status:500,ms:1203} ],
+};
+
+const LOG_DATA = [
+  { id:1, method:'GET', path:'/api/v1/products/P-84921/image.png', status:200, ms:64, device:'iOS', session:'TC-004' },
+  { id:2, method:'POST', path:'/api/v1/auth/login', status:200, ms:342, device:'iOS', session:'TC-001' },
+  { id:3, method:'GET', path:'/api/v1/users/me', status:200, ms:88, device:'iOS', session:'TC-001' },
+  { id:4, method:'POST', path:'/api/v1/auth/forgot-password', status:200, ms:203, device:'iOS', session:'TC-003' },
+  { id:5, method:'GET', path:'/api/v1/auth/reset-token/validate', status:200, ms:67, device:'iOS', session:'TC-003' },
+  { id:6, method:'POST', path:'/api/v1/auth/reset-password', status:422, ms:145, device:'iOS', session:'TC-003' },
+  { id:7, method:'GET', path:'/api/v1/products?q=shoes', status:200, ms:312, device:'Android', session:'TC-004' },
+  { id:8, method:'POST', path:'/api/v1/cart/items', status:201, ms:187, device:'Android', session:'TC-005' },
+  { id:9, method:'POST', path:'/api/v1/checkout/session', status:200, ms:243, device:'Android', session:'TC-006' },
+  { id:10, method:'POST', path:'/api/v1/orders', status:500, ms:1203, device:'Android', session:'TC-006' },
+];
+const SESSION_GROUPS = [
+  { device:'iOS', name:"Marco's iPhone 14 Pro", sessions:[ {code:'TC-001',label:'Login valid',status:'pass',reqs:2}, {code:'TC-003',label:'Password reset',status:'fail',reqs:3,active:true} ] },
+  { device:'Android', name:'Pixel 8 · Emulator', sessions:[ {code:'TC-004',label:'Product search',status:'pass',reqs:2}, {code:'TC-005',label:'Add to cart',status:'pass',reqs:1}, {code:'TC-006',label:'Checkout',status:'fail',reqs:2} ] },
+];
+const CONNECTED_DEVICES = [
+  { name:"Marco's iPhone 14 Pro", os:'iOS 17.4 · iPhone14,3', id:'DEVICE-A3B2' },
+  { name:'Pixel 8 · Emulator', os:'Android 14 · API 34', id:'DEVICE-C7F1' },
+];
+const MATCHES = [
+  { id:'TC-006', title:'Checkout with saved payment method', plans:2, bg:'#EFF6FF', border:'#BFDBFE' },
+  { id:'TC-006·b', title:'Checkout with saved payment — EU VAT variant', plans:1, bg:'#F5F7FA', border:'#DDE3EB' },
+  { id:'TC-005', title:'Add item to cart from product detail page', plans:2, bg:'#F5F7FA', border:'#DDE3EB' },
+];
+
+const DEVICES_SEED = [
+  { id:'DEVICE-A3B2', name:"Marco's iPhone 14 Pro", platform:'iOS', enabled:true, lastSeen:'Just now' },
+  { id:'DEVICE-C7F1', name:'Pixel 8 · Emulator', platform:'Android', enabled:true, lastSeen:'2m ago' },
+  { id:'DEVICE-9E21', name:'QA iPad (spare)', platform:'iOS', enabled:false, lastSeen:'3d ago' },
+];
+const SEV_COLOR = { P0:'#DC2626', P1:'#B45309', P2:'#2563EB', P3:'#6B7280' };
+const BUG_STATUS_STYLE = { Open:COL.accent, 'In Progress':COL.warn, Resolved:COL.pass, Closed:COL.skip, "Won't Fix":COL.blocked };
+const BUGS_SEED = [
+  { id:'BUG-001', title:'Reset token expires without a clear error message', severity:'P1', status:'Open', env:'Staging', build:'2.4.1', device:"Marco's iPhone 14 Pro", caseId:'TC-003', plan:'Regression Suite v2.4', description:'Password reset flow shows a generic error when the token has expired instead of a specific, user-facing message.', timelineTs:'04:23:31', logWindow:30, reqCount:3, screenshotLabel:'Attached' },
+  { id:'BUG-002', title:'Order total mismatch after applying coupon', severity:'P0', status:'In Progress', env:'Production', build:'2.4.0', device:'Pixel 8 · Emulator', caseId:'TC-006', plan:'Checkout Flow', description:'Checkout total does not reflect the coupon discount in the final confirmation screen, though the cart preview is correct.', timelineTs:'04:26:44', logWindow:30, reqCount:2, screenshotLabel:'Attached' },
+  { id:'BUG-003', title:'Search results flash empty state before loading', severity:'P3', status:"Won't Fix", env:'Staging', build:'2.3.9', device:"Marco's iPhone 14 Pro", caseId:'TC-004', plan:'Search & Discovery', description:'Minor flash of the empty state UI for ~100ms before results render; cosmetic only.', timelineTs:'04:24:09', logWindow:30, reqCount:1, screenshotLabel:'None' },
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'cases', caseTab: 'All Cases', planTab: 'All',
+    selCaseId: 'TC-003', expCaseId: 'TC-006', detailTab: 'Information', addToPlanOpen: false, importOpen: false, caseMenuRow: null,
+    selPlanId: 1, planMenuRow: null,
+    bugMarkers: [], stopModalOpen: false, runnerMode: 'both',
+    pairingOpen: false, dockOpen: false, sidebarExpanded: false, workspaceOpen: false,
+    devicePolicy: 'allowlist', devices: DEVICES_SEED,
+    selBugId: 'BUG-001', bugs: BUGS_SEED,
+    selLogId: 6, logs: LOG_DATA, logTab: 'Response', logBeautify: true,
+  };
+
+  methodColor(m) { return { GET:'#1E40AF', POST:'#166534', PUT:'#92400E', DELETE:'#991B1B', PATCH:'#5B21B6' }[m] || '#374151'; }
+  statusColorFor(code) {
+    if (code == null) return '#2563EB';
+    const n = parseInt(code);
+    return n >= 500 ? '#DC2626' : n >= 400 ? '#B45309' : n >= 300 ? '#6B7280' : '#16A34A';
+  }
+  caseSummary(instances) {
+    if (instances.some(i => i.status === 'fail' || i.status === 'blocked')) return { label:'Has Fail', ...COL.fail };
+    if (instances.length && instances.every(i => i.status === 'pass')) return { label:'All Done', ...COL.pass };
+    return { label:'Not Run Yet', ...COL.skip };
+  }
+  passRate(p) { const d = p.pass + p.fail + p.pending; return d === 0 ? 100 : Math.round((p.pass / d) * 100); }
+  rateColorFor(rate) { return rate >= 90 ? '#16A34A' : rate >= 70 ? '#B45309' : '#DC2626'; }
+
+  go(screen) { this.setState({ screen }); }
+  goCaseTab(tab) { this.setState({ caseTab: tab }); }
+  selectCase(id) { this.setState({ selCaseId: id }); }
+  toggleExpand(id) { this.setState(s => ({ expCaseId: s.expCaseId === id ? null : id })); }
+  goDetailTab(tab) { this.setState({ detailTab: tab }); }
+  openAddToPlan() { this.setState({ addToPlanOpen: true }); }
+  closeAddToPlan() { this.setState({ addToPlanOpen: false }); }
+  openImport() { this.setState({ importOpen: true }); }
+  closeImport() { this.setState({ importOpen: false }); }
+  selectPlan(id) { this.setState({ selPlanId: id, planMenuRow: null }); }
+  togglePlanMenu(id) { this.setState(s => ({ planMenuRow: s.planMenuRow === id ? null : id })); }
+
+  bugOccurred() {
+    const now = new Date();
+    const t = now.toTimeString().slice(0,8);
+    this.setState(s => ({ bugMarkers: [...s.bugMarkers, { id: 'm'+Date.now(), time: t, title: 'Untitled bug — annotate in Bugs' }] }));
+  }
+  openStop() { this.setState({ stopModalOpen: true }); }
+  closeStop() { this.setState({ stopModalOpen: false }); }
+  chooseResult() { this.setState({ stopModalOpen: false }); }
+  openPairing() { this.setState({ pairingOpen: true }); }
+  closePairing() { this.setState({ pairingOpen: false }); }
+  toggleDock() { this.setState(s => ({ dockOpen: !s.dockOpen })); }
+  setPolicy(p) { this.setState({ devicePolicy: p }); }
+  toggleDevice(id) { this.setState(s => ({ devices: s.devices.map(d => d.id === id ? { ...d, enabled: !d.enabled } : d) })); }
+  selectBug(id) { this.setState({ selBugId: id }); }
+  selectLog(id) { this.setState({ selLogId: id }); }
+  goLogTab(tab) { this.setState({ logTab: tab }); }
+  clearLogs() { this.setState({ logs: [] }); }
+  toggleSidebar() { this.setState(s => ({ sidebarExpanded: !s.sidebarExpanded, workspaceOpen: false })); }
+  toggleWorkspace() { this.setState(s => ({ workspaceOpen: !s.workspaceOpen })); }
+  toggleCaseMenu(id) { this.setState(s => ({ caseMenuRow: s.caseMenuRow === id ? null : id })); }
+  goPlanTab(tab) { this.setState({ planTab: tab }); }
+  setRunnerMode(mode) { this.setState({ runnerMode: mode }); }
+  toggleBeautify() { this.setState(s => ({ logBeautify: !s.logBeautify })); }
+
+  renderVals() {
+    const s = this.state;
+    const NAV = [
+      { id:'cases', label:'Test Cases', short:'Cases' }, { id:'plans', label:'Test Plans', short:'Plans' },
+      { id:'runner', label:'Runner', short:'Run' }, { id:'logs', label:'Log Inspector', short:'Logs' },
+      { id:'devices', label:'Devices', short:'Dev' }, { id:'bugs', label:'Bugs', short:'Bugs' }, { id:'reports', label:'Reports', short:'Rpts' },
+    ];
+    const navItems = NAV.map(n => {
+      const active = s.screen === n.id;
+      return { label:n.label, short:n.short, go:() => this.go(n.id), bg: active?'rgba(59,130,246,0.14)':'transparent', borderColor: active?'#3B82F6':'transparent', textColor: active?'#93C5FD':'#7A8BA8', weight: active?600:400,
+        isCases: n.id==='cases', isPlans: n.id==='plans', isRunner: n.id==='runner', isLogs: n.id==='logs', isDevices: n.id==='devices', isBugs: n.id==='bugs', isReports: n.id==='reports' };
+    });
+
+    // Cases
+    const CASE_TABS = ['All Cases','Active','Archived'];
+    const caseTabs = CASE_TABS.map(t => ({ label:t, go:() => this.goCaseTab(t), weight: s.caseTab===t?600:400, color: s.caseTab===t?'#2563EB':'#6B7280', border: s.caseTab===t?'#2563EB':'transparent' }));
+
+    const cases = CASES_SEED.map(c => {
+      const summary = this.caseSummary(c.instances);
+      const selected = c.id === s.selCaseId, expanded = c.id === s.expCaseId;
+      const pics = [...new Set(c.instances.map(i => i.pic))];
+      return {
+        ...c, summary, expanded, instanceCount: c.instances.length,
+        idColor: c.forkedFrom ? '#7C3AED' : '#9CA3AF', idWeight: c.forkedFrom ? 700 : 400,
+        showIos: c.platform === 'iOS' || c.platform === 'Both', showAndroid: c.platform === 'Android' || c.platform === 'Both',
+        avatars: pics.map(p => ({ initials: p.replace('·',''), color: (PEOPLE[p]||{color:'#6B7280'}).color, name: (PEOPLE[p]||{name:p}).name })),
+        rowBg: selected ? '#EFF6FF' : 'transparent', rowBorder: selected ? '#2563EB' : 'transparent',
+        expandGlyph: expanded ? '▾' : '▸', menuOpen: s.caseMenuRow === c.id, toggleMenu: () => this.toggleCaseMenu(c.id),
+        select: () => this.selectCase(c.id), toggleExpand: () => this.toggleExpand(c.id),
+        instances: c.instances.map(i => ({ ...i, style: STATUS_STYLE[i.status], statusLabel: STATUS_LABEL[i.status], pic: (PEOPLE[i.pic]||{name:i.pic}).name })),
+      };
+    });
+    const selRaw = CASES_SEED.find(c => c.id === s.selCaseId) || CASES_SEED[0];
+    const selPics = [...new Set(selRaw.instances.map(i => i.pic))];
+    const selectedCase = {
+      ...selRaw, summary: this.caseSummary(selRaw.instances), instanceCount: selRaw.instances.length,
+      showIos: selRaw.platform === 'iOS' || selRaw.platform === 'Both', showAndroid: selRaw.platform === 'Android' || selRaw.platform === 'Both',
+      buildDisplay: selRaw.build ? (selRaw.build + ' SDK') : '— (not set)',
+      instances: selRaw.instances.map(i => ({ ...i, style: STATUS_STYLE[i.status], statusLabel: STATUS_LABEL[i.status], pic: (PEOPLE[i.pic]||{name:i.pic}).name })),
+      picList: selPics.map(p => ({ initials: p.replace('·',''), color: (PEOPLE[p]||{color:'#6B7280'}).color, name: (PEOPLE[p]||{name:p}).name, plans: selRaw.instances.filter(i=>i.pic===p).map(i=>i.plan).join(' · ') })),
+    };
+    const detailTabs = ['Information','Steps','Change Log','Related Plans'].map(t => ({ label:t, go:() => this.goDetailTab(t), weight: s.detailTab===t?600:400, color: s.detailTab===t?'#2563EB':'#6B7280', border: s.detailTab===t?'#2563EB':'transparent' }));
+    const steps = ACTIVE_STEPS.map((st,i) => ({ n:i+1, action:st.text, expect:st.expect }));
+    const changelog = [
+      { who:'Aisha R.', initials:'AR', color:'#7C3AED', action:'changed status to', target:'Pass', when:'12m ago' },
+      { who:'Marco K.', initials:'MK', color:'#2563EB', action:'started run in', target:'Regression Suite v2.4', when:'1m ago' },
+      { who:'Aisha R.', initials:'AR', color:'#7C3AED', action:'edited', target:'Step 3', when:'1d ago' },
+      { who:'Marco K.', initials:'MK', color:'#2563EB', action:'linked case to', target:'Regression Suite v2.4', when:'3d ago' },
+      { who:'Marco K.', initials:'MK', color:'#2563EB', action:'created case', target:'', when:'1w ago' },
+    ].map((e,i,arr) => ({ ...e, showLine: i !== arr.length-1 }));
+    const matches = MATCHES;
+    const importRows = [
+      { title:'Verify order history pagination', meta:'category: Orders · platform: iOS', bg:'#F0FDF4', border:'#BBF7D0', statusLabel:'Valid', statusColor:'#16A34A' },
+      { title:'Checkout with saved payment method', meta:'duplicate title — allowed, imports as new case', bg:'#F0FDF4', border:'#BBF7D0', statusLabel:'Valid (dup OK)', statusColor:'#16A34A' },
+      { title:'Apply gift card at checkout', meta:'category: Checkout · platform: iOS', bg:'#F0FDF4', border:'#BBF7D0', statusLabel:'Valid', statusColor:'#16A34A' },
+      { title:'(missing title)', meta:'row 5 — required field "title" is empty', bg:'#FEF2F2', border:'#FECACA', statusLabel:'Error', statusColor:'#DC2626' },
+    ];
+
+    // Plans
+    const PLAN_TABS = ['All','Active','Archived'];
+    const planTabs = PLAN_TABS.map(t => ({ label:t, go:() => this.goPlanTab(t), weight: s.planTab===t?600:400, color: s.planTab===t?'#2563EB':'#6B7280', border: s.planTab===t?'#2563EB':'transparent' }));
+    const allPlansComputed = PLANS_SEED.map(p => {
+      const rate = this.passRate(p); const selected = p.id === s.selPlanId;
+      return { ...p, passRate:rate, rateColor:this.rateColorFor(rate), targetBuildDisplay: p.targetBuild || '—', statusLabel: p.status==='active'?'Active':'Archived', statusBg: p.status==='active'?'#EFF6FF':'#EEF2F7', statusColor: p.status==='active'?'#1E40AF':'#6B7280', rowBg: selected?'#EFF6FF':'transparent', rowBorder: selected?'#2563EB':'transparent', select:() => this.selectPlan(p.id) };
+    });
+    const plans = s.planTab==='All' ? allPlansComputed : allPlansComputed.filter(p => p.statusLabel === s.planTab);
+    const selPlanRaw = PLANS_SEED.find(p => p.id === s.selPlanId) || PLANS_SEED[0];
+    const selRate = this.passRate(selPlanRaw);
+    const selectedPlan = {
+      ...selPlanRaw, passRate:selRate, rateColor:this.rateColorFor(selRate), targetBuildDisplay: selPlanRaw.targetBuild || '—',
+      statusLabel: selPlanRaw.status==='active'?'Active':'Archived', statusBg: selPlanRaw.status==='active'?'#EFF6FF':'#EEF2F7', statusColor: selPlanRaw.status==='active'?'#1E40AF':'#6B7280',
+      envDot: selPlanRaw.env==='Production'?'#DC2626':selPlanRaw.env==='Staging'?'#B45309':'#2563EB',
+      caseRows: (PLAN_CASES[selPlanRaw.id]||[]).map(r => ({ ...r, style: RESULT_STYLE[r.status], resultLabel: RESULT_LABEL[r.status], rowBg: r.status==='fail'?'#FEF2F2':'#FFFFFF', menuOpen: s.planMenuRow===r.id, toggleMenu:() => this.togglePlanMenu(r.id) })),
+    };
+    const recentSessions = [
+      { time:'Today 4:23 AM', result:'Pass', bg:'#F0FDF4', color:'#16A34A' },
+      { time:'Yesterday 2:10 PM', result:'Fail', bg:'#FEF2F2', color:'#DC2626' },
+      { time:'Jun 5, 11:40 AM', result:'Pass', bg:'#F0FDF4', color:'#16A34A' },
+    ];
+
+    // Runner
+    const RUNNER_MODES = [ {id:'both', label:'Both'}, {id:'ios', label:'iOS only'}, {id:'android', label:'Android only'} ];
+    const runnerModes = RUNNER_MODES.map(m => ({ label:m.label, go:() => this.setRunnerMode(m.id), bg: s.runnerMode===m.id?'#2563EB':'transparent', color: s.runnerMode===m.id?'#fff':'#94A3B8' }));
+    const iosOff = s.runnerMode === 'android', androidOff = s.runnerMode === 'ios';
+    const runCases = RUN_CASES.map((rc,i) => {
+      const iosSt = RUN_STAT[rc.ios], andSt = RUN_STAT[rc.android];
+      const active = rc.code === 'TC-003';
+      return { n:i+1, code:rc.code, title:rc.title, bg: active?'#EFF6FF':'transparent', border: active?'#2563EB':'transparent',
+        iosStyle:{bg:iosSt.bg,border:iosSt.b,color:iosSt.c}, iosLabel:iosSt.l, iosOpacity: iosOff?0.35:1,
+        androidStyle:{bg:andSt.bg,border:andSt.b,color:andSt.c}, androidLabel:andSt.l, androidOpacity: androidOff?0.35:1 };
+    });
+    const mkPlatformColumn = (platform, deviceName, logsRaw, verdict, borderRight, disabled) => ({
+      platform, deviceName, borderRight: borderRight ? '#DDE3EB' : 'transparent', disabled, opacity: disabled?0.4:1, pointerEvents: disabled?'none':'auto',
+      passActive: verdict==='pass' ? '#16A34A' : '#F0FDF4', passTextColor: verdict==='pass' ? '#fff' : '#16A34A',
+      failActive: verdict==='fail' ? '#DC2626' : '#FEF2F2', failTextColor: verdict==='fail' ? '#fff' : '#DC2626',
+      bugActive: verdict==='bug' ? '#B45309' : '#FFFBEB', bugTextColor: verdict==='bug' ? '#fff' : '#B45309',
+      logs: logsRaw.map(l => ({ method:l.method, url:l.url, methodColor:this.methodColor(l.method), opacity: l.inProgress?0.65:1, statusColor: l.inProgress?'#2563EB':this.statusColorFor(l.status), statusLabel: l.inProgress?'…':(l.status+' · '+l.ms+'ms') })),
+    });
+    const platformColumns = [ mkPlatformColumn('iOS', "Marco's iPhone 14 Pro", DEV_LOGS.ios, 'running', true, iosOff), mkPlatformColumn('Android', 'Pixel 8 · Emulator', DEV_LOGS.android, 'bug', false, androidOff) ];
+    const resultOptions = ['Passed','Failed','Blocked','Incomplete'].map(r => { const k = {Passed:'pass',Failed:'fail',Blocked:'blocked',Incomplete:'skip'}[r]; return { label:r, choose:() => this.chooseResult(r), bg:COL[k].bg, color:COL[k].color, border:COL[k].border }; });
+
+    // Devices
+    const devices = s.devices.map(d => ({ ...d, statusColor: d.enabled?'#16A34A':'#9CA3AF', statusLabel: d.enabled?'Enabled':'Disabled', toggleLabel: d.enabled?'Disable':'Enable', toggle:() => this.toggleDevice(d.id) }));
+
+    // Bugs
+    const bugs = s.bugs.map(b => { const selected = b.id===s.selBugId; return { ...b, sevColor:SEV_COLOR[b.severity], statusStyle:BUG_STATUS_STYLE[b.status], rowBg: selected?'#EFF6FF':'transparent', rowBorder: selected?'#2563EB':'transparent', select:() => this.selectBug(b.id) }; });
+    const selBugRaw = s.bugs.find(b => b.id===s.selBugId) || s.bugs[0];
+    const selectedBug = { ...selBugRaw, sevColor: SEV_COLOR[selBugRaw.severity] };
+
+    // Reports
+    const buildFail = {}; PLANS_SEED.forEach(p => { buildFail[p.targetBuild] = (buildFail[p.targetBuild]||0) + p.fail; });
+    const maxFail = Math.max(1, ...Object.values(buildFail));
+    const failedByBuild = Object.entries(buildFail).filter(([,c]) => c>0).map(([build,count]) => ({ build, count, pct: Math.round((count/maxFail)*100) }));
+    const envCounts = {}; s.bugs.forEach(b => { envCounts[b.env] = (envCounts[b.env]||0) + 1; });
+    const maxEnv = Math.max(1, ...Object.values(envCounts));
+    const bugsByEnv = Object.entries(envCounts).map(([env,count]) => ({ env, count, pct: Math.round((count/maxEnv)*100) }));
+    const sessionHistory = [
+      { time:'Today 04:23', plan:'Regression Suite v2.4', device:"Marco's iPhone", result:'Failed', resultColor:'#DC2626' },
+      { time:'Today 04:15', plan:'Checkout Flow', device:'Pixel 8', result:'Passed', resultColor:'#16A34A' },
+      { time:'Yesterday', plan:'Authentication Suite', device:"Marco's iPhone", result:'Passed', resultColor:'#16A34A' },
+      { time:'2 days ago', plan:'Search & Discovery', device:'Pixel 8', result:'Blocked', resultColor:'#7C3AED' },
+    ];
+
+    // Logs
+    const logs = s.logs.map(l => { const selected = l.id===s.selLogId; return { ...l, url:l.path, methodColor:this.methodColor(l.method), statusColor:this.statusColorFor(l.status), statusLabel: l.status+' · '+l.ms+'ms', opacity:1, rowBg: selected?'#EFF6FF':'transparent', rowBorder: selected?'#2563EB':'transparent', select:() => this.selectLog(l.id) }; });
+    const selLogRaw = s.logs.find(l => l.id===s.selLogId) || s.logs[0] || {};
+    const reqBodyPretty = '{\n  "token": "a8f2c1e7-…",\n  "password": "[REDACTED]",\n  "confirmPassword": "[REDACTED]"\n}';
+    const resBodyPretty = '{\n  "error": "validation_failed",\n  "message": "Token has expired or is invalid.",\n  "code": "RESET_TOKEN_EXPIRED"\n}';
+    const reqBodyRaw = '{"token":"a8f2c1e7-…","password":"[REDACTED]","confirmPassword":"[REDACTED]"}';
+    const resBodyRaw = '{"error":"validation_failed","message":"Token has expired or is invalid.","code":"RESET_TOKEN_EXPIRED"}';
+    const selectedLog = selLogRaw.id ? {
+      ...selLogRaw, methodColor:this.methodColor(selLogRaw.method), fullUrl:'https://api.acme.io'+selLogRaw.path,
+      statusColor:this.statusColorFor(selLogRaw.status), statusLabel: selLogRaw.status+' · '+selLogRaw.ms+'ms', ts:'04:23:31 UTC',
+      reqHeaders:[ {key:'Content-Type',val:'application/json'}, {key:'Authorization',val:'Bearer ••••••••••••••••'}, {key:'Cookie',val:'session=••••••••'}, {key:'X-Device-ID',val:'DEVICE-A3B2'} ],
+      resHeaders:[ {key:'Content-Type',val:'application/json; charset=utf-8'}, {key:'X-Request-ID',val:'req_8f2a3c1e'}, {key:'X-Rate-Limit-Remaining',val:'47'} ],
+      reqBodyDisplay: s.logBeautify ? reqBodyPretty : reqBodyRaw, resBodyDisplay: s.logBeautify ? resBodyPretty : resBodyRaw,
+    } : { method:'', fullUrl:'', statusColor:'#9CA3AF', statusLabel:'', ts:'', device:'', session:'', reqHeaders:[], resHeaders:[], reqBodyDisplay:'', resBodyDisplay:'No logs — cleared (local data only).' };
+    const logTabs = ['Overview','Request','Response'].map(t => ({ label:t, go:() => this.goLogTab(t), weight: s.logTab===t?600:400, color: s.logTab===t?'#2563EB':'#6B7280', border: s.logTab===t?'#2563EB':'transparent' }));
+    const sessionGroups = SESSION_GROUPS.map(g => ({ ...g, sessions: g.sessions.map(ss => ({ ...ss, bg: ss.active?'#EFF6FF':'transparent', border: ss.active?'#2563EB':'transparent', dot: ss.status==='fail'?'#DC2626':'#16A34A', label: ss.label, code: ss.code })) }));
+
+    return {
+      navItems,
+      sidebarExpanded: s.sidebarExpanded, sidebarCollapsed: !s.sidebarExpanded, sidebarWidth: s.sidebarExpanded?200:60,
+      sidebarJustify: s.sidebarExpanded?'flex-start':'center', sidebarAlign: s.sidebarExpanded?'flex-start':'center',
+      sidebarToggleGlyph: s.sidebarExpanded?'‹':'›', toggleSidebar: () => this.toggleSidebar(),
+      workspaceOpen: s.workspaceOpen, workspaceGlyph: s.workspaceOpen?'▴':'▾', toggleWorkspace: () => this.toggleWorkspace(),
+      isCases: s.screen==='cases', isPlans: s.screen==='plans', isRunner: s.screen==='runner', isDevices: s.screen==='devices', isBugs: s.screen==='bugs', isReports: s.screen==='reports', isLogs: s.screen==='logs',
+      caseTabs, cases, selectedCase, detailTabs,
+      isDetailInfo: s.detailTab==='Information', isDetailSteps: s.detailTab==='Steps', isDetailChangelog: s.detailTab==='Change Log', isDetailRelated: s.detailTab==='Related Plans',
+      steps, changelog, matches, addToPlanOpen: s.addToPlanOpen, openAddToPlan: () => this.openAddToPlan(), closeAddToPlan: () => this.closeAddToPlan(),
+      importOpen: s.importOpen, importRows, openImport: () => this.openImport(), closeImport: () => this.closeImport(),
+      planTabs, plans, selectedPlan, recentSessions,
+      runnerModes, runCases, platformColumns, bugMarkers: s.bugMarkers, bugOccurred: () => this.bugOccurred(),
+      stopModalOpen: s.stopModalOpen, resultOptions, openStop: () => this.openStop(), closeStop: () => this.closeStop(),
+      pairingOpen: s.pairingOpen, openPairing: () => this.openPairing(), closePairing: () => this.closePairing(),
+      devices, allowlistBg: s.devicePolicy==='allowlist'?'#EFF6FF':'#F9FAFB', allowlistColor: s.devicePolicy==='allowlist'?'#1E40AF':'#6B7280', allowlistBorder: s.devicePolicy==='allowlist'?'#BFDBFE':'#E5E7EB',
+      openBg: s.devicePolicy==='open'?'#FFFBEB':'#F9FAFB', openColor: s.devicePolicy==='open'?'#B45309':'#6B7280', openBorder: s.devicePolicy==='open'?'#FDE68A':'#E5E7EB',
+      setAllowlist: () => this.setPolicy('allowlist'), setOpen: () => this.setPolicy('open'),
+      bugCount: s.bugs.length, bugs, selectedBug,
+      failedByBuild, bugsByEnv, sessionHistory, goCases: () => this.go('cases'),
+      logCount: logs.length, logs, selectedLog, logTabs, isLogOverview: s.logTab==='Overview', isLogRequest: s.logTab==='Request', isLogResponse: s.logTab==='Response', clearLogs: () => this.clearLogs(),
+      logBeautify: s.logBeautify, toggleBeautify: () => this.toggleBeautify(), beautifyBg: s.logBeautify?'#EFF6FF':'#F9FAFB', beautifyColor: s.logBeautify?'#1E40AF':'#6B7280', beautifyBorder: s.logBeautify?'#BFDBFE':'#E5E7EB',
+      sessionGroups, connectedDevices: CONNECTED_DEVICES, showDock: s.screen!=='devices' && s.screen!=='bugs' && s.screen!=='reports', dockOpen: s.dockOpen, dockGlyph: s.dockOpen?'▴':'▾', toggleDock: () => this.toggleDock(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
