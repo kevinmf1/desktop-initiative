@@ -8,19 +8,19 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-005 closed; nothing 🔵)
-- **Status:** feat-004 and feat-005 are complete and committed separately.
-  Session detail: [archive](../archive/sessions/2026-08-03-feat-004-feat-005.md).
+- **Active feature:** — (feat-006 closed; nothing 🔵)
+- **Status:** feat-006 is complete. Session detail:
+  [archive](../archive/sessions/2026-08-03-feat-006.md).
 - **Last verify:** 2026-08-03 · `build` → **PASS** · `test` → **PASS** · `lint` → not configured.
-  Rust handshake tests: 9/9 passed. Prior release check: `cargo tauri build --no-bundle` passed.
+  Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`; Vitest 2/2,
+  Rust 15/15.
 
 ## Next step
 
-Pick one ready feature. **feat-006** starts the auth/workspace/authoring chain; **feat-013** is now
-also ready and starts pairing toward the WebSocket server. Set the chosen row 🔵 before editing.
-
-`desktop/node_modules`, `desktop/dist` and `desktop/src-tauri/target/` are already ignored by the
-scaffold's own `.gitignore`s — verified with `git status --short -uall desktop`.
+Pick one ready feature. **feat-007** continues the auth chain by exchanging the Rust-held Google
+identity proof with the backend, storing the minted credential and cached memberships in the OS
+keychain, enforcing offline grace, and clearing local auth data on sign-out. **feat-013** remains
+independently ready and starts device pairing.
 
 ## Parked
 
@@ -40,4 +40,4 @@ scaffold's own `.gitignore`s — verified with `git status --short -uall desktop
 | File | Change | Why |
 |------|--------|-----|
 _No unarchived session changes. See
-[2026-08-03-feat-004-feat-005.md](../archive/sessions/2026-08-03-feat-004-feat-005.md)._
+[2026-08-03-feat-006.md](../archive/sessions/2026-08-03-feat-006.md)._

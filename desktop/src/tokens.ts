@@ -1,5 +1,5 @@
 // Theme A "Clean Pro" — copied from design/desktop-qa/uploads/QA-Tools (1)/qa-tokens.jsx.
-// ponytail: only the tokens the shell actually uses. Copy more from qa-tokens.jsx as screens land.
+// Only the tokens the shell actually uses. Copy more from qa-tokens.jsx as screens land.
 // Theme B "Dev Dark" has no mockup (design/README.md) — one theme until it does.
 export const t = {
   bg: '#F5F7FA',

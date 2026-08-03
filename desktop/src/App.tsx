@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 import { t } from './tokens';
 
@@ -15,8 +16,6 @@ export const SCREENS = [
 
 type ScreenId = (typeof SCREENS)[number]['id'];
 
-// ponytail: a 200px text rail, not the 60px icon rail in qa-ui.jsx — qa-icons.jsx is 222 lines
-// of SVG for screens that do not exist yet. Port the icon rail when the screens do.
 function NavRail({ active, onSelect }: { active: ScreenId; onSelect: (id: ScreenId) => void }) {
   return (
     <nav
@@ -82,7 +81,7 @@ function NavRail({ active, onSelect }: { active: ScreenId; onSelect: (id: Screen
   );
 }
 
-export default function App() {
+function WorkspaceShell() {
   const [active, setActive] = useState<ScreenId>('cases');
   const screen = SCREENS.find((s) => s.id === active)!;
 
@@ -117,5 +116,101 @@ export default function App() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  const [status, setStatus] = useState<'signed-out' | 'signing-in' | 'signed-in'>('signed-out');
+  const [error, setError] = useState('');
+
+  if (status === 'signed-in') return <WorkspaceShell />;
+
+  async function signIn() {
+    setStatus('signing-in');
+    setError('');
+    try {
+      await invoke('sign_in_with_google');
+      setStatus('signed-in');
+    } catch (reason) {
+      setError(String(reason));
+      setStatus('signed-out');
+    }
+  }
+
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 24,
+        boxSizing: 'border-box',
+        fontFamily: t.font,
+        background: t.bg,
+        color: t.text,
+      }}
+    >
+      <section
+        aria-labelledby="sign-in-title"
+        style={{
+          width: 'min(100%, 380px)',
+          padding: 32,
+          boxSizing: 'border-box',
+          background: t.surface,
+          border: `1px solid ${t.border}`,
+          borderRadius: t.r,
+          textAlign: 'center',
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            width: 44,
+            height: 44,
+            margin: '0 auto 20px',
+            borderRadius: t.r,
+            display: 'grid',
+            placeItems: 'center',
+            background: t.accent,
+            color: '#fff',
+            fontFamily: t.mono,
+            fontSize: 14,
+            fontWeight: 700,
+          }}
+        >
+          QA
+        </div>
+        <h1 id="sign-in-title" style={{ margin: 0, fontSize: 22 }}>
+          Sign in to TestLab
+        </h1>
+        <p style={{ margin: '10px 0 24px', color: t.text2, fontSize: 14, lineHeight: 1.5 }}>
+          Continue with your Google account. Sign-in opens securely in your system browser.
+        </p>
+        <button
+          type="button"
+          onClick={signIn}
+          disabled={status === 'signing-in'}
+          style={{
+            width: '100%',
+            height: 42,
+            border: 0,
+            borderRadius: t.rSm,
+            background: t.accent,
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: status === 'signing-in' ? 'wait' : 'pointer',
+            opacity: status === 'signing-in' ? 0.7 : 1,
+          }}
+        >
+          {status === 'signing-in' ? 'Waiting for browser…' : 'Sign in with Google'}
+        </button>
+        {error && (
+          <p role="alert" style={{ margin: '16px 0 0', color: '#B42318', fontSize: 13 }}>
+            {error}
+          </p>
+        )}
+      </section>
+    </main>
   );
 }
