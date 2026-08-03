@@ -1,6 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from './tokens';
+
+// The redacted account from Rust — never carries the session or refresh token (FR-052).
+export type Account = {
+  user: { id: string; display_name: string; email: string; avatar_url?: string | null };
+  memberships: { workspace_id: string; name: string; role?: string | null; status?: string | null }[];
+  offline_grace_until: string;
+  can_start_new_session: boolean;
+};
 
 // Screen list from design/README.md (the desktop-standalone.html gallery's surviving info).
 // Each is a placeholder until its own feature lands — see FEATURES.md epic "Desktop app (Tauri)".
@@ -16,7 +24,17 @@ export const SCREENS = [
 
 type ScreenId = (typeof SCREENS)[number]['id'];
 
-function NavRail({ active, onSelect }: { active: ScreenId; onSelect: (id: ScreenId) => void }) {
+function NavRail({
+  active,
+  onSelect,
+  account,
+  onSignOut,
+}: {
+  active: ScreenId;
+  onSelect: (id: ScreenId) => void;
+  account: Account;
+  onSignOut: () => void;
+}) {
   return (
     <nav
       style={{
@@ -77,17 +95,56 @@ function NavRail({ active, onSelect }: { active: ScreenId; onSelect: (id: Screen
           </button>
         );
       })}
+      <div style={{ marginTop: 'auto', padding: '12px 8px 0', borderTop: `1px solid ${t.railBorder}` }}>
+        <div style={{ color: t.railActiveText, fontSize: 12, fontWeight: 600 }}>
+          {account.user.display_name}
+        </div>
+        <div
+          style={{
+            color: t.railText,
+            fontSize: 11,
+            marginTop: 2,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {account.user.email}
+        </div>
+        <button
+          type="button"
+          onClick={onSignOut}
+          style={{
+            all: 'unset',
+            marginTop: 8,
+            cursor: 'pointer',
+            color: t.railText,
+            fontSize: 12,
+            fontWeight: 500,
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </nav>
   );
 }
 
-function WorkspaceShell() {
+function WorkspaceShell({
+  account,
+  onSignOut,
+}: {
+  account: Account;
+  onSignOut: () => void;
+}) {
   const [active, setActive] = useState<ScreenId>('cases');
   const screen = SCREENS.find((s) => s.id === active)!;
+  // FR-053a: expired offline grace gates starting a *new* session and nothing else. Every other
+  // screen — all locally captured data — stays reachable, and a running session is never touched.
+  const newSessionBlocked = screen.id === 'runner' && !account.can_start_new_session;
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: t.font, background: t.bg }}>
-      <NavRail active={active} onSelect={setActive} />
+      <NavRail active={active} onSelect={setActive} account={account} onSignOut={onSignOut} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <h1
           style={{
@@ -107,35 +164,89 @@ function WorkspaceShell() {
           {screen.label}
         </h1>
         <section style={{ flex: 1, display: 'grid', placeItems: 'center', color: t.text2 }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 14 }}>{screen.label} is not built yet.</div>
-            <div style={{ fontSize: 12, color: t.text3, fontFamily: t.mono, marginTop: 6 }}>
-              {screen.feature}
+          {newSessionBlocked ? (
+            <div role="status" style={{ textAlign: 'center', maxWidth: 420 }}>
+              <div style={{ fontSize: 14, color: t.text }}>
+                Sign in again to start a new session.
+              </div>
+              <div style={{ fontSize: 13, marginTop: 8, lineHeight: 1.5 }}>
+                The offline grace period ended on{' '}
+                {new Date(account.offline_grace_until).toLocaleDateString()}. Running sessions and
+                everything already captured on this machine are unaffected.
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 14 }}>{screen.label} is not built yet.</div>
+              <div style={{ fontSize: 12, color: t.text3, fontFamily: t.mono, marginTop: 6 }}>
+                {screen.feature}
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
   );
 }
 
-export default function App() {
-  const [status, setStatus] = useState<'signed-out' | 'signing-in' | 'signed-in'>('signed-out');
-  const [error, setError] = useState('');
+type State =
+  | { phase: 'restoring' }
+  | { phase: 'signed-out'; error: string }
+  | { phase: 'signing-in' }
+  | { phase: 'signed-in'; account: Account; error: string };
 
-  if (status === 'signed-in') return <WorkspaceShell />;
+export default function App() {
+  const [state, setState] = useState<State>({ phase: 'restoring' });
+
+  // FR-052a / FR-053 / SC-022: launch reads the OS keychain and makes no network call, so a fully
+  // offline desktop with a cached session goes straight into the workspace.
+  useEffect(() => {
+    invoke<Account | null>('cached_account').then(
+      (cached) =>
+        setState(cached ? { phase: 'signed-in', account: cached, error: '' } : { phase: 'signed-out', error: '' }),
+      (reason) => setState({ phase: 'signed-out', error: String(reason) }),
+    );
+  }, []);
 
   async function signIn() {
-    setStatus('signing-in');
-    setError('');
+    setState({ phase: 'signing-in' });
     try {
-      await invoke('sign_in_with_google');
-      setStatus('signed-in');
+      const account = await invoke<Account>('sign_in_with_google');
+      setState({ phase: 'signed-in', account, error: '' });
     } catch (reason) {
-      setError(String(reason));
-      setStatus('signed-out');
+      setState({ phase: 'signed-out', error: String(reason) });
     }
   }
+
+  async function signOut() {
+    try {
+      await invoke('sign_out');
+      setState({ phase: 'signed-out', error: '' });
+    } catch (reason) {
+      // The credential was not cleared, so stay signed in rather than claim a sign-out that
+      // the next launch would silently undo (FR-054).
+      setState((current) =>
+        current.phase === 'signed-in' ? { ...current, error: String(reason) } : current,
+      );
+    }
+  }
+
+  if (state.phase === 'restoring') return null;
+
+  if (state.phase === 'signed-in') {
+    return (
+      <>
+        <WorkspaceShell account={state.account} onSignOut={signOut} />
+        {state.error && (
+          <p role="alert" style={{ margin: 0, padding: '8px 24px', color: '#B42318', fontSize: 13 }}>
+            {state.error}
+          </p>
+        )}
+      </>
+    );
+  }
+
+  const error = state.phase === 'signed-out' ? state.error : '';
 
   return (
     <main
@@ -189,7 +300,7 @@ export default function App() {
         <button
           type="button"
           onClick={signIn}
-          disabled={status === 'signing-in'}
+          disabled={state.phase === 'signing-in'}
           style={{
             width: '100%',
             height: 42,
@@ -199,11 +310,11 @@ export default function App() {
             color: '#fff',
             fontSize: 14,
             fontWeight: 600,
-            cursor: status === 'signing-in' ? 'wait' : 'pointer',
-            opacity: status === 'signing-in' ? 0.7 : 1,
+            cursor: state.phase === 'signing-in' ? 'wait' : 'pointer',
+            opacity: state.phase === 'signing-in' ? 0.7 : 1,
           }}
         >
-          {status === 'signing-in' ? 'Waiting for browser…' : 'Sign in with Google'}
+          {state.phase === 'signing-in' ? 'Waiting for browser…' : 'Sign in with Google'}
         </button>
         {error && (
           <p role="alert" style={{ margin: '16px 0 0', color: '#B42318', fontSize: 13 }}>

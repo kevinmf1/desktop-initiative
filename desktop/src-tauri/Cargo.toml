@@ -19,10 +19,16 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 base64 = "0.22"
+# Default features are the three real native stores (Keychain / Credential Manager /
+# Secret Service). Do not disable them: with no backend feature the crate falls back to an
+# in-memory store and the credential silently never reaches the OS keychain (FR-052a).
+keyring = "4"
 rand = "0.8"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 sha2 = "0.10"
 tauri = { version = "2", features = [] }
+# Already in the dependency graph; `serde-well-known` adds the RFC 3339 (de)serializers.
+time = { version = "0.3", features = ["serde-well-known"] }
 tauri-plugin-opener = "2"
 tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "time"] }
 url = "2"

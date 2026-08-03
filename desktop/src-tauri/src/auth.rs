@@ -13,6 +13,8 @@ use tokio::{
 };
 use url::Url;
 
+use crate::auth_session::Account;
+
 const AUTHORIZE_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const CALLBACK_TIMEOUT: Duration = Duration::from_secs(300);
@@ -110,13 +112,20 @@ struct TokenResponse {
     error_description: Option<String>,
 }
 
+/// The Google leg (FR-001b, FR-051a) followed by the backend exchange (FR-052a). The identity proof
+/// is handed to `auth_session` inside Rust and never crosses the IPC boundary; the webview receives
+/// only the redacted account.
 #[tauri::command]
 pub async fn sign_in_with_google(
     app: AppHandle,
     state: State<'_, AuthState>,
-) -> Result<(), String> {
+) -> Result<Account, String> {
     state.begin()?;
-    state.finish(authorize(&app).await)
+    state.finish(authorize(&app).await)?;
+    let proof = state
+        .take_identity_proof()?
+        .ok_or("Google sign-in did not produce an identity proof")?;
+    crate::auth_session::establish(&proof).await
 }
 
 async fn authorize(app: &AppHandle) -> Result<GoogleIdentityProof, String> {
