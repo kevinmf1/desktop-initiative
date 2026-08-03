@@ -2,8 +2,8 @@
 
 desktop-initiative — **this repo delivers the frontend (Tauri desktop) only.** It is one of four
 projects in the QA Test Management Platform; the Go backend, iOS SDK and Android SDK are other
-people's, built from their own copies of the umbrella spec. No product code lives here yet —
-`specs/frontend/` is the deliverable.
+people's, built from their own copies of the umbrella spec. The deliverable is the app in
+`desktop/`, built to the spec set in `specs/frontend/`.
 Router for agent work. Facts live in the linked docs; this file is the map, not the manual.
 
 ## Session startup
@@ -20,9 +20,11 @@ Router for agent work. Facts live in the linked docs; this file is the map, not 
 
 ## Project overview
 
-- **Stack:** Markdown specs only. No build toolchain, no package manifest.
+- **Stack:** Tauri 2.x — Rust core (`desktop/src-tauri/`) + React 19 / TS on Vite
+  (`desktop/src/`). Needs Rust (stable) + Node 20; see `specs/frontend/quickstart.md`.
 - **Structure:**
-  - `specs/frontend/` — **our deliverable**: the Tauri desktop spec set (self-contained)
+  - `desktop/` — **the app**. `npm --prefix desktop run tauri dev` to run it.
+  - `specs/frontend/` — the Tauri desktop spec set it is built to (self-contained)
   - `specs/001-test-management-platform/` — canonical umbrella spec, **single source of truth**
   - Each carries `spec.md plan.md research.md data-model.md quickstart.md` + its `contracts/`
 - **Out of scope:** `specs/README.md` also declares `backend/`, `ios/`, `android/`. Those are the
@@ -40,8 +42,11 @@ Router for agent work. Facts live in the linked docs; this file is the map, not 
 Run before claiming any work done. All checks must pass.
 
 ```bash
-./verify.sh build
+./verify.sh build && ./verify.sh test
 ```
+
+`build` = spec structure + `tsc && vite build` + `cargo check --all-targets`.
+`test` = contract-copy drift + `vitest run` + `cargo test`.
 
 `verify.sh` prints a final `HARNESS_VERIFY: PASS` / `FAIL` line — that line is your evidence.
 Only checks this project actually has are listed. Do not invent lint/test/e2e steps.

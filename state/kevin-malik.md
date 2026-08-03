@@ -7,17 +7,18 @@
 
 ## Now
 
-- **Objective:** Harness ready and correctly scoped to the **frontend (Tauri desktop) only**.
-- **Active feature:** — (none; Harness setup epic is closed)
-- **Status:** harness green, nothing committed yet (`main` is unborn — first commit is yours to make)
-- **Last verify:** 2026-08-03 · `build` → **PASS** (umbrella + frontend) ·
-  `test` → **PASS** (device-desktop-ws 2 copies, sync-api 2 copies, sdk-public-api 1) ·
-  `lint` → not configured
+- **Objective:** Build the Tauri desktop app to `specs/frontend/`.
+- **Active feature:** — (feat-004 closed; nothing 🔵)
+- **Status:** feat-004 is complete and ready to commit; `main` is at `967e5b6 Git Init`.
+- **Last verify:** 2026-08-03 · `build` → **PASS** · `test` → **PASS** · `lint` → not configured.
+  Release check: `cargo tauri build --no-bundle` passed.
 
 ## Next step
 
-Pick the first real frontend feature and add it to `FEATURES.md` as a new epic. The spec set in
-`specs/frontend/` is complete, so the next work is desktop implementation, not more spec writing.
+Pick **feat-005**, the next ready feature, and set its row 🔵 before editing.
+
+`desktop/node_modules`, `desktop/dist` and `desktop/src-tauri/target/` are already ignored by the
+scaffold's own `.gitignore`s — verified with `git status --short -uall desktop`.
 
 ## Parked
 
@@ -29,27 +30,11 @@ Pick the first real frontend feature and add it to `FEATURES.md` as a new epic. 
 
 ## Blockers
 
-- None.
+- None. Rust toolchain is at `~/.cargo/bin` and not on a non-login shell's `PATH`; `verify.sh`
+  prepends it, so no action needed.
 
-## Changes (this session)
+## Changes
 
 | File | Change | Why |
 |------|--------|-----|
-| AGENTS.md | Filled project overview; skill name `harness-kit` → `edts-harness` | Was TODO-marked; skill reinstalled under its real name |
-| CONSTITUTION.md | Real invariants + one dated decision | Stack defaults only, before |
-| FEATURES.md | Seeded epic, then rescoped to frontend | Placeholder replaced; backend/iOS rows withdrawn |
-| verify.sh | Spec-structure + contract-drift checks | Generated version was a TODO that always failed |
-| .gitignore, git repo | `git init -b main`, ignore `.DS_Store` | feat-003 |
-| archive/features/feat-003.md | Closed-feature evidence | Rotation |
-| .claude/settings.local.json | Dropped 3 allow-entries for the removed `harness-kit` path | Dead permissions |
-| state/kevin-malik.md | This file | Session state |
-
-### Scope correction — 2026-08-03
-
-Earlier in this session I derived `specs/backend/` and started `specs/ios/` as feat-001/feat-002,
-reading `specs/README.md`'s four-project index as this repo's work list. **It is not** — this repo
-delivers the frontend only. Those folders are gone and the harness now enforces the narrower scope
-(`verify.sh` `STACKS="frontend"`, `CONSTITUTION.md` § *Invariants — scope*). IDs feat-001/002 are
-retired, not reusable.
-
-_Ground truth: `git diff --stat` — everything shows as untracked until the first commit._
+_No unarchived session changes. See [feat-004](../archive/features/feat-004.md)._

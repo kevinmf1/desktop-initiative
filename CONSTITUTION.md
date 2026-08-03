@@ -35,14 +35,13 @@
 
 ## Invariants — platform
 
-- This repo carries **no build toolchain and no product code** — Markdown only. `./verify.sh`
-  checks spec structure and contract-copy consistency, nothing more. Replace `run_build` with a
-  real compile step the moment code lands here.
+- The app lives in **`desktop/`** and must build, test and release **with no other project
+  present** (FR-000 / SC-018). Nothing in `verify.sh` may reach outside `desktop/` and `specs/`.
+  Superseded the Markdown-only invariant on 2026-08-03 — see *Decisions*.
 - Binding target for our project: **Tauri 2.x** (Rust core + React/TS webview), macOS 12+ /
   Windows 10+ / Linux. The peers' floors (Go 1.24 + PostgreSQL 16, iOS 13+, Android API 23+)
   matter only where a contract's wire behaviour depends on them.
-- Git is initialised, `HEAD` is on `main`, and `main` is **unborn** until the first commit — so
-  `git diff --stat` shows everything as untracked until then. See
+- Git is initialised and `HEAD` is on `main` (first commit `967e5b6 Git Init`). See
   [archive/features/feat-003.md](archive/features/feat-003.md).
 
 ## Prohibitions — code
@@ -90,6 +89,20 @@ _Dated entries. Add one whenever an arguable choice gets settled — include the
 it can be reopened later without redoing the analysis. Amend by adding a new dated entry that
 supersedes the old one; never silently edit history._
 
+### 2026-08-03 · `verify.sh` compiles the app — supersedes "verify.sh checks specs, not a build"
+
+Product code landed in `desktop/` (feat-004), so the 2026-07-31 entry below no longer holds. `build`
+now runs the spec-structure check **and** `tsc && vite build` + `cargo check --all-targets`; `test`
+runs the contract-drift check **and** `vitest run` + `cargo test`. The spec checks stay — contract
+drift is still a real failure mode that a compiler cannot see.
+
+`cargo check`, not `cargo tauri build`: it is the same type/borrow check in seconds instead of
+minutes, and bundling installers on every session start would make the harness's cheapest step its
+slowest. A release build is a release-time concern, not a baseline one.
+
+`verify.sh` prepends `$HOME/.cargo/bin` to `PATH` because rustup installs there and non-login
+shells do not pick it up — without it the harness reports FAIL on a machine that is fine.
+
 ### 2026-08-03 · This repo is frontend-only; `specs/README.md` is not our work list
 
 `specs/README.md` indexes all four projects and declares `backend/`, `ios/`, `android/`. Read as a
@@ -102,7 +115,7 @@ are **correct**, not incomplete. Chosen over checking all four (which fails perm
 will never do) and over editing `specs/README.md` to drop them (it is the peers' index too, and
 trimming it would break *their* folders' self-containment).
 
-### 2026-07-31 · verify.sh checks specs, not a build
+### 2026-07-31 · verify.sh checks specs, not a build — *superseded 2026-08-03*
 
 There is no code in this repo, so a compile check would be invented verification — worse than
 none. `build` asserts the structure `specs/README.md` promises; `test` asserts duplicated

@@ -3,18 +3,32 @@
 # Usage: ./verify.sh [build|test|lint|all]   (default: build)
 # Always ends with a machine-parseable line: HARNESS_VERIFY: PASS|FAIL
 #
-# ponytail: this is a specs-only repo — there is nothing to compile. "build" checks the
-# spec structure this repo is responsible for; "test" checks duplicated contracts have not
-# drifted. Replace run_build with a real compile step once desktop/ product code lands here.
+# "build" checks the spec structure this repo is responsible for, then compiles desktop/
+# (TypeScript + Vite for the webview, cargo check for the Rust core). "test" checks the
+# duplicated contract copies have not drifted, then runs the webview and Rust core tests.
+#
+# The desktop must build and test with no other project present (FR-000 / SC-018), so every
+# command below runs inside desktop/ only.
 #
 # SCOPE: this repo owns the FRONTEND (Tauri desktop) only. specs/README.md also declares
 # backend/, ios/ and android/ — those are other people's projects and are deliberately NOT
 # checked here. Do not add them back without also taking on their delivery.
 set -eo pipefail
 
+# rustup installs here and non-login shells often miss it.
+export PATH="$HOME/.cargo/bin:$PATH"
+
 MODE="${1:-build}"
 
 fail() { echo "HARNESS_VERIFY: FAIL ($1)"; exit 1; }
+
+need() { command -v "$1" >/dev/null || fail "$1 not found — see specs/frontend/quickstart.md"; }
+
+# npm ci is 10s of wasted wall clock on every run; only install when node_modules is absent.
+npm_deps() {
+  need npm
+  [ -d desktop/node_modules ] || (cd desktop && npm install --silent) || fail "npm install"
+}
 
 REQUIRED_DOCS="spec.md plan.md research.md data-model.md quickstart.md"
 STACKS="frontend"
@@ -36,6 +50,12 @@ run_build() {
   done
   [ "$missing" -eq 0 ] || fail "spec structure incomplete"
   echo "spec structure OK: umbrella + $STACKS"
+
+  npm_deps
+  (cd desktop && npm run build) || fail "desktop webview build (tsc + vite)"
+  need cargo
+  (cd desktop/src-tauri && cargo check --all-targets) || fail "desktop Rust core (cargo check)"
+  echo "desktop compiles: webview + Rust core"
 }
 
 # Each contract is duplicated into every stack folder that participates in it.
@@ -60,6 +80,11 @@ run_test() {
   [ "$found" -eq 1 ] || fail "no contracts found"
   [ "$drift" -eq 0 ] || fail "contract copies diverged"
   echo "contract copies consistent"
+
+  npm_deps
+  (cd desktop && npm test) || fail "desktop webview tests (vitest)"
+  need cargo
+  (cd desktop/src-tauri && cargo test) || fail "desktop Rust core tests (cargo test)"
 }
 
 run_lint() {
