@@ -62,13 +62,14 @@ test('starts Google sign-in through the Rust command and reports failures', asyn
 
 // FR-052a / FR-053 / SC-022
 test('a cached keychain session restores the workspace with no sign-in and no network call', async () => {
-  const command = ipc({ cached_account: () => account() });
+  const command = ipc({ cached_account: () => account(), list_test_cases: () => [] });
   render(<App />);
 
   expect(await screen.findByRole('heading', { level: 1, name: 'Test Cases' })).toBeTruthy();
   expect(screen.getByText('kevin@example.com')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Sign in with Google' })).toBeNull();
-  expect(command.mock.calls.map(([name]) => name)).toEqual(['cached_account']);
+  // Only the keychain read and the landing screen's own local read — no auth network call.
+  expect(command.mock.calls.map(([name]) => name)).toEqual(['cached_account', 'list_test_cases']);
 });
 
 test('no cached session shows the Google-only sign-in screen', async () => {
@@ -141,6 +142,7 @@ test('switching scopes the content to the new workspace without rewriting anythi
           { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
         ],
       }),
+    list_test_cases: () => [],
   });
   render(<App />);
 
@@ -151,8 +153,11 @@ test('switching scopes the content to the new workspace without rewriting anythi
 
   expect(screen.getByText(/in Gamma/)).toBeTruthy();
   expect(screen.queryByText(/in Alpha/)).toBeNull();
-  // No reattribution: a switch is a view change, so it issues no Rust call at all.
-  expect(command.mock.calls.map(([name]) => name)).toEqual(['cached_account']);
+  // No reattribution: a switch only re-*reads* for the workspace switched into. Nothing is
+  // written, so no existing device, session, bug or capture can change workspace.
+  expect(command.mock.calls.map(([name]) => name).filter((n) => n !== 'list_test_cases')).toEqual([
+    'cached_account',
+  ]);
 });
 
 // FR-056d
@@ -164,7 +169,10 @@ test('a switch is refused while a test session is running', async () => {
       { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
     ],
   });
+  ipc({ list_test_cases: () => [] });
   render(<WorkspaceShell account={signedIn} onSignOut={() => {}} runningSessions={2} />);
+  // The refusal is asserted from the Bugs screen so it is the only alert on the page.
+  await user.click(screen.getByRole('button', { name: 'Bugs' }));
 
   await user.selectOptions(screen.getByLabelText('Workspace'), 'ws-3');
 

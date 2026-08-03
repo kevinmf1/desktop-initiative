@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
+import TestCases from './TestCases';
 import { t } from './tokens';
 
 // The redacted account from Rust — never carries the session or refresh token (FR-052).
@@ -243,7 +244,13 @@ export function WorkspaceShell({
         >
           {screen.label}
         </h1>
-        <section style={{ flex: 1, display: 'grid', placeItems: 'center', color: t.text2 }}>
+        <section
+          style={
+            screen.id === 'cases' && !newSessionBlocked
+              ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+              : { flex: 1, display: 'grid', placeItems: 'center', color: t.text2 }
+          }
+        >
           {newSessionBlocked ? (
             <div role="status" style={{ textAlign: 'center', maxWidth: 420 }}>
               <div style={{ fontSize: 14, color: t.text }}>
@@ -255,6 +262,8 @@ export function WorkspaceShell({
                 everything already captured on this machine are unaffected.
               </div>
             </div>
+          ) : screen.id === 'cases' ? (
+            <TestCases workspaceId={workspace.workspace_id} />
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14 }}>
