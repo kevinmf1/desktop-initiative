@@ -48,6 +48,59 @@ export function summaryStatus(instances: PlanInstance[]): Summary {
   return 'Not Run';
 }
 
+export const SORTS = ['Recently updated', 'Title', 'Status', 'Platform'] as const;
+export type Sort = (typeof SORTS)[number];
+
+/** FR-004. There is no separate `category` field to filter on: FR-003 defines the axis as
+ *  "category/tag" and the store keeps it as `tags`, so the category filter *is* the tag filter.
+ *  An empty string on a filter means "any". */
+export type View = {
+  query: string;
+  tag: string;
+  status: Summary | '';
+  platform: Platform | '';
+  server: string;
+  sort: Sort;
+};
+
+export const ALL_CASES: View = {
+  query: '',
+  tag: '',
+  status: '',
+  platform: '',
+  server: '',
+  sort: 'Recently updated',
+};
+
+/** FR-004: search, filter and sort in one pass. Pure, so the whole of FR-004 is testable without
+ *  a render, and it takes `instancesByCase` because the status axis filters and sorts the
+ *  **derived** summary (FR-003a) — there is no status column to query. */
+export function arrange(
+  cases: TestCase[],
+  instancesByCase: Record<string, PlanInstance[]>,
+  v: View,
+): TestCase[] {
+  const summaryOf = (c: TestCase) => summaryStatus(instancesByCase[c.id] ?? []);
+  const q = v.query.trim().toLowerCase();
+  const kept = cases.filter(
+    (c) =>
+      (q === '' || [c.title, c.description, ...c.tags].some((s) => s.toLowerCase().includes(q))) &&
+      (v.tag === '' || c.tags.includes(v.tag)) &&
+      (v.status === '' || summaryOf(c) === v.status) &&
+      (v.platform === '' || c.platform === v.platform) &&
+      (v.server === '' || c.server === v.server),
+  );
+  const order: Record<Sort, (a: TestCase, b: TestCase) => number> = {
+    // Parsed rather than string-compared: the store writes RFC 3339, which sorts lexically only
+    // while every row carries the same UTC offset.
+    'Recently updated': (a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at),
+    Title: (a, b) => a.title.localeCompare(b.title),
+    Status: (a, b) => SUMMARY.indexOf(summaryOf(a)) - SUMMARY.indexOf(summaryOf(b)),
+    Platform: (a, b) => PLATFORMS.indexOf(a.platform) - PLATFORMS.indexOf(b.platform),
+  };
+  return kept.sort(order[v.sort]);
+}
+
 const SUMMARY_COLOR: Record<Summary, [string, string, string]> = {
   'Has Fail': [t.fail, t.failLight, t.failBorder],
   Blocked: [t.blocked, t.blockedLight, t.blockedBorder],
@@ -309,6 +362,8 @@ function CaseRow({
         <tr>
           <td />
           <td colSpan={7} style={{ ...cell, background: t.accentLight, fontSize: 12 }}>
+            {/* FR-007: one case, many plans. Each plan links to this row; nothing is copied, so
+                editing the case here changes it for every plan that uses it. */}
             {instances.length === 0
               ? 'Not in any Test Plan yet — no per-plan status to show.'
               : instances.map((i) => (
@@ -317,6 +372,10 @@ function CaseRow({
                     <span style={{ fontWeight: 600 }}>{i.status}</span>
                   </div>
                 ))}
+            {/* FR-005: the created half of the audit pair — the row shows the updated half. */}
+            <div style={{ marginTop: 6, fontSize: 11, color: t.text3 }}>
+              Created by {c.created_by} on {new Date(c.created_at).toLocaleString()}
+            </div>
           </td>
         </tr>
       )}
@@ -324,8 +383,85 @@ function CaseRow({
   );
 }
 
-/** FR-003: full CRUD, scoped to the active workspace (FR-001). Search, filter and sort over this
- *  list are FR-004 — feat-010. */
+/** FR-004's controls. Native `<select>`/`<input type="search">` — a combobox library would buy
+ *  nothing here, and the native ones are keyboard- and screen-reader-correct for free. */
+function Toolbar({
+  v,
+  onChange,
+  tags,
+  servers,
+}: {
+  v: View;
+  onChange: (v: View) => void;
+  tags: string[];
+  servers: string[];
+}) {
+  const pick = (
+    label: string,
+    value: string,
+    any: string,
+    options: readonly string[],
+    set: (value: string) => void,
+  ) => (
+    <label style={{ fontSize: 11, color: t.text3, fontFamily: t.mono }}>
+      {label}
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        style={{ ...field, marginTop: 2, width: 'auto', fontFamily: t.font }}
+      >
+        <option value="">{any}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}>
+      <label style={{ fontSize: 11, color: t.text3, fontFamily: t.mono, flex: '1 1 200px' }}>
+        Search cases
+        <input
+          type="search"
+          aria-label="Search cases"
+          placeholder="Title, description or tag…"
+          value={v.query}
+          onChange={(e) => onChange({ ...v, query: e.target.value })}
+          style={{ ...field, marginTop: 2 }}
+        />
+      </label>
+      {pick('Tag', v.tag, 'Any tag', tags, (tag) => onChange({ ...v, tag }))}
+      {/* Filters the FR-003a summary computed on read, not a stored column. */}
+      {pick('Status', v.status, 'Any status', SUMMARY, (s) => onChange({ ...v, status: s as Summary }))}
+      {pick('Platform', v.platform, 'Any platform', PLATFORMS, (p) =>
+        onChange({ ...v, platform: p as Platform }),
+      )}
+      {pick('Server', v.server, 'Any server', servers, (server) => onChange({ ...v, server }))}
+      <label style={{ fontSize: 11, color: t.text3, fontFamily: t.mono }}>
+        Sort by
+        <select
+          aria-label="Sort by"
+          value={v.sort}
+          onChange={(e) => onChange({ ...v, sort: e.target.value as Sort })}
+          style={{ ...field, marginTop: 2, width: 'auto', fontFamily: t.font }}
+        >
+          {SORTS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+/** FR-003: full CRUD, scoped to the active workspace (FR-001). FR-004: searchable, filterable and
+ *  sortable over that list. */
 export default function TestCases({
   workspaceId,
   // ponytail: no Test Plan Item exists before feat-012, so every case has zero instances and
@@ -338,6 +474,7 @@ export default function TestCases({
 }) {
   const [cases, setCases] = useState<TestCase[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [view, setView] = useState<View>(ALL_CASES);
   const [error, setError] = useState('');
 
   async function reload() {
@@ -393,11 +530,18 @@ export default function TestCases({
 
   if (cases === null) return null;
 
+  // The filter choices are the values actually present, so a stale option can never be offered.
+  const values = (of: (c: TestCase) => string[]) =>
+    [...new Set(cases.flatMap(of))].filter(Boolean).sort();
+  const shown = arrange(cases, instancesByCase, view);
+
   return (
     <div style={{ padding: 20, overflowY: 'auto', fontFamily: t.font }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 13, color: t.text2 }}>
-          {cases.length} {cases.length === 1 ? 'case' : 'cases'}
+          {shown.length === cases.length
+            ? `${cases.length} ${cases.length === 1 ? 'case' : 'cases'}`
+            : `${shown.length} of ${cases.length} cases`}
         </span>
         <button
           type="button"
@@ -426,8 +570,21 @@ export default function TestCases({
         />
       )}
 
+      {cases.length > 0 && (
+        <Toolbar
+          v={view}
+          onChange={setView}
+          tags={values((c) => c.tags)}
+          servers={values((c) => [c.server])}
+        />
+      )}
+
       {cases.length === 0 ? (
         <p style={{ fontSize: 13, color: t.text2 }}>No Test Cases in this workspace yet.</p>
+      ) : shown.length === 0 ? (
+        <p style={{ fontSize: 13, color: t.text2 }}>
+          No Test Case matches the current search and filters.
+        </p>
       ) : (
         <table
           style={{
@@ -451,7 +608,7 @@ export default function TestCases({
             </tr>
           </thead>
           <tbody>
-            {cases.map((c) => (
+            {shown.map((c) => (
               <CaseRow
                 key={c.id}
                 c={c}

@@ -8,25 +8,25 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-009 closed; nothing 🔵)
-- **Status:** feat-009 is complete — Test Case CRUD in a Rust JSON store with no stored run status,
-  the FR-003a summary derived on read in TS, Active/Archived, iOS/Android/Both as an enum, soft
-  delete. Detail: [archive](../archive/features/feat-009.md).
+- **Active feature:** — (feat-010 closed; nothing 🔵)
+- **Status:** feat-010 is complete — FR-004 lives in one pure `arrange()` in `TestCases.tsx` (search
+  over title/description/tags, five filter axes, four sort keys), driven by a native-control
+  `Toolbar` whose tag/server options come from the loaded data. The *category* filter **is** the tag
+  filter (FR-003 defines one "category/tag" field; `data-model.md` has no `category`). The created
+  half of FR-005's audit pair now shows in the expanded row. Detail:
+  [archive](../archive/features/feat-010.md).
 - **Last verify:** 2026-08-04 · `build` → **PASS** (no warnings) · `test` → **PASS** ·
   `lint` → not configured. Evidence: `HARNESS_VERIFY: PASS (build)` and
-  `HARNESS_VERIFY: PASS (test)`; Vitest 19/19, Rust 32/32.
+  `HARNESS_VERIFY: PASS (test)`; Vitest 22/22, Rust 32/32.
 
 ## Next step
 
 Three features are ready (all `Depends on` ✅):
 
-- **feat-010** — Test Case list: search, filter (category/tag/status/platform/server), sort, audit
-  metadata, soft delete with confirmation, reuse across plans (FR-004…007). Most of it is UI over
-  the list `TestCases.tsx` already renders; the store side is done (`visible()` already hides
-  soft-deleted rows, audit fields already display). Note the *status* filter filters the **derived**
-  summary, which means filtering computed values, not a query.
 - **feat-011** — CSV/Excel import with row-level error preview (FR-008). `test_case::upsert` is the
-  commit path; duplicate titles are already allowed.
+  commit path; duplicate titles are already allowed. Start by deciding where parsing lives: a CSV
+  parse is a few lines of TS, but Excel (`.xlsx`) is a zip + XML read, so check whether FR-008
+  really needs `.xlsx` before adding a dependency for it.
 - **feat-012** — Test Plan CRUD. Also the feature that finally supplies real plan instances: pass a
   real `instancesByCase` into `<TestCases>` (today `{}`, so every badge reads `Not Run`).
 - **feat-013** — device pairing by QR / pairing code; independently ready, starts the device chain.
@@ -61,17 +61,18 @@ Wiring owed by later features:
 
 ## Changes
 
+_feat-009: rotated to [archive](../archive/features/feat-009.md)._
+
+
+### feat-010
+
 | File | Change | Why |
 |------|--------|-----|
-| `desktop/src-tauri/src/test_case.rs` | New store: `TestCase`/`Platform`/`Lifecycle`, `visible`/`upsert`/`soft_delete` + 3 commands | FR-003/003b/003c, FR-005, FR-006; enums make the platform rule a deserialization guarantee |
-| `desktop/src-tauri/src/test_case.rs` | One JSON file under the app data dir, not SQLite | research.md R2's rusqlite store is feat-023's; nothing here needs it yet — ceiling + upgrade path in the module header |
-| `desktop/src-tauri/src/test_case.rs` | `actor()` reads the cached Auth Session for audit fields | FR-005 — the webview must not be able to claim authorship |
-| `desktop/src-tauri/src/lib.rs` | Module + `list/save/delete_test_case` in the handler | Commands must be registered to be callable |
-| `desktop/src/TestCases.tsx` | New screen: `summaryStatus()`, case table with expandable instances, create/edit form, confirmed delete | FR-003a computes on read so no field can hold it; layout from `qa-test-cases.jsx`, five states per the spec not the mockup's three |
-| `desktop/src/App.tsx` | `cases` renders `<TestCases>` instead of the placeholder | The first screen with real data |
-| `desktop/src/tokens.ts` | Semantic status colours copied from `qa-tokens.jsx` | The derived badge needs pass/fail/blocked/skip tones |
-| `desktop/src/__tests__/TestCases.test.tsx` | New, 8 tests | Precedence, expand, create payload, enum choices, archive-in-place, delete confirm, scoping, error path |
-| `desktop/src/__tests__/App.test.tsx` | 4 tests updated | The landing screen now does one local read; the FR-056d refusal is asserted from Bugs so it stays the only alert |
-| `FEATURES.md` · `archive/features/feat-009.md` | feat-009 → ✅ with evidence; epic 5/20 → 6/20 | Definition of done |
+| `desktop/src/TestCases.tsx` | `arrange()` + `View`/`ALL_CASES`/`SORTS` — search, five filters, four sorts, all pure | FR-004; the status axis filters the **derived** FR-003a summary, so it cannot be a store query. Pure ⇒ all of FR-004 is one test |
+| `desktop/src/TestCases.tsx` | `Toolbar` — native search input + five `<select>`s; tag/server options derived from the loaded rows | Native controls are a11y-correct for free; free-text axes would go stale against a fixed option list |
+| `desktop/src/TestCases.tsx` | Header reads `N of M cases` when filtered; separate empty state for "no match" | A filtered-empty list must not read as "no cases yet" |
+| `desktop/src/TestCases.tsx` | Expanded row shows `Created by … on …` | FR-005 wants the created half displayed too; the row already had updated |
+| `desktop/src/__tests__/TestCases.test.tsx` | 3 tests added (8 → 11) | Every FR-004 axis, controls→rows wiring + filtered count, both audit halves |
+| `FEATURES.md` · `archive/features/feat-010.md` | feat-010 → ✅ with evidence; epic 6/20 → 7/20 | Definition of done |
 
 _Earlier sessions: [2026-08-03-feat-006.md](../archive/sessions/2026-08-03-feat-006.md)._

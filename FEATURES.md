@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 6/20 | feat-010 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 7/20 | feat-011 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -54,7 +54,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-007 | Session credential in the OS keychain, cached membership list, 30-day offline grace (expiry never interrupts a running session), sign-out clears local only — FR-052a, FR-053, FR-053a, FR-054 | ✅ | kevin-malik | feat-006 | [archive](archive/features/feat-007.md) |
 | feat-008 | Workspace switcher: every membership listed, all data scoped to the active workspace, no reattribution on switch, switch blocked while a session runs — FR-001, FR-056a, FR-056c, FR-056d | ✅ | kevin-malik | feat-007 | [archive](archive/features/feat-008.md) |
 | feat-009 | Test Case CRUD — derived summary status (`Has Fail → Blocked → In Progress → All Passed → Not Run`, computed on read), Active/Archived flag, platform iOS/Android/Both — FR-003, FR-003a, FR-003b, FR-003c | ✅ | kevin-malik | feat-008 | [archive](archive/features/feat-009.md) |
-| feat-010 | Test Case list: search, filter (category/tag/status/platform/server), sort, audit metadata, soft delete with confirmation, reuse across plans — FR-004, FR-005, FR-006, FR-007 | 🟡 | — | feat-009 | — |
+| feat-010 | Test Case list: search, filter (category/tag/status/platform/server), sort, audit metadata, soft delete with confirmation, reuse across plans — FR-004, FR-005, FR-006, FR-007 | ✅ | kevin-malik | feat-009 | [archive](archive/features/feat-010.md) |
 | feat-011 | CSV/Excel import with row-level error preview before commit; duplicate titles allowed — FR-008 | 🟡 | — | feat-009 | — |
 | feat-012 | Test Plan CRUD: create/update/archive/duplicate, add/remove cases, plan notes, target build, environment/server — FR-009, FR-010, FR-011 | 🟡 | — | feat-009 | — |
 | feat-013 | Pairing by QR / pairing code as the default flow; single-use token, 5-minute TTL, refresh invalidates the previous one; device ID is a filter, not auth — FR-016, FR-020, FR-020a | 🟡 | — | feat-005 | — |

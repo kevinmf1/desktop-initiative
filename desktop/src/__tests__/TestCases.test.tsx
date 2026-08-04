@@ -2,7 +2,13 @@ import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
-import TestCases, { summaryStatus, type PlanInstance, type TestCase } from '../TestCases';
+import TestCases, {
+  ALL_CASES,
+  arrange,
+  summaryStatus,
+  type PlanInstance,
+  type TestCase,
+} from '../TestCases';
 
 afterEach(clearMocks);
 
@@ -172,6 +178,80 @@ test('the list is read for the active workspace only', async () => {
     ['list_test_cases', { workspaceId: 'ws-1' }],
     ['list_test_cases', { workspaceId: 'ws-3' }],
   ]);
+});
+
+// FR-004 — every search / filter / sort axis, over the pure function the screen renders through.
+test('the list searches, filters on every axis, and sorts on every key', () => {
+  const login = testCase({ id: 'a', title: 'User login', tags: ['Auth'], platform: 'iOS' });
+  const reset = testCase({
+    id: 'b',
+    title: 'Password reset by email',
+    description: 'Sends a magic link',
+    tags: ['Auth', 'Email'],
+    platform: 'Android',
+    server: 'prod',
+    updated_at: '2026-08-04T12:00:00Z',
+  });
+  const cart = testCase({ id: 'c', title: 'Add to cart', tags: ['Checkout'], platform: 'Both' });
+  const all = [login, reset, cart];
+  // 'a' has a failing instance, 'b' has none at all — so the status axis is the derived summary.
+  const instances = { a: [inst('Smoke Tests', 'Failed')], c: [inst('Smoke Tests', 'Passed')] };
+  const ids = (v: Partial<typeof ALL_CASES>) =>
+    arrange(all, instances, { ...ALL_CASES, ...v }).map((c) => c.id);
+
+  expect(ids({ query: 'LOGIN' })).toEqual(['a']); // title, case-insensitive
+  expect(ids({ query: 'magic link' })).toEqual(['b']); // description
+  expect(ids({ query: 'checkout' })).toEqual(['c']); // tag
+  expect(ids({ tag: 'Auth' }).sort()).toEqual(['a', 'b']);
+  expect(ids({ platform: 'Android' })).toEqual(['b']);
+  expect(ids({ server: 'prod' })).toEqual(['b']);
+  expect(ids({ status: 'Has Fail' })).toEqual(['a']);
+  expect(ids({ status: 'Not Run' })).toEqual(['b']);
+  // Filters combine rather than replace each other.
+  expect(ids({ tag: 'Auth', platform: 'iOS' })).toEqual(['a']);
+  expect(ids({ tag: 'Checkout', platform: 'iOS' })).toEqual([]);
+
+  expect(ids({ sort: 'Recently updated' })[0]).toBe('b'); // newest first
+  expect(ids({ sort: 'Title' })).toEqual(['c', 'b', 'a']);
+  expect(ids({ sort: 'Status' })).toEqual(['a', 'c', 'b']); // Has Fail → All Passed → Not Run
+  expect(ids({ sort: 'Platform' })).toEqual(['a', 'b', 'c']); // iOS → Android → Both
+});
+
+// FR-004 — the controls are wired to the rendered rows, and filter options come from the data.
+test('searching narrows the rendered rows and reports the filtered count', async () => {
+  const user = userEvent.setup();
+  ipc({
+    list_test_cases: () => [
+      testCase({ id: 'a', title: 'User login', tags: ['Auth'] }),
+      testCase({ id: 'b', title: 'Add to cart', tags: ['Checkout'] }),
+    ],
+  });
+  render(<TestCases workspaceId="ws-1" />);
+
+  expect(await screen.findByText('2 cases')).toBeTruthy();
+  // Only tags actually present are offered — no stale choice.
+  expect([...(screen.getByLabelText('Tag') as HTMLSelectElement).options].map((o) => o.value)) //
+    .toEqual(['', 'Auth', 'Checkout']);
+
+  await user.type(screen.getByLabelText('Search cases'), 'cart');
+  expect(screen.getByText('1 of 2 cases')).toBeTruthy();
+  expect(screen.queryByText('User login')).toBeNull();
+
+  await user.selectOptions(screen.getByLabelText('Platform'), 'iOS');
+  expect(screen.getByText('No Test Case matches the current search and filters.')).toBeTruthy();
+});
+
+// FR-005 — both halves of the audit pair are displayed, not just stored.
+test('audit metadata is shown for both create and update', async () => {
+  const user = userEvent.setup();
+  ipc({ list_test_cases: () => [testCase({ created_by: 'Dana', updated_by: 'Kevin' })] });
+  render(<TestCases workspaceId="ws-1" />);
+
+  const row = (await screen.findByText('User login with valid credentials')).closest('tr')!;
+  expect(within(row).getByText('by Kevin')).toBeTruthy();
+
+  await user.click(within(row).getByRole('button', { expanded: false }));
+  expect(screen.getByText(/Created by Dana on /)).toBeTruthy();
 });
 
 test('a store failure is reported instead of showing an empty list as success', async () => {
