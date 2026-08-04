@@ -8,25 +8,24 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-010 closed; nothing 🔵)
-- **Status:** feat-010 is complete — FR-004 lives in one pure `arrange()` in `TestCases.tsx` (search
-  over title/description/tags, five filter axes, four sort keys), driven by a native-control
-  `Toolbar` whose tag/server options come from the loaded data. The *category* filter **is** the tag
-  filter (FR-003 defines one "category/tag" field; `data-model.md` has no `category`). The created
-  half of FR-005's audit pair now shows in the expanded row. Detail:
-  [archive](../archive/features/feat-010.md).
+- **Active feature:** — (feat-011 closed; nothing 🔵)
+- **Status:** feat-011 is complete, **CSV and Excel both**. Validation is one pure
+  `planTable(cells)` in `src/import.ts` (required `title` + `platform`, `lifecycle` defaults Active,
+  case-insensitive enums, unknown columns ignored, duplicate titles checked *nowhere* — FR-008's
+  explicit demand), and an `ImportRow` holds `input` xor `errors` so an invalid row cannot commit.
+  CSV/TSV/semicolon text is parsed in the webview by `parseDelimited`; a workbook is decoded by
+  `workbook.rs`'s `read_workbook` (calamine, base64 over the IPC, first sheet only) into the identical
+  `string[][]`. Commit is one `save_test_case` per valid row. Detail:
+  [archive](../archive/features/feat-011.md); the "binary formats decode in Rust" rule is now in
+  `CONSTITUTION.md` § Decisions.
 - **Last verify:** 2026-08-04 · `build` → **PASS** (no warnings) · `test` → **PASS** ·
   `lint` → not configured. Evidence: `HARNESS_VERIFY: PASS (build)` and
-  `HARNESS_VERIFY: PASS (test)`; Vitest 22/22, Rust 32/32.
+  `HARNESS_VERIFY: PASS (test)`; Vitest 27/27, Rust 34/34.
 
 ## Next step
 
-Three features are ready (all `Depends on` ✅):
+Two features are ready (all `Depends on` ✅):
 
-- **feat-011** — CSV/Excel import with row-level error preview (FR-008). `test_case::upsert` is the
-  commit path; duplicate titles are already allowed. Start by deciding where parsing lives: a CSV
-  parse is a few lines of TS, but Excel (`.xlsx`) is a zip + XML read, so check whether FR-008
-  really needs `.xlsx` before adding a dependency for it.
 - **feat-012** — Test Plan CRUD. Also the feature that finally supplies real plan instances: pass a
   real `instancesByCase` into `<TestCases>` (today `{}`, so every badge reads `Not Run`).
 - **feat-013** — device pairing by QR / pairing code; independently ready, starts the device chain.
@@ -62,17 +61,20 @@ Wiring owed by later features:
 ## Changes
 
 _feat-009: rotated to [archive](../archive/features/feat-009.md)._
+_feat-010: rotated to [archive](../archive/features/feat-010.md)._
 
-
-### feat-010
+### feat-011
 
 | File | Change | Why |
 |------|--------|-----|
-| `desktop/src/TestCases.tsx` | `arrange()` + `View`/`ALL_CASES`/`SORTS` — search, five filters, four sorts, all pure | FR-004; the status axis filters the **derived** FR-003a summary, so it cannot be a store query. Pure ⇒ all of FR-004 is one test |
-| `desktop/src/TestCases.tsx` | `Toolbar` — native search input + five `<select>`s; tag/server options derived from the loaded rows | Native controls are a11y-correct for free; free-text axes would go stale against a fixed option list |
-| `desktop/src/TestCases.tsx` | Header reads `N of M cases` when filtered; separate empty state for "no match" | A filtered-empty list must not read as "no cases yet" |
-| `desktop/src/TestCases.tsx` | Expanded row shows `Created by … on …` | FR-005 wants the created half displayed too; the row already had updated |
-| `desktop/src/__tests__/TestCases.test.tsx` | 3 tests added (8 → 11) | Every FR-004 axis, controls→rows wiring + filtered count, both audit halves |
-| `FEATURES.md` · `archive/features/feat-010.md` | feat-010 → ✅ with evidence; epic 6/20 → 7/20 | Definition of done |
+| `desktop/src/import.ts` | new — `parseDelimited`, `planTable`, `planImport`, `readText`/`readBase64`/`isWorkbook` | FR-008's rules are pure and source-agnostic, so every one is testable without a render or a file; only the two `FileReader` helpers touch the edges |
+| `desktop/src-tauri/src/workbook.rs` · `lib.rs` · `Cargo.toml` | new `read_workbook(base64) → Vec<Vec<String>>` via `calamine`, registered | FR-008's Excel half. Rust over SheetJS: the npm release is frozen on a prototype-pollution advisory, and the decoder stays off the JS bundle — now a `CONSTITUTION.md` rule |
+| `desktop/src-tauri/tests/fixtures/cases.xlsx` | new — 3-row workbook incl. an *absent* title cell | Excel omits empty cells rather than writing blanks; that is the row a naive reader shifts |
+| `desktop/src/TestCases.tsx` | `ImportPreview` — per-line table, errors inline, commit button offers only the valid count | FR-008/SC-009: a mixed file must be previewable and partially committable, never all-or-nothing |
+| `desktop/src/TestCases.tsx` | `Import CSV / Excel` as a `<label>` over a hidden `<input type="file">`; workbook → Rust, text → `parseDelimited`, both → `planTable` | Native picker ⇒ no `plugin-dialog`, no `plugin-fs`, no capability widened; one validation path regardless of format |
+| `desktop/src/TestCases.tsx` | `commitImport()` — one `save_test_case` per valid row, failures collected per line | Reuses the FR-005 audit stamping and FR-003c enum gate already in Rust; a bulk command would duplicate both |
+| `desktop/src/__tests__/TestCases.test.tsx` | 5 tests added (11 → 16) | Every validation rule incl. duplicate-titles-allowed, preview-before-write, the workbook path, a decode failure, and CSV ≡ workbook |
+| `CONSTITUTION.md` | Decision 2026-08-04: binary formats decode in Rust, cross the IPC as plain data | Settles where the next zip/binary parser goes, not just this one |
+| `FEATURES.md` · `archive/features/feat-011.md` | feat-011 → ✅ with evidence; epic 7/20 → 8/20 | Definition of done |
 
 _Earlier sessions: [2026-08-03-feat-006.md](../archive/sessions/2026-08-03-feat-006.md)._

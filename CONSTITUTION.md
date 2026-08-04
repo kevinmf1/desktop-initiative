@@ -89,6 +89,21 @@ _Dated entries. Add one whenever an arguable choice gets settled — include the
 it can be reopened later without redoing the analysis. Amend by adding a new dated entry that
 supersedes the old one; never silently edit history._
 
+### 2026-08-04 · Binary file formats are parsed in Rust, not in the webview
+
+FR-008's Excel half needed an `.xlsx` reader (a zip of XML). It landed as `calamine` behind the
+`read_workbook` command (`src-tauri/src/workbook.rs`), with the webview sending the picked file as
+base64 and receiving `string[][]`.
+
+Chosen over SheetJS in the webview: its npm release is frozen at `0.18.5` — maintained builds ship
+only from the vendor's own CDN — and that release carries a known prototype-pollution advisory, which
+is not what should be pointed at a file a user was handed by someone else. The Rust side is also
+already the trust boundary for file contents, and the decoder adds nothing to the JS bundle.
+
+Generalised: **a binary or archive format gets decoded in the Rust core and crosses the IPC as plain
+data.** The webview keeps the *rules* (validation, preview, what a valid row is) — for FR-008 that is
+one pure `planTable(cells)`, which cannot tell a CSV from a workbook.
+
 ### 2026-08-03 · `verify.sh` compiles the app — supersedes "verify.sh checks specs, not a build"
 
 Product code landed in `desktop/` (feat-004), so the 2026-07-31 entry below no longer holds. `build`

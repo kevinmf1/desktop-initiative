@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 7/20 | feat-011 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 8/20 | feat-012 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -55,7 +55,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-008 | Workspace switcher: every membership listed, all data scoped to the active workspace, no reattribution on switch, switch blocked while a session runs — FR-001, FR-056a, FR-056c, FR-056d | ✅ | kevin-malik | feat-007 | [archive](archive/features/feat-008.md) |
 | feat-009 | Test Case CRUD — derived summary status (`Has Fail → Blocked → In Progress → All Passed → Not Run`, computed on read), Active/Archived flag, platform iOS/Android/Both — FR-003, FR-003a, FR-003b, FR-003c | ✅ | kevin-malik | feat-008 | [archive](archive/features/feat-009.md) |
 | feat-010 | Test Case list: search, filter (category/tag/status/platform/server), sort, audit metadata, soft delete with confirmation, reuse across plans — FR-004, FR-005, FR-006, FR-007 | ✅ | kevin-malik | feat-009 | [archive](archive/features/feat-010.md) |
-| feat-011 | CSV/Excel import with row-level error preview before commit; duplicate titles allowed — FR-008 | 🟡 | — | feat-009 | — |
+| feat-011 | CSV/Excel import with row-level error preview before commit; duplicate titles allowed — FR-008 | ✅ | kevin-malik | feat-009 | [archive](archive/features/feat-011.md) |
 | feat-012 | Test Plan CRUD: create/update/archive/duplicate, add/remove cases, plan notes, target build, environment/server — FR-009, FR-010, FR-011 | 🟡 | — | feat-009 | — |
 | feat-013 | Pairing by QR / pairing code as the default flow; single-use token, 5-minute TTL, refresh invalidates the previous one; device ID is a filter, not auth — FR-016, FR-020, FR-020a | 🟡 | — | feat-005 | — |
 | feat-014 | Device registry: display name + stable device ID, enable/disable without deleting, persists across restarts, access policy `open`/`allowlist` (default `allowlist`), observed platform shown — FR-015, FR-017, FR-018, FR-019, FR-022 | 🟡 | — | feat-013 | — |

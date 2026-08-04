@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod auth_session;
 pub mod test_case;
+pub mod workbook;
 pub mod ws;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,7 +15,8 @@ pub fn run() {
             auth_session::sign_out,
             test_case::list_test_cases,
             test_case::save_test_case,
-            test_case::delete_test_case
+            test_case::delete_test_case,
+            workbook::read_workbook
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
+import {
+  isWorkbook,
+  parseDelimited,
+  planTable,
+  readBase64,
+  readText,
+  type ImportPlan,
+} from './import';
 import { t } from './tokens';
 
 // Layout follows design/desktop-qa/uploads/QA-Tools (1)/qa-test-cases.jsx — table of cases,
@@ -460,8 +468,85 @@ function Toolbar({
   );
 }
 
+/** FR-008: the preview. Every row of the file is listed with its own errors, and the commit button
+ *  offers only the valid ones — so a mixed file is never all-or-nothing (SC-009). */
+function ImportPreview({
+  plan,
+  busy,
+  onCommit,
+  onCancel,
+}: {
+  plan: ImportPlan;
+  busy: boolean;
+  onCommit: () => void;
+  onCancel: () => void;
+}) {
+  const valid = plan.rows.filter((r) => r.input);
+  const invalid = plan.rows.length - valid.length;
+  return (
+    <section
+      aria-label="Import preview"
+      style={{
+        padding: 16,
+        margin: '0 0 12px',
+        background: t.surface,
+        border: `1px solid ${t.border}`,
+        borderRadius: t.r,
+      }}
+    >
+      {plan.error ? (
+        <p role="alert" style={{ margin: 0, fontSize: 13, color: t.fail }}>
+          {plan.error}
+        </p>
+      ) : (
+        <>
+          <p style={{ margin: '0 0 10px', fontSize: 13, color: t.text2 }}>
+            {valid.length} of {plan.rows.length} rows can be imported
+            {invalid > 0 && ` — ${invalid} ${invalid === 1 ? 'row has' : 'rows have'} errors and will be skipped`}
+            .
+          </p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
+            <thead>
+              <tr>
+                <th style={head}>Line</th>
+                <th style={head}>Title</th>
+                <th style={head}>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plan.rows.map((r) => (
+                <tr key={r.line} style={{ borderBottom: `1px solid ${t.borderSubtle}` }}>
+                  <td style={{ ...cell, fontFamily: t.mono, color: t.text3 }}>{r.line}</td>
+                  <td style={cell}>{r.title || <em style={{ color: t.text3 }}>(no title)</em>}</td>
+                  <td style={cell}>
+                    {r.errors.length === 0 ? (
+                      <Badge label="Ready" tone={[t.pass, t.passLight, t.passBorder]} />
+                    ) : (
+                      <span style={{ color: t.fail, fontSize: 12 }}>{r.errors.join(' ')}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {valid.length > 0 && (
+          <button type="button" onClick={onCommit} disabled={busy} style={button(true)}>
+            {busy ? 'Importing…' : `Import ${valid.length} ${valid.length === 1 ? 'row' : 'rows'}`}
+          </button>
+        )}
+        <button type="button" onClick={onCancel} style={button(false)}>
+          Cancel
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /** FR-003: full CRUD, scoped to the active workspace (FR-001). FR-004: searchable, filterable and
- *  sortable over that list. */
+ *  sortable over that list. FR-008: bulk import with a row-level preview. */
 export default function TestCases({
   workspaceId,
   // ponytail: no Test Plan Item exists before feat-012, so every case has zero instances and
@@ -476,6 +561,8 @@ export default function TestCases({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [view, setView] = useState<View>(ALL_CASES);
   const [error, setError] = useState('');
+  const [plan, setPlan] = useState<ImportPlan | null>(null);
+  const [importing, setImporting] = useState(false);
 
   async function reload() {
     try {
@@ -515,6 +602,29 @@ export default function TestCases({
     }
   }
 
+  // FR-008: nothing is written until the preview is confirmed, and only the valid rows are sent.
+  // ponytail: one `save_test_case` per row rather than a bulk Rust command — the per-row validation
+  // and audit stamping already live there, and an import is tens of rows. Ceiling: not atomic (a row
+  // that the store rejects leaves the earlier rows committed, which is why the failures are named
+  // per line) and O(n) file rewrites. Upgrade path: feat-023's SQLite store gets one transaction.
+  async function commitImport() {
+    if (!plan) return;
+    setImporting(true);
+    const failures: string[] = [];
+    for (const row of plan.rows) {
+      if (!row.input) continue;
+      try {
+        await invoke('save_test_case', { workspaceId, input: row.input });
+      } catch (reason) {
+        failures.push(`Line ${row.line}: ${reason}`);
+      }
+    }
+    setImporting(false);
+    setPlan(null);
+    setError(failures.join(' '));
+    await reload();
+  }
+
   // FR-006: confirmed, and soft in the store — a session or bug that references this case still
   // resolves afterwards.
   async function remove(c: TestCase) {
@@ -543,10 +653,38 @@ export default function TestCases({
             ? `${cases.length} ${cases.length === 1 ? 'case' : 'cases'}`
             : `${shown.length} of ${cases.length} cases`}
         </span>
+        {/* FR-008: a native file input — no dialog plugin, no capability to widen, and the picker
+            is the OS one. A workbook is decoded by Rust (`read_workbook`), a text file in the
+            webview; both arrive at `planTable` as the same cells. */}
+        <label style={{ ...button(false), display: 'inline-flex', alignItems: 'center', marginLeft: 'auto' }}>
+          Import CSV / Excel
+          <input
+            type="file"
+            aria-label="Import CSV or Excel"
+            accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xlsb,.xls"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const input = e.currentTarget;
+              const file = input.files?.[0];
+              if (!file) return;
+              setError('');
+              try {
+                const table = isWorkbook(file.name)
+                  ? await invoke<string[][]>('read_workbook', { base64: await readBase64(file) })
+                  : parseDelimited(await readText(file));
+                setPlan(planTable(table));
+              } catch (reason) {
+                // A file that cannot even be decoded is a preview-level error, not a page-level one.
+                setPlan({ rows: [], error: String(reason) });
+              }
+              input.value = ''; // so re-picking the same file after a cancel still fires.
+            }}
+          />
+        </label>
         <button
           type="button"
           onClick={() => setDraft(BLANK)}
-          style={{ ...button(true), marginLeft: 'auto' }}
+          style={{ ...button(true), marginLeft: 8 }}
         >
           New Case
         </button>
@@ -556,6 +694,15 @@ export default function TestCases({
         <p role="alert" style={{ margin: '0 0 12px', color: t.fail, fontSize: 13 }}>
           {error}
         </p>
+      )}
+
+      {plan && (
+        <ImportPreview
+          plan={plan}
+          busy={importing}
+          onCommit={commitImport}
+          onCancel={() => setPlan(null)}
+        />
       )}
 
       {draft && (

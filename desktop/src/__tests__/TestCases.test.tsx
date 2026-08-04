@@ -9,6 +9,7 @@ import TestCases, {
   type PlanInstance,
   type TestCase,
 } from '../TestCases';
+import { planImport, planTable } from '../import';
 
 afterEach(clearMocks);
 
@@ -263,4 +264,139 @@ test('a store failure is reported instead of showing an empty list as success', 
   render(<TestCases workspaceId="ws-1" />);
 
   expect((await screen.findByRole('alert')).textContent).toContain('is not readable');
+});
+
+// FR-008 — every validation rule, on the pure planner: row-level errors, no commit, and duplicate
+// titles explicitly not flagged (SC-009).
+test('an import plan flags bad rows by line and never flags a duplicate title', () => {
+  const plan = planImport(
+    [
+      'Title,Description,Platform,Server,Lifecycle,Tags',
+      '"Login, then logout",Happy path,ios,staging,Active,"Auth, Smoke"',
+      'User login with valid credentials,Same title as an existing case,Android,,,',
+      ',Missing title,Both,,,',
+      'Bad platform,,Windows,,,',
+      'Bad lifecycle,,Both,,Retired,',
+      '',
+    ].join('\n'),
+  );
+
+  expect(plan.error).toBeUndefined();
+  expect(plan.rows.map((r) => r.line)).toEqual([2, 3, 4, 5, 6]);
+  // Quoted delimiters survive, `ios` matches iOS, tags split, blank lifecycle defaults to Active.
+  expect(plan.rows[0].input).toEqual({
+    title: 'Login, then logout',
+    description: 'Happy path',
+    platform: 'iOS',
+    server: 'staging',
+    lifecycle: 'Active',
+    tags: ['Auth', 'Smoke'],
+  });
+  // FR-008: a row duplicating an existing title is valid and unremarked.
+  expect(plan.rows[1].errors).toEqual([]);
+  expect(plan.rows[2].errors).toEqual(['Title is required.']);
+  expect(plan.rows[3].errors).toEqual(['Platform must be one of iOS, Android, Both.']);
+  expect(plan.rows[4].errors).toEqual(['Lifecycle must be one of Active, Archived.']);
+  for (const bad of plan.rows.slice(2)) expect(bad.input).toBeUndefined();
+
+  // Whole-file refusals: no header row, and a header with no rows under it.
+  expect(planImport('a,b\n1,2').error).toContain('must be a header');
+  expect(planImport('Title,Platform\n').error).toContain('no rows');
+});
+
+// FR-008 / SC-009 — the preview is shown before anything is written, then only valid rows commit.
+test('a mixed import previews row errors before commit and commits only the valid rows', async () => {
+  const user = userEvent.setup();
+  const sent: unknown[] = [];
+  ipc({
+    list_test_cases: () => [],
+    save_test_case: ({ input }: any) => (sent.push(input), input),
+  });
+  render(<TestCases workspaceId="ws-1" />);
+
+  const file = new File(
+    ['Title,Platform\nCheckout with saved card,Both\n,Both\nNo platform,\n'],
+    'cases.csv',
+    { type: 'text/csv' },
+  );
+  await user.upload(await screen.findByLabelText('Import CSV or Excel'), file);
+
+  const preview = await screen.findByRole('region', { name: 'Import preview' });
+  expect(preview.textContent).toContain('1 of 3 rows can be imported');
+  expect(within(preview).getByText('Title is required.')).toBeTruthy();
+  expect(within(preview).getByText(/Platform must be one of/)).toBeTruthy();
+  // Nothing may be written before the preview is confirmed.
+  expect(sent).toEqual([]);
+
+  await user.click(within(preview).getByRole('button', { name: 'Import 1 row' }));
+
+  expect(sent).toEqual([
+    {
+      title: 'Checkout with saved card',
+      description: '',
+      platform: 'Both',
+      server: '',
+      lifecycle: 'Active',
+      tags: [],
+    },
+  ]);
+  expect(screen.queryByRole('region', { name: 'Import preview' })).toBeNull();
+});
+
+// FR-008 — an Excel workbook takes the Rust decoder and lands in the same preview as a CSV. The
+// decode itself (calamine, cells, missing-cell handling) is proven in `workbook.rs`'s own tests.
+test('an Excel workbook is decoded by the Rust command and previewed like a CSV', async () => {
+  const user = userEvent.setup();
+  const command = ipc({
+    list_test_cases: () => [],
+    read_workbook: () => [
+      ['Title', 'Platform'],
+      ['Checkout with saved card', 'iOS'],
+      ['', 'Both'],
+    ],
+  });
+  render(<TestCases workspaceId="ws-1" />);
+
+  await user.upload(
+    await screen.findByLabelText('Import CSV or Excel'),
+    new File(['PK not really a zip'], 'cases.xlsx'),
+  );
+
+  const preview = await screen.findByRole('region', { name: 'Import preview' });
+  expect(preview.textContent).toContain('1 of 2 rows can be imported');
+  expect(within(preview).getByText('Title is required.')).toBeTruthy();
+  // The file went to Rust as base64, not as bytes and not as a path.
+  const [[, args]] = command.mock.calls.filter(([name]) => name === 'read_workbook');
+  expect(typeof (args as any).base64).toBe('string');
+  expect((args as any).base64).not.toContain('base64,');
+});
+
+// A workbook the Rust side refuses must surface its reason, not an empty preview.
+test('a workbook that cannot be decoded shows the reason from the decoder', async () => {
+  const user = userEvent.setup();
+  ipc({
+    list_test_cases: () => [],
+    read_workbook: () => {
+      throw new Error('That is not a readable Excel workbook: invalid Zip archive');
+    },
+  });
+  render(<TestCases workspaceId="ws-1" />);
+
+  await user.upload(
+    await screen.findByLabelText('Import CSV or Excel'),
+    new File(['nonsense'], 'cases.xlsx'),
+  );
+
+  expect((await screen.findByRole('alert')).textContent).toContain('not a readable Excel workbook');
+});
+
+// `planTable` is the one place the two sources meet — the same cells give the same plan.
+test('a workbook table and the equivalent CSV produce the same plan', () => {
+  const table = [
+    ['Title', 'Platform', 'Tags'],
+    ['Checkout with saved card', 'iOS', 'Payments'],
+  ];
+  expect(planTable(table)).toEqual(
+    planImport('Title,Platform,Tags\nCheckout with saved card,iOS,Payments'),
+  );
 });
