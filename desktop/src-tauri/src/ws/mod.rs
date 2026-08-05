@@ -1,3 +1,5 @@
+pub mod pairing;
+
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 
@@ -100,6 +102,16 @@ pub enum InboundHandshakeFrame {
 pub struct HelloHandshake {
     pub contract_version: String,
     pub capabilities: Vec<String>,
+    // Trust half of the frame (FR-020). Defaulted because version negotiation happens whether or
+    // not credentials are present, and an older minor may not send them at all.
+    #[serde(default)]
+    pub device_id: String,
+    #[serde(default)]
+    pub pairing_token: Option<String>,
+    // ponytail: parsed but not yet checked — the per-device credential is stored and re-verified by
+    // the device registry (feat-014). Until then a return visit re-pairs from the QR.
+    #[serde(default)]
+    pub reconnect_credential: Option<String>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
