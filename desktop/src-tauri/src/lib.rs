@@ -1,9 +1,26 @@
 pub mod auth;
 pub mod auth_session;
+pub mod device;
 pub mod test_case;
 pub mod test_plan;
 pub mod workbook;
 pub mod ws;
+
+/// Every local store is one JSON file in the app data dir, so they all resolve their path the same
+/// way. ponytail: named here rather than copied per module — feat-023 replaces one function.
+pub(crate) fn store_path(
+    app: &tauri::AppHandle,
+    file: &str,
+) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("No app data directory: {e}"))?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Could not create {}: {e}", dir.display()))?;
+    Ok(dir.join(file))
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,7 +40,12 @@ pub fn run() {
             test_plan::archive_test_plan,
             test_plan::duplicate_test_plan,
             workbook::read_workbook,
-            ws::pairing::mint_pairing_invite
+            ws::pairing::mint_pairing_invite,
+            device::list_devices,
+            device::rename_device,
+            device::set_device_enabled,
+            device::remove_device,
+            device::set_device_policy
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

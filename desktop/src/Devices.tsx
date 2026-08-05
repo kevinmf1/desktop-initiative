@@ -57,10 +57,203 @@ function Qr({ invite }: { invite: PairingInvite }) {
   );
 }
 
-export default function Devices() {
+// The registry from `device.rs`. `observed_platform` is null until the device reports it (FR-022).
+export type Device = {
+  id: string;
+  device_id: string;
+  display_name: string;
+  observed_platform: 'iOS' | 'Android' | null;
+  enabled: boolean;
+  sdk_contract_version: string;
+  os_version: string;
+  registered_at: string;
+};
+
+export type Registry = { policy: 'Open' | 'Allowlist'; devices: Device[] };
+
+/** FR-017/FR-018: what the row's state actually means for incoming records, said in the list so the
+ *  operator does not have to hold the policy in their head. */
+export function admission(device: Device, policy: Registry['policy']): string {
+  if (!device.enabled) return 'Disabled — records rejected';
+  return policy === 'Allowlist' ? 'Allowed — on the allowlist' : 'Allowed — policy is open';
+}
+
+const cell: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', verticalAlign: 'top' };
+
+function rowButton(danger = false): React.CSSProperties {
+  return {
+    height: 28,
+    padding: '0 10px',
+    border: `1px solid ${t.border}`,
+    borderRadius: t.rSm,
+    background: t.surface,
+    color: danger ? '#B42318' : t.text,
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+  };
+}
+
+function Registered({
+  registry,
+  error,
+  act,
+}: {
+  registry: Registry | null;
+  error: string;
+  act: (command: string, args: Record<string, unknown>) => void;
+}) {
+  return (
+    <section
+      aria-labelledby="registry-title"
+      style={{
+        width: 'min(100%, 720px)',
+        padding: 24,
+        boxSizing: 'border-box',
+        background: t.surface,
+        border: `1px solid ${t.border}`,
+        borderRadius: t.r,
+        color: t.text,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <h2 id="registry-title" style={{ margin: 0, fontSize: 16, flex: 1 }}>
+          Registered devices
+        </h2>
+        <label style={{ fontSize: 12, color: t.text2, display: 'flex', alignItems: 'center', gap: 8 }}>
+          Access policy
+          <select
+            aria-label="Access policy"
+            value={registry?.policy ?? 'Allowlist'}
+            onChange={(event) => act('set_device_policy', { policy: event.target.value })}
+            style={{
+              height: 30,
+              padding: '0 8px',
+              border: `1px solid ${t.border}`,
+              borderRadius: t.rSm,
+              background: t.surface,
+              color: t.text,
+              fontFamily: t.font,
+              fontSize: 12,
+            }}
+          >
+            <option value="Allowlist">Allowlist</option>
+            <option value="Open">Open</option>
+          </select>
+        </label>
+      </div>
+      <p style={{ margin: '8px 0 16px', color: t.text2, fontSize: 13, lineHeight: 1.5 }}>
+        {/* FR-020: say plainly that this list is a filter, so nobody treats it as the security control. */}
+        {registry?.policy === 'Open'
+          ? 'Any paired device may send records. Disabled devices are still rejected.'
+          : 'Only registered, enabled devices may send records.'}{' '}
+        The list filters — pairing is what establishes trust.
+      </p>
+
+      {error && (
+        <p role="alert" style={{ margin: '0 0 12px', color: '#B42318', fontSize: 13 }}>
+          {error}
+        </p>
+      )}
+
+      {registry && registry.devices.length === 0 ? (
+        <div role="status" style={{ color: t.text2, fontSize: 13, padding: '12px 0' }}>
+          No devices registered yet. Pair one above — it registers itself on first pairing.
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ color: t.text2, fontSize: 11, textTransform: 'uppercase' }}>
+              <th style={cell}>Name</th>
+              <th style={cell}>Platform</th>
+              <th style={cell}>Status</th>
+              <th style={cell} />
+            </tr>
+          </thead>
+          <tbody>
+            {(registry?.devices ?? []).map((device) => (
+              <tr key={device.id} style={{ borderTop: `1px solid ${t.border}` }}>
+                <td style={cell}>
+                  {/* FR-015: the display name is the user's; the stable device ID underneath is not. */}
+                  <input
+                    // Keyed on the stored name so a refused rename snaps back to what is stored,
+                    // instead of leaving a name on screen that was never saved.
+                    key={device.display_name}
+                    aria-label={`Display name for ${device.device_id}`}
+                    defaultValue={device.display_name}
+                    onBlur={(event) =>
+                      event.target.value !== device.display_name &&
+                      act('rename_device', { id: device.id, displayName: event.target.value })
+                    }
+                    style={{
+                      width: '100%',
+                      height: 28,
+                      padding: '0 8px',
+                      border: `1px solid ${t.border}`,
+                      borderRadius: t.rSm,
+                      background: t.bg,
+                      color: t.text,
+                      fontFamily: t.font,
+                      fontSize: 13,
+                    }}
+                  />
+                  <div style={{ marginTop: 4, color: t.text3, fontFamily: t.mono, fontSize: 11 }}>
+                    {device.device_id}
+                  </div>
+                </td>
+                <td style={{ ...cell, color: device.observed_platform ? t.text : t.text3 }}>
+                  {/* FR-022: "once available" — an unknown platform says so rather than guessing. */}
+                  {device.observed_platform ?? 'Not reported yet'}
+                  {device.os_version && (
+                    <div style={{ color: t.text3, fontSize: 11, marginTop: 2 }}>{device.os_version}</div>
+                  )}
+                </td>
+                <td style={{ ...cell, color: device.enabled ? t.text2 : '#B42318' }}>
+                  {admission(device, registry?.policy ?? 'Allowlist')}
+                </td>
+                <td style={{ ...cell, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {/* FR-018: disable keeps the registration; remove is the one that forces a re-pair. */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      act('set_device_enabled', { id: device.id, enabled: !device.enabled })
+                    }
+                    style={rowButton()}
+                  >
+                    {device.enabled ? 'Disable' : 'Enable'}
+                  </button>{' '}
+                  <button
+                    type="button"
+                    onClick={() => act('remove_device', { id: device.id })}
+                    style={rowButton(true)}
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+export default function Devices({ workspaceId }: { workspaceId: string }) {
   const [invite, setInvite] = useState<PairingInvite | null>(null);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const [registry, setRegistry] = useState<Registry | null>(null);
+  const [registryError, setRegistryError] = useState('');
+
+  async function loadRegistry() {
+    try {
+      setRegistry(await invoke<Registry>('list_devices', { workspaceId }));
+      setRegistryError('');
+    } catch (reason) {
+      setRegistryError(String(reason));
+    }
+  }
 
   async function refresh() {
     try {
@@ -77,6 +270,7 @@ export default function Devices() {
 
   useEffect(() => {
     void refresh();
+    void loadRegistry();
   }, []);
 
   useEffect(() => {
@@ -88,7 +282,18 @@ export default function Devices() {
   const live = invite !== null && remaining > 0;
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center', padding: 24 }}>
+    <div
+      style={{
+        display: 'grid',
+        justifyItems: 'center',
+        alignContent: 'start',
+        gap: 24,
+        padding: 24,
+        width: '100%',
+        boxSizing: 'border-box',
+        overflow: 'auto',
+      }}
+    >
       <section
         aria-labelledby="pairing-title"
         style={{
@@ -129,7 +334,7 @@ export default function Devices() {
             </div>
           </>
         ) : (
-          <div role="status" style={{ color: t.text2, fontSize: 13, minHeight: 220, display: 'grid', placeItems: 'center' }}>
+          <div role="status" aria-label="Pairing status" style={{ color: t.text2, fontSize: 13, minHeight: 220, display: 'grid', placeItems: 'center' }}>
             {error
               ? error
               : invite
@@ -157,6 +362,17 @@ export default function Devices() {
           Refresh code
         </button>
       </section>
+
+      <Registered
+        registry={registry}
+        error={registryError}
+        act={(command, args) => {
+          invoke(command, { workspaceId, ...args }).then(loadRegistry, (reason) =>
+            // Reload anyway: the refused change must not stay on screen as if it took.
+            loadRegistry().finally(() => setRegistryError(String(reason))),
+          );
+        }}
+      />
     </div>
   );
 }

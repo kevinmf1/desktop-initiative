@@ -19,7 +19,7 @@ export const SCREENS = [
   { id: 'cases', label: 'Test Cases', feature: 'feat-009 / feat-010' },
   { id: 'plans', label: 'Test Plans', feature: 'feat-012' },
   { id: 'runner', label: 'Runner', feature: 'feat-016' },
-  { id: 'devices', label: 'Devices', feature: 'feat-013 / feat-014' },
+  { id: 'devices', label: 'Devices', feature: 'feat-013 / feat-014 / feat-015' },
   { id: 'bugs', label: 'Bugs', feature: 'feat-020' },
   { id: 'reports', label: 'Reports', feature: 'feat-022' },
   { id: 'logs', label: 'Log Inspector', feature: 'feat-017 / feat-018' },
@@ -248,7 +248,8 @@ export function WorkspaceShell({
         </h1>
         <section
           style={
-            (screen.id === 'cases' || screen.id === 'plans') && !newSessionBlocked
+            (screen.id === 'cases' || screen.id === 'plans' || screen.id === 'devices') &&
+            !newSessionBlocked
               ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
               : { flex: 1, display: 'grid', placeItems: 'center', color: t.text2 }
           }
@@ -269,7 +270,7 @@ export function WorkspaceShell({
           ) : screen.id === 'plans' ? (
             <TestPlans workspaceId={workspace.workspace_id} />
           ) : screen.id === 'devices' ? (
-            <Devices />
+            <Devices workspaceId={workspace.workspace_id} />
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14 }}>

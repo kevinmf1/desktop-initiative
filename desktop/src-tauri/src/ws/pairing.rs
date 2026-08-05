@@ -70,8 +70,15 @@ impl PairingNack {
     }
 }
 
-/// A device that presented a valid token. The credential lets it come back without a new QR;
-/// storing and re-checking it belongs to the device registry (feat-014, FR-018/019).
+/// A device that presented a valid token. The credential lets it come back without a new QR; it is
+/// stored hashed by the device registry (`crate::device`).
+///
+/// The listener (feat-015) owes three calls around this one, in this order:
+/// 1. `hello.reconnect_credential` present → `device::reconnects(...)`; if true the device is back
+///    in without a token and `authorize()` is not called at all (FR-018/019).
+/// 2. `authorize()` — the trust gate. Nothing below it decides trust (FR-020).
+/// 3. `device::register(...)` then `device::admits(...)` — record the pairing, then apply the
+///    `open`/`allowlist` filter before any record reaches a viewer or a store (FR-017, SC-008).
 #[derive(Debug, PartialEq, Eq)]
 pub struct Authorized {
     pub device_id: String,

@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 10/20 | feat-014 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 11/20 | feat-015 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -58,7 +58,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-011 | CSV/Excel import with row-level error preview before commit; duplicate titles allowed — FR-008 | ✅ | kevin-malik | feat-009 | [archive](archive/features/feat-011.md) |
 | feat-012 | Test Plan CRUD: create/update/archive/duplicate, add/remove cases, plan notes, target build, environment/server — FR-009, FR-010, FR-011 | ✅ | kevin-malik | feat-009 | [archive](archive/features/feat-012.md) |
 | feat-013 | Pairing by QR / pairing code as the default flow; single-use token, 5-minute TTL, refresh invalidates the previous one; device ID is a filter, not auth — FR-016, FR-020, FR-020a | ✅ | kevin-malik | feat-005 | [archive](archive/features/feat-013.md) |
-| feat-014 | Device registry: display name + stable device ID, enable/disable without deleting, persists across restarts, access policy `open`/`allowlist` (default `allowlist`), observed platform shown — FR-015, FR-017, FR-018, FR-019, FR-022 | 🟡 | — | feat-013 | — |
+| feat-014 | Device registry: display name + stable device ID, enable/disable without deleting, persists across restarts, access policy `open`/`allowlist` (default `allowlist`), observed platform shown — FR-015, FR-017, FR-018, FR-019, FR-022 | ✅ | kevin-malik | feat-013 | [archive](archive/features/feat-014.md) |
 | feat-015 | `device-desktop-ws` server with ≥2 concurrent visible device sessions, state and logs isolated per device + session ID — FR-021 | 🟡 | — | feat-013 | — |
 | feat-016 | Manual test runner: start from a plan or ad-hoc cases (build, server, platform, device) producing a unique session ID; stop prompts Passed/Failed/Blocked/Incomplete — FR-012, FR-014 | 🟡 | — | feat-012, feat-015 | — |
 | feat-017 | Live log viewer, behaviour identical for iOS and Android devices — FR-029a | 🟡 | — | feat-015 | — |

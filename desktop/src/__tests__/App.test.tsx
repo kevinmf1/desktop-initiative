@@ -1,5 +1,5 @@
 import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import App, {
@@ -68,12 +68,15 @@ test('a cached keychain session restores the workspace with no sign-in and no ne
   expect(await screen.findByRole('heading', { level: 1, name: 'Test Cases' })).toBeTruthy();
   expect(screen.getByText('kevin@example.com')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Sign in with Google' })).toBeNull();
-  // Only the keychain read and the landing screen's own local read — no auth network call.
-  expect(command.mock.calls.map(([name]) => name)).toEqual([
-    'cached_account',
-    'list_test_cases',
-    'list_test_plans',
-  ]);
+  // Only the keychain read and the landing screen's own local reads — no auth network call. The
+  // heading renders before those reads are dispatched, so wait for them rather than race them.
+  await waitFor(() =>
+    expect(command.mock.calls.map(([name]) => name)).toEqual([
+      'cached_account',
+      'list_test_cases',
+      'list_test_plans',
+    ]),
+  );
 });
 
 test('no cached session shows the Google-only sign-in screen', async () => {

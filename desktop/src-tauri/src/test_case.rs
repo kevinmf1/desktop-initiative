@@ -20,10 +20,10 @@
 //! concurrent-safe across processes. Upgrade path: feat-023 replaces `load`/`save` with a rusqlite
 //! table and reads this file once to migrate.
 
-use std::{fs, path::PathBuf};
+use std::fs;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use time::OffsetDateTime;
 
 const STORE_FILE: &str = "test-cases.json";
@@ -170,17 +170,8 @@ fn new_id(now: OffsetDateTime) -> String {
     format!("tc-{}", now.unix_timestamp_nanos())
 }
 
-fn store_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("No app data directory: {e}"))?;
-    fs::create_dir_all(&dir).map_err(|e| format!("Could not create {}: {e}", dir.display()))?;
-    Ok(dir.join(STORE_FILE))
-}
-
 pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestCase>, String> {
-    let path = store_path(app)?;
+    let path = crate::store_path(app, STORE_FILE)?;
     match fs::read_to_string(&path) {
         Ok(raw) => serde_json::from_str(&raw)
             .map_err(|e| format!("{} is not readable: {e}", path.display())),
@@ -190,7 +181,7 @@ pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestCase>, String> {
 }
 
 fn save(app: &AppHandle, cases: &[TestCase]) -> Result<(), String> {
-    let path = store_path(app)?;
+    let path = crate::store_path(app, STORE_FILE)?;
     let raw = serde_json::to_string_pretty(cases).map_err(|e| e.to_string())?;
     fs::write(&path, raw).map_err(|e| format!("Could not write {}: {e}", path.display()))
 }
