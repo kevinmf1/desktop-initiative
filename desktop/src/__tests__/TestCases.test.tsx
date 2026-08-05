@@ -1,14 +1,16 @@
 import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import TestCases, {
   ALL_CASES,
   arrange,
+  instancesFromPlans,
   summaryStatus,
   type PlanInstance,
   type TestCase,
 } from '../TestCases';
+import type { TestPlan } from '../TestPlans';
 import { planImport, planTable } from '../import';
 
 afterEach(clearMocks);
@@ -42,6 +44,15 @@ function ipc(handlers: Record<string, (args: any) => unknown>) {
 }
 
 const inst = (plan: string, status: PlanInstance['status']): PlanInstance => ({ plan, status });
+
+test('plan items become real independent instances for the Test Case read model', () => {
+  const plans = [{
+    id: 'tp-1',
+    name: 'Smoke',
+    items: [{ test_case_id: 'tc-1', instance_status: 'Passed' }],
+  }] as TestPlan[];
+  expect(instancesFromPlans(plans)).toEqual({ 'tc-1': [{ plan: 'Smoke', status: 'Passed' }] });
+});
 
 // FR-003a — the precedence order, and the fact that it is derived rather than read from a field.
 test('the summary status is derived across plan instances in precedence order', () => {
@@ -175,10 +186,16 @@ test('the list is read for the active workspace only', async () => {
 
   rerender(<TestCases workspaceId="ws-3" />);
 
-  expect(command.mock.calls.filter(([name]) => name === 'list_test_cases')).toEqual([
-    ['list_test_cases', { workspaceId: 'ws-1' }],
-    ['list_test_cases', { workspaceId: 'ws-3' }],
-  ]);
+  await waitFor(() => {
+    expect(command.mock.calls.filter(([name]) => name === 'list_test_cases')).toEqual([
+      ['list_test_cases', { workspaceId: 'ws-1' }],
+      ['list_test_cases', { workspaceId: 'ws-3' }],
+    ]);
+    expect(command.mock.calls.filter(([name]) => name === 'list_test_plans')).toEqual([
+      ['list_test_plans', { workspaceId: 'ws-1' }],
+      ['list_test_plans', { workspaceId: 'ws-3' }],
+    ]);
+  });
 });
 
 // FR-004 — every search / filter / sort axis, over the pure function the screen renders through.

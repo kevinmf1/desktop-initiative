@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod auth_session;
 pub mod test_case;
+pub mod test_plan;
 pub mod workbook;
 pub mod ws;
 
@@ -16,6 +17,10 @@ pub fn run() {
             test_case::list_test_cases,
             test_case::save_test_case,
             test_case::delete_test_case,
+            test_plan::list_test_plans,
+            test_plan::save_test_plan,
+            test_plan::archive_test_plan,
+            test_plan::duplicate_test_plan,
             workbook::read_workbook
         ])
         .run(tauri::generate_context!())

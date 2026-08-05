@@ -8,27 +8,19 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-011 closed; nothing 🔵)
-- **Status:** feat-011 is complete, **CSV and Excel both**. Validation is one pure
-  `planTable(cells)` in `src/import.ts` (required `title` + `platform`, `lifecycle` defaults Active,
-  case-insensitive enums, unknown columns ignored, duplicate titles checked *nowhere* — FR-008's
-  explicit demand), and an `ImportRow` holds `input` xor `errors` so an invalid row cannot commit.
-  CSV/TSV/semicolon text is parsed in the webview by `parseDelimited`; a workbook is decoded by
-  `workbook.rs`'s `read_workbook` (calamine, base64 over the IPC, first sheet only) into the identical
-  `string[][]`. Commit is one `save_test_case` per valid row. Detail:
-  [archive](../archive/features/feat-011.md); the "binary formats decode in Rust" rule is now in
-  `CONSTITUTION.md` § Decisions.
-- **Last verify:** 2026-08-04 · `build` → **PASS** (no warnings) · `test` → **PASS** ·
-  `lint` → not configured. Evidence: `HARNESS_VERIFY: PASS (build)` and
-  `HARNESS_VERIFY: PASS (test)`; Vitest 27/27, Rust 34/34.
+- **Active feature:** — (feat-012 closed; nothing 🔵)
+- **Status:** feat-012 complete. Test Plans persist notes, target build, environment/server, lifecycle,
+  and canonical Test Case links. Create/update/archive/duplicate and add/remove are wired; duplicate
+  resets new independent items to `Not Run`. Test Cases now derive summaries from real plan items.
+  Detail: [archive](../archive/features/feat-012.md).
+- **Last verify:** 2026-08-06 · `build` → **PASS** · `test` → **PASS** · `lint` → not
+  configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`; Vitest
+  31/31, Rust 40/40.
 
 ## Next step
 
-Two features are ready (all `Depends on` ✅):
-
-- **feat-012** — Test Plan CRUD. Also the feature that finally supplies real plan instances: pass a
-  real `instancesByCase` into `<TestCases>` (today `{}`, so every badge reads `Not Run`).
-- **feat-013** — device pairing by QR / pairing code; independently ready, starts the device chain.
+**feat-013** is ready (feat-005 ✅): implement pairing by QR / short code, single-use token,
+5-minute TTL, and refresh invalidation. Read `design/README.md`; Devices has no canonical mockup.
 
 Wiring owed by later features:
 
@@ -77,4 +69,5 @@ _feat-010: rotated to [archive](../archive/features/feat-010.md)._
 | `CONSTITUTION.md` | Decision 2026-08-04: binary formats decode in Rust, cross the IPC as plain data | Settles where the next zip/binary parser goes, not just this one |
 | `FEATURES.md` · `archive/features/feat-011.md` | feat-011 → ✅ with evidence; epic 7/20 → 8/20 | Definition of done |
 
-_Earlier sessions: [2026-08-03-feat-006.md](../archive/sessions/2026-08-03-feat-006.md)._
+_Session detail: [2026-08-06-feat-012.md](../archive/sessions/2026-08-06-feat-012.md). Earlier:
+[2026-08-03-feat-006.md](../archive/sessions/2026-08-03-feat-006.md)._

@@ -9,6 +9,7 @@ import {
   type ImportPlan,
 } from './import';
 import { t } from './tokens';
+import type { TestPlan } from './TestPlans';
 
 // Layout follows design/desktop-qa/uploads/QA-Tools (1)/qa-test-cases.jsx — table of cases,
 // expandable per-plan instances, single roll-up badge. Where the mockup and the spec disagree the
@@ -41,6 +42,18 @@ export type TestCase = {
 /** One Test Plan Item's status for this case. Owned by feat-012; until it lands every case has
  *  zero instances, which FR-003a's last precedence rung already covers as `Not Run`. */
 export type PlanInstance = { plan: string; status: 'Not Run' | 'Passed' | 'Failed' | 'Blocked' };
+
+/** FR-003a / FR-007: turn plan-item references into the read model used by the Test Case list.
+ *  The Test Case itself still stores no status. */
+export function instancesFromPlans(plans: TestPlan[]): Record<string, PlanInstance[]> {
+  const result: Record<string, PlanInstance[]> = {};
+  for (const plan of plans) {
+    for (const item of plan.items) {
+      (result[item.test_case_id] ??= []).push({ plan: plan.name, status: item.instance_status });
+    }
+  }
+  return result;
+}
 
 export const SUMMARY = ['Has Fail', 'Blocked', 'In Progress', 'All Passed', 'Not Run'] as const;
 export type Summary = (typeof SUMMARY)[number];
@@ -549,15 +562,13 @@ function ImportPreview({
  *  sortable over that list. FR-008: bulk import with a row-level preview. */
 export default function TestCases({
   workspaceId,
-  // ponytail: no Test Plan Item exists before feat-012, so every case has zero instances and
-  // FR-003a's derived badge reads `Not Run`. feat-012 passes the real map in; the precedence is
-  // implemented and tested now so the badge is right the moment it does.
-  instancesByCase = {},
+  instancesByCase,
 }: {
   workspaceId: string;
   instancesByCase?: Record<string, PlanInstance[]>;
 }) {
   const [cases, setCases] = useState<TestCase[] | null>(null);
+  const [loadedInstances, setLoadedInstances] = useState<Record<string, PlanInstance[]>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
   const [view, setView] = useState<View>(ALL_CASES);
   const [error, setError] = useState('');
@@ -566,8 +577,14 @@ export default function TestCases({
 
   async function reload() {
     try {
-      const listed = await invoke<TestCase[]>('list_test_cases', { workspaceId });
+      const [listed, plans] = await Promise.all([
+        invoke<TestCase[]>('list_test_cases', { workspaceId }),
+        instancesByCase === undefined
+          ? invoke<TestPlan[]>('list_test_plans', { workspaceId })
+          : Promise.resolve(null),
+      ]);
       setCases(listed ?? []);
+      if (plans) setLoadedInstances(instancesFromPlans(plans));
     } catch (reason) {
       setError(String(reason));
       setCases([]);
@@ -643,7 +660,8 @@ export default function TestCases({
   // The filter choices are the values actually present, so a stale option can never be offered.
   const values = (of: (c: TestCase) => string[]) =>
     [...new Set(cases.flatMap(of))].filter(Boolean).sort();
-  const shown = arrange(cases, instancesByCase, view);
+  const actualInstances = instancesByCase ?? loadedInstances;
+  const shown = arrange(cases, actualInstances, view);
 
   return (
     <div style={{ padding: 20, overflowY: 'auto', fontFamily: t.font }}>
@@ -759,7 +777,7 @@ export default function TestCases({
               <CaseRow
                 key={c.id}
                 c={c}
-                instances={instancesByCase[c.id] ?? []}
+                instances={actualInstances[c.id] ?? []}
                 onEdit={() => setDraft(draftOf(c))}
                 onDelete={() => remove(c)}
               />

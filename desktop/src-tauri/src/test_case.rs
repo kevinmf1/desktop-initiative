@@ -179,7 +179,7 @@ fn store_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join(STORE_FILE))
 }
 
-fn load(app: &AppHandle) -> Result<Vec<TestCase>, String> {
+pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestCase>, String> {
     let path = store_path(app)?;
     match fs::read_to_string(&path) {
         Ok(raw) => serde_json::from_str(&raw)

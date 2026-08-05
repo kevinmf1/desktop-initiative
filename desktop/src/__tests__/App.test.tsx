@@ -69,7 +69,11 @@ test('a cached keychain session restores the workspace with no sign-in and no ne
   expect(screen.getByText('kevin@example.com')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Sign in with Google' })).toBeNull();
   // Only the keychain read and the landing screen's own local read — no auth network call.
-  expect(command.mock.calls.map(([name]) => name)).toEqual(['cached_account', 'list_test_cases']);
+  expect(command.mock.calls.map(([name]) => name)).toEqual([
+    'cached_account',
+    'list_test_cases',
+    'list_test_plans',
+  ]);
 });
 
 test('no cached session shows the Google-only sign-in screen', async () => {
@@ -155,9 +159,11 @@ test('switching scopes the content to the new workspace without rewriting anythi
   expect(screen.queryByText(/in Alpha/)).toBeNull();
   // No reattribution: a switch only re-*reads* for the workspace switched into. Nothing is
   // written, so no existing device, session, bug or capture can change workspace.
-  expect(command.mock.calls.map(([name]) => name).filter((n) => n !== 'list_test_cases')).toEqual([
-    'cached_account',
-  ]);
+  expect(
+    command.mock.calls
+      .map(([name]) => name)
+      .filter((n) => n !== 'list_test_cases' && n !== 'list_test_plans'),
+  ).toEqual(['cached_account']);
 });
 
 // FR-056d
