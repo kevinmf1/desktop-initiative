@@ -27,6 +27,9 @@ const KEYCHAIN_ENTRY: &str = "auth-session";
 const DEFAULT_OFFLINE_GRACE_DAYS: i64 = 30;
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+#[cfg(debug_assertions)]
+const DEV_AUTH_ENV: &str = "TESTLAB_DEV_AUTH";
+
 /// What the desktop persists to the OS keychain. Everything needed to run offline, and nothing
 /// Google issued.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -108,6 +111,48 @@ impl CachedSession {
             can_start_new_session: self.can_start_new_session(now),
         }
     }
+}
+
+#[cfg(any(debug_assertions, test))]
+fn development_account_for(enabled: bool, now: OffsetDateTime) -> Option<Account> {
+    enabled.then(|| Account {
+        user: CachedUser {
+            id: "local-developer".into(),
+            display_name: "Local Developer".into(),
+            email: "developer@local.test".into(),
+            avatar_url: None,
+        },
+        memberships: [
+            ("local-workspace-1", "Local Workspace Alpha"),
+            ("local-workspace-2", "Local Workspace Beta"),
+        ]
+        .into_iter()
+        .map(|(workspace_id, name)| CachedMembership {
+            workspace_id: workspace_id.into(),
+            name: name.into(),
+            role: Some("admin".into()),
+            status: Some("active".into()),
+        })
+        .collect(),
+        offline_grace_until: now + time::Duration::days(365),
+        can_start_new_session: true,
+    })
+}
+
+#[cfg(any(debug_assertions, test))]
+fn development_auth_enabled(value: Option<&str>) -> bool {
+    value.is_some_and(|value| value.trim() == "1")
+}
+
+#[cfg(debug_assertions)]
+fn development_account(now: OffsetDateTime) -> Option<Account> {
+    let configured = env::var(DEV_AUTH_ENV).ok();
+    development_account_for(development_auth_enabled(configured.as_deref()), now)
+}
+
+#[cfg(not(debug_assertions))]
+fn development_account(_now: OffsetDateTime) -> Option<Account> {
+    None
 }
 
 /// FR-053: the grace window defaults to 30 days and is configurable. The backend's value wins when
@@ -192,6 +237,9 @@ pub async fn establish(proof: &GoogleIdentityProof) -> Result<Account, String> {
 #[tauri::command]
 pub fn cached_account() -> Result<Option<Account>, String> {
     let now = OffsetDateTime::now_utc();
+    if let Some(account) = development_account(now) {
+        return Ok(Some(account));
+    }
     Ok(load_cache()?.map(|session| session.account(now)))
 }
 
@@ -200,6 +248,13 @@ pub fn cached_account() -> Result<Option<Account>, String> {
 /// already synced to the backend.
 #[tauri::command]
 pub async fn sign_out() -> Result<(), String> {
+    if development_account(OffsetDateTime::now_utc()).is_some() {
+        return Err(
+            "Local development auth is enabled. Stop the app and unset TESTLAB_DEV_AUTH to sign out."
+                .into(),
+        );
+    }
+
     // Read first, clear second, revoke last: clearing is unconditional, so an unreachable backend
     // can never leave the desktop signed in.
     let cached = load_cache().ok().flatten();
@@ -396,6 +451,26 @@ mod tests {
                 "the webview must never receive {secret}"
             );
         }
+    }
+
+    #[test]
+    fn debug_local_auth_is_explicit_and_supplies_two_active_workspaces() {
+        let now = at("2026-08-06T10:00:00Z");
+        assert!(!development_auth_enabled(None));
+        assert!(!development_auth_enabled(Some("true")));
+        assert!(development_auth_enabled(Some(" 1 ")));
+        assert_eq!(development_account_for(false, now), None);
+
+        let account = development_account_for(true, now).unwrap();
+        assert_eq!(account.user.id, "local-developer");
+        assert_eq!(account.user.display_name, "Local Developer");
+        assert_eq!(account.memberships.len(), 2);
+        assert!(account
+            .memberships
+            .iter()
+            .all(|membership| membership.status.as_deref() == Some("active")));
+        assert!(account.can_start_new_session);
+        assert!(account.offline_grace_until > now);
     }
 
     #[test]

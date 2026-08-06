@@ -28,6 +28,32 @@ Scenario 6 and the offline portion of B exercise behaviour with the backend **st
 1. Start the desktop app. For **[alone]** scenarios you can work locally; for A/B first **sign in with Google** (Scenario A), then pick an active workspace — all subsequent scenarios operate within it.
 2. For **[peer: SDK]** scenarios, build and launch a sample host app with the SDK.
 
+### Local development auth (debug builds only)
+
+To manually exercise authenticated **[alone]** scenarios without Google or a backend, launch the
+Tauri development build with the explicit local-auth flag:
+
+```bash
+cd desktop
+TESTLAB_DEV_AUTH=1 npm run tauri dev
+```
+
+PowerShell equivalent:
+
+```powershell
+cd desktop
+$env:TESTLAB_DEV_AUTH = '1'
+npm run tauri dev
+```
+
+The app opens as `Local Developer` with `Local Workspace Alpha` and `Local Workspace Beta`; this
+also gives Rust commands the same identity for audit fields. The flag is accepted only by debug
+builds and needs neither `GOOGLE_CLIENT_ID` nor `TESTLAB_API_BASE_URL`. Unset it and restart to use
+the normal cached-session/Google flow.
+
+This mode proves only local desktop behaviour. Scenario A still requires Google + backend; sync and
+upload checks require the backend; device streaming checks require an SDK peer.
+
 ---
 
 ## Scenario 0 — Desktop builds independently *(FR-000 / SC-018)* **[alone]**

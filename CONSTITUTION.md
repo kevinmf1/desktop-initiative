@@ -89,6 +89,19 @@ _Dated entries. Add one whenever an arguable choice gets settled — include the
 it can be reopened later without redoing the analysis. Amend by adding a new dated entry that
 supersedes the old one; never silently edit history._
 
+### 2026-08-06 · Local authentication bypass exists only in debug builds
+
+Manual testing of the desktop's local features must not wait for a Google OAuth client or a live
+backend. A debug build may therefore treat `TESTLAB_DEV_AUTH=1` as a local account with fixed test
+workspaces. The bypass is owned by the Rust auth boundary so the webview and privileged commands
+observe the same identity; a React-only mock would make the screen look signed in while audit and
+authorization code remained signed out.
+
+The product is still Google-SSO-only: release builds compile the environment-variable branch to
+`None`, and disabling the variable preserves the normal keychain/Google/backend path. Local auth is
+evidence for standalone desktop behaviour only; it never counts as proof of OAuth, backend session
+minting, server-side membership enforcement, sync, or upload behaviour.
+
 ### 2026-08-04 · Binary file formats are parsed in Rust, not in the webview
 
 FR-008's Excel half needed an `.xlsx` reader (a zip of XML). It landed as `calamine` behind the

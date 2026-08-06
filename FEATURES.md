@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 11/20 | feat-015 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 12/21 | feat-015 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -68,6 +68,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-021 | Capture relay: receive the binary from the device, upload to backend storage, queue + retry when unreachable, "pending upload" state, metadata syncs independently of the binary — FR-044, FR-044a, FR-044b | 🟡 | — | feat-020, feat-023 | — |
 | feat-022 | Reporting: session history, pass/fail rate by plan, failed cases by build, bugs by environment, API error patterns by session/device, per-plan result for a shared Test Case — FR-033, FR-034 | 🟡 | — | feat-016, feat-020 | — |
 | feat-023 | Local-first store + `sync-api` client: session keeps capturing while the backend is down, bugs and evidence sync later, clearing logs never drops bug evidence, malformed messages discarded with a diagnostic, duplicates de-duplicated — FR-035, FR-035b, FR-036 | 🟡 | — | feat-015 | — |
+| feat-024 | Debug-only local authentication for manual frontend testing: no Google/backend required, two active workspaces, normal auth unchanged when disabled, unavailable in release builds | ✅ | kevin-malik | feat-007 | [archive](archive/features/feat-024.md) |
 
 ---
 
