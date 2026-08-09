@@ -176,8 +176,10 @@ test('switching scopes the content to the new workspace without rewriting anythi
   });
   render(<App />);
 
-  await user.click(await screen.findByRole('button', { name: 'Bugs' }));
-  expect(screen.getByText(/Bugs in Alpha/)).toBeTruthy();
+  // Asserted from a screen that is still a placeholder — it names its workspace in plain text,
+  // which is what makes the scoping visible without reading a built screen's data.
+  await user.click(await screen.findByRole('button', { name: 'Reports' }));
+  expect(screen.getByText(/Reports in Alpha/)).toBeTruthy();
 
   await user.selectOptions(screen.getByLabelText('Workspace'), 'ws-3');
 
@@ -218,8 +220,8 @@ test('a switch is refused while a test session is running', async () => {
   // has to hold on a shell that has never opened the Runner.
   ipc({ list_test_cases: () => [], list_test_sessions: () => [running('ts-1'), running('ts-2')] });
   render(<WorkspaceShell account={signedIn} onSignOut={() => {}} />);
-  // The refusal is asserted from the Bugs screen so it is the only alert on the page.
-  await user.click(screen.getByRole('button', { name: 'Bugs' }));
+  // The refusal is asserted from the Reports placeholder so it is the only alert on the page.
+  await user.click(screen.getByRole('button', { name: 'Reports' }));
 
   await user.selectOptions(screen.getByLabelText('Workspace'), 'ws-3');
 

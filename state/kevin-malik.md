@@ -8,34 +8,37 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-019 closed; nothing 🔵)
-- **Status:** feat-019 complete. New `bug.rs` store + a one-field marker form on the Runner's running
-  session card. FR-013's three clauses are structural, not conventional: `mark(bugs, sessions, …)`
-  takes `&[TestSession]` so a marker **cannot** stop a run; the bug stores `window_start`/`window_end`
-  = `marked_at ± 30s` (a bookmark, so the frames it points at include the ones that arrive *after*
-  the click); and it carries `(test_session_id, device_id)` — the SDK-reported id `Sessions` files
-  records under, so the window resolves with no translation table. `test_session::load` is now
-  `pub(crate)` so `mark_bug` validates against real sessions. Marking never calls
-  `onSessionsChanged`. Detail: [archive](../archive/features/feat-019.md).
-  feat-018: [archive](../archive/features/feat-018.md).
+- **Active feature:** — (feat-020 closed; nothing 🔵)
+- **Status:** feat-020 complete. feat-019's marker became the full record (FR-030…032) plus a new
+  **Bugs screen**. Two things carry the design: **capture vs triage** — marking still takes one
+  field, the run's own facts (plan, build, environment) are *copied off the session* at mark time,
+  and severity/status/description/related case are set afterwards through `edit`/`update_bug`, whose
+  patch has **no field that can reach the observation** (`marked_at`, session, device, build). And
+  **evidence is derived, never stored** — `window_seconds` (1…3600, default 30) is the FR-032
+  configuration, `window_start`/`window_end` are always recomputed from `marked_at` so repeated
+  edits cannot drift, and widening the window *re-reads* frames rather than re-capturing. The
+  excerpt renders through the Log Inspector's own `logRow` + `groupRows`, so it reads exactly like
+  the live view; a frame with no timestamp is left out rather than guessed into the window. A
+  feat-019 `bugs.json` still loads (`serde(default)` + `alias = "summary"`), with a test that parses
+  the exact JSON it wrote. Detail: [archive](../archive/features/feat-020.md).
+  feat-019: [archive](../archive/features/feat-019.md).
 - **Last verify:** 2026-08-10 · `build` → **PASS** · `test` → **PASS** · `lint` → not
   configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`;
-  Vitest 62/62, Rust 70/70.
+  Vitest 66/66, Rust 73/73.
 
 ## Next step
 
 Two features are ready:
 
-- **feat-020** (bug record + evidence, FR-030/030a/030b/031/032) — the direct continuation. It fills
-  in the record `bug.rs` now creates: full field set, severity P0–P3, status Open → Won't Fix
-  (default Open), and the log excerpt + preceding User Actions pulled from the window feat-019 stores.
-  The ±30s is already a per-bug field pair (`WINDOW_SECONDS` is the only fixed part), so making it
-  configurable is an input, not a migration. `groupRows` (feat-018) is what turns the window's frames
-  into the "preceding User Actions" list.
-- **feat-023** (local-first store + `sync-api` client) is independent and is what makes captured
-  frames survive a restart — `Sessions` is still in memory, capped at 500 frames per session, and
-  `bugs.json` / `test-sessions.json` are still whole-file rewrites.
-- Not yet ready: feat-021 (needs 020 + 023), feat-022 (needs 020).
+- **feat-023** (local-first store + `sync-api` client) — the one that unblocks the rest. Records are
+  still in memory only (`ws::server::Sessions`, capped 500/session), so a bug's excerpt is empty
+  after a restart and the screen says so; `bugs.json` / `test-sessions.json` are still whole-file
+  rewrites. Start with the frame store, then the `sync-api` client.
+- **feat-022** (reporting, FR-033/034) is now ready too — it reads `severity` / `status` /
+  `environment` off the bug record feat-020 just landed, plus `Session Case Result` for pass/fail
+  by plan.
+- Not yet ready: feat-021 (needs feat-023). Its FR-044a "pending upload" state is what the Bugs
+  screen's *Attached captures* section becomes.
 
 ## Parked
 
@@ -62,9 +65,12 @@ _feat-009 … feat-024: rotated to [archive](../archive/features/). Latest sessi
 
 | File | What | Why |
 |------|------|-----|
-| `desktop/src-tauri/src/bug.rs` | new: `Bug`, `mark`, `visible`, `list_bugs`, `mark_bug`, 3 tests | FR-013: the marker store. `&[TestSession]` is what makes "keeps the session running" a type, not a promise |
-| `desktop/src-tauri/src/test_session.rs` | `load` → `pub(crate)` | `mark_bug` must validate the id against real sessions, not trust the webview |
-| `desktop/src-tauri/src/lib.rs` | `pub mod bug` + both commands registered | a command not in `generate_handler!` is invisible to the webview |
-| `desktop/src/Runner.tsx` | `Bug` type, `BugMarker` form, marker list + bug count on the card, `mark()` | FR-013 on screen: one field, no dialog, and the window shown as what it is — a bookmark |
-| `desktop/src/__tests__/Runner.test.tsx` | 2 new tests (62 total) | marker IPC + session stays running; refusal reported and no marker form on a stopped card |
-| `FEATURES.md` · `archive/features/feat-019.md` | feat-019 ✅ + evidence | definition of done |
+| `desktop/src-tauri/src/bug.rs` | `Severity`/`Status` enums, full FR-030 field set on `Bug`, `BugEdit` + `edit`, `update_bug`, 3 new tests | FR-030…032. Copied run facts + a patch that cannot reach the observation = triage without rewriting evidence |
+| `desktop/src-tauri/src/lib.rs` | `bug::update_bug` registered | a command not in `generate_handler!` is invisible to the webview |
+| `desktop/src/Bugs.tsx` | new screen: list, triage form, `withinWindow` / `precedingActions`, excerpt via `groupRows` | FR-031: evidence derived from the window at read time, rendered by the Log Inspector's own row logic |
+| `desktop/src/Runner.tsx` | `Bug` type extended, `summary` → `title`, `SEVERITIES`/`STATUSES` | one shared shape for the record; the marker form itself is unchanged (FR-013) |
+| `desktop/src/App.tsx` | `bugs` screen wired + full-bleed | the placeholder was the last thing standing between the record and the operator |
+| `desktop/src/__tests__/Bugs.test.tsx` | new: 4 tests | window selection incl. the untimestamped frame, actions stop at the marker, detail render, one-field patch + refusal |
+| `desktop/src/__tests__/App.test.tsx` | workspace-scoping asserts moved to the Reports placeholder | Bugs is a built screen now, so it no longer prints "… in Alpha" |
+| `desktop/src/__tests__/Runner.test.tsx` | `bug()` fixture updated to the full record | `summary` no longer exists on `Bug` |
+| `FEATURES.md` · `archive/features/feat-020.md` | feat-020 ✅ + evidence | definition of done |

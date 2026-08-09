@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
+import Bugs from './Bugs';
 import Devices from './Devices';
 import LogInspector from './LogInspector';
 import Runner, { isRunning, type TestSession } from './Runner';
@@ -227,7 +228,7 @@ export function WorkspaceShell({ account, onSignOut }: { account: Account; onSig
   }
   // FR-053a: expired offline grace gates starting a *new* session and nothing else — the Runner
   // renders that refusal in place of its start form, so running sessions stay visible and stoppable.
-  const fullBleed = ['cases', 'plans', 'devices', 'runner', 'logs'].includes(screen.id);
+  const fullBleed = ['cases', 'plans', 'devices', 'runner', 'logs', 'bugs'].includes(screen.id);
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: t.font, background: t.bg }}>
@@ -273,6 +274,8 @@ export function WorkspaceShell({ account, onSignOut }: { account: Account; onSig
             <TestPlans workspaceId={workspace.workspace_id} />
           ) : screen.id === 'devices' ? (
             <Devices workspaceId={workspace.workspace_id} />
+          ) : screen.id === 'bugs' ? (
+            <Bugs workspaceId={workspace.workspace_id} />
           ) : screen.id === 'logs' ? (
             <LogInspector workspaceId={workspace.workspace_id} />
           ) : screen.id === 'runner' ? (

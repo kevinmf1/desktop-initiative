@@ -53,6 +53,7 @@ pub fn run() {
             test_session::stop_test_session,
             bug::list_bugs,
             bug::mark_bug,
+            bug::update_bug,
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,

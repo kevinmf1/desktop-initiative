@@ -24,16 +24,28 @@ export type TestSession = {
   case_ids: string[];
 };
 
-// FR-013's marker, from `bug.rs`. The window is a bookmark — it names a time range over the
-// session's records rather than copying them.
+export const SEVERITIES = ['P0', 'P1', 'P2', 'P3'] as const;
+export const STATUSES = ['Open', 'In Progress', 'Resolved', 'Closed', "Won't Fix"] as const;
+
+// FR-013's marker and FR-030's record — one row in `bug.rs`. The window is a bookmark: it names a
+// time range over the session's records rather than copying them, so widening it (FR-032) re-reads
+// rather than re-captures.
 export type Bug = {
   id: string;
   workspace_id: string;
   test_session_id: string;
   device_id: string;
-  summary: string;
+  title: string;
+  description: string;
+  severity: (typeof SEVERITIES)[number];
+  status: (typeof STATUSES)[number];
+  test_case_id: string | null;
+  test_plan_id: string | null;
+  build_version: string;
+  environment: string;
   marked_by: string;
   marked_at: string;
+  window_seconds: number;
   window_start: string;
   window_end: string;
 };
@@ -359,8 +371,8 @@ function SessionCard({
                 color: t.text,
               }}
             >
-              <span style={{ flex: 1, minWidth: 0 }}>{bug.summary}</span>
-              {/* The bookmark, not a copy: the window is what feat-020 reads records out of. */}
+              <span style={{ flex: 1, minWidth: 0 }}>{bug.title}</span>
+              {/* The bookmark, not a copy: the window is what the Bugs screen reads records out of. */}
               <span style={{ fontFamily: t.mono, fontSize: 11, color: t.text2 }}>
                 {clock(bug.marked_at)} · window {clock(bug.window_start)}–{clock(bug.window_end)}
               </span>
