@@ -69,6 +69,7 @@ const session = (overrides: Partial<TestSession> = {}): TestSession => ({
   server: 'staging',
   result: null,
   case_ids: ['tc-1'],
+  synced_at: null,
   ...overrides,
 });
 
@@ -90,6 +91,7 @@ const bug = (overrides: Partial<Bug> = {}): Bug => ({
   window_seconds: 30,
   window_start: '2026-08-10T10:14:30Z',
   window_end: '2026-08-10T10:15:30Z',
+  synced_at: null,
   ...overrides,
 });
 

@@ -344,6 +344,21 @@ export default function LogInspector({ workspaceId }: { workspaceId: string }) {
         >
           {grouped ? 'Grouped' : 'Flat'}
         </button>
+        {/* FR-035b: clearing the general logs never touches a bug's evidence — the Rust side keeps
+            every frame inside a marked window, so this is safe to offer without a warning. */}
+        <button
+          type="button"
+          onClick={() =>
+            active &&
+            invoke('clear_device_logs', { deviceId: active.device_id }).then(
+              () => setFrames([]),
+              () => {},
+            )
+          }
+          style={{ ...chip(false), marginLeft: 4 }}
+        >
+          Clear logs
+        </button>
         <span style={{ marginLeft: 'auto', fontSize: 12, color: t.text3 }}>
           {rows.length} of {frames.length} records · {devices.length} device
           {devices.length === 1 ? '' : 's'}

@@ -101,6 +101,10 @@ pub struct Bug {
     pub window_start: OffsetDateTime,
     #[serde(with = "time::serde::rfc3339")]
     pub window_end: OffsetDateTime,
+    /// FR-035b: when this record last reached the backend. `None` is the outbox — a bug is written
+    /// locally first and always, and syncing is what happens *afterwards*, if and when it can.
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    pub synced_at: Option<OffsetDateTime>,
 }
 
 /// A triage patch. Every field is optional: absent means "leave it", which is what makes a
@@ -181,6 +185,7 @@ pub fn mark(
         window_seconds: WINDOW_SECONDS,
         window_start: now - window,
         window_end: now + window,
+        synced_at: None,
     };
     bugs.push(bug.clone());
     Ok(bug)
@@ -234,10 +239,12 @@ pub fn edit(
         bug.window_start = bug.marked_at - window;
         bug.window_end = bug.marked_at + window;
     }
+    // Triage changed the record, so the copy the backend holds is stale: back into the outbox.
+    bug.synced_at = None;
     Ok(bug.clone())
 }
 
-fn load(app: &AppHandle) -> Result<Vec<Bug>, String> {
+pub(crate) fn load(app: &AppHandle) -> Result<Vec<Bug>, String> {
     let path = crate::store_path(app, STORE_FILE)?;
     match fs::read_to_string(&path) {
         Ok(raw) => serde_json::from_str(&raw)
@@ -247,7 +254,7 @@ fn load(app: &AppHandle) -> Result<Vec<Bug>, String> {
     }
 }
 
-fn save(app: &AppHandle, bugs: &[Bug]) -> Result<(), String> {
+pub(crate) fn save(app: &AppHandle, bugs: &[Bug]) -> Result<(), String> {
     let path = crate::store_path(app, STORE_FILE)?;
     let raw = serde_json::to_string_pretty(bugs).map_err(|e| e.to_string())?;
     fs::write(&path, raw).map_err(|e| format!("Could not write {}: {e}", path.display()))
@@ -317,6 +324,7 @@ mod tests {
             server: "staging".into(),
             result: None,
             case_ids: vec!["tc-1".into()],
+            synced_at: None,
         }
     }
 

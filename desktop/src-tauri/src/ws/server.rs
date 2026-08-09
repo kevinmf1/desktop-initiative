@@ -12,11 +12,13 @@
 //! - **the sessions** (`Sessions`) — every record is filed under `(device_id, session_id)`, so two
 //!   devices, or one device running two sessions, never share state (FR-021).
 //!
-//! ponytail: sessions are in memory and capped per session; feat-023's local-first store is what
-//! makes them survive a restart, and feat-017 is what renders their records.
+//! Since feat-023 each record is also appended to `crate::frames`, the durable per-device log: the
+//! map is the live view, the file is the record. A replay of an event already filed is dropped
+//! before either sees it (FR-036), and a restart loses the rows but not the frames (FR-035b).
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashSet},
+    path::PathBuf,
     sync::{Mutex, MutexGuard},
 };
 
@@ -47,8 +49,8 @@ const RECORD_TYPES: [&str; 5] = [
     "media_chunk",
 ];
 
-/// ponytail: a ring of the last N frames per session — enough for the live viewer (feat-017), and
-/// bounded so a long soak cannot eat the heap. feat-023 replaces this with the durable store.
+/// ponytail: a ring of the last N frames per session — the live view, bounded so a long soak cannot
+/// eat the heap. The durable answer is `crate::frames`, which is what `records()` reads.
 const MAX_RECORDS_PER_SESSION: usize = 500;
 
 /// A connected device that has not sent a record carrying a `session_id` yet. It is still one
@@ -73,16 +75,35 @@ pub struct DeviceSession {
     /// Not serialised to the list view — feat-017 asks for one session's records by key.
     #[serde(skip)]
     pub records: Vec<serde_json::Value>,
+    /// FR-036: the identities already filed for this session, so a replay is dropped once.
+    #[serde(skip)]
+    seen: HashSet<String>,
 }
 
 #[derive(Default)]
-pub struct Sessions(Mutex<BTreeMap<(String, String), DeviceSession>>);
+pub struct Sessions {
+    map: Mutex<BTreeMap<(String, String), DeviceSession>>,
+    /// Where the durable log lives. `None` in tests and before the app is set up — the map then is
+    /// the whole store, which is exactly what the protocol tests want.
+    dir: Mutex<Option<PathBuf>>,
+}
 
 impl Sessions {
     fn map(&self) -> MutexGuard<'_, BTreeMap<(String, String), DeviceSession>> {
         // A poisoned lock means some other connection panicked. Losing every session over one bad
         // frame is worse than carrying on with the state that was there.
-        self.0.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+        self.map.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    fn dir(&self) -> Option<PathBuf> {
+        self.dir.lock().ok().and_then(|dir| dir.clone())
+    }
+
+    /// Called once at startup with the app data dir. Until then records are memory-only.
+    pub fn store_in(&self, dir: PathBuf) {
+        if let Ok(mut slot) = self.dir.lock() {
+            *slot = Some(dir);
+        }
     }
 
     fn entry(
@@ -107,6 +128,7 @@ impl Sessions {
                 started_at: now,
                 last_seen_at: now,
                 records: Vec::new(),
+                seen: HashSet::new(),
             });
         map
     }
@@ -131,6 +153,8 @@ impl Sessions {
     }
 
     /// FR-021: the record lands under this device *and* this session, never anywhere else.
+    /// FR-036: a repeated delivery of an event already filed here is dropped — one entry, always.
+    /// Returns false when the frame was a replay, so the caller can say so in the diagnostic.
     pub fn record(
         &self,
         workspace_id: &str,
@@ -138,19 +162,35 @@ impl Sessions {
         session_id: &str,
         frame: serde_json::Value,
         now: OffsetDateTime,
-    ) {
+    ) -> bool {
         let key = (device.device_id.clone(), session_id.to_owned());
         let mut map = self.entry(workspace_id, device, session_id, now);
         let Some(session) = map.get_mut(&key) else {
-            return;
+            return false;
         };
         session.connected = true;
         session.last_seen_at = now;
+
+        if let Some(identity) = crate::frames::identity(&frame) {
+            if !session.seen.insert(identity) {
+                return false;
+            }
+        }
+
         session.record_count += 1;
         if session.records.len() == MAX_RECORDS_PER_SESSION {
             session.records.remove(0);
         }
-        session.records.push(frame);
+        session.records.push(frame.clone());
+        // The map is the live view; the file is the record. A write that fails is reported and does
+        // not interrupt the stream — capture never depends on the store (Principle III).
+        drop(map);
+        if let Some(dir) = self.dir() {
+            if let Err(error) = crate::frames::append(&dir, &device.device_id, session_id, &frame) {
+                eprintln!("device-desktop-ws: {error}");
+            }
+        }
+        true
     }
 
     /// The contract's "detect drop; keep session": the rows stay, they just stop being live.
@@ -169,11 +209,57 @@ impl Sessions {
             .collect()
     }
 
+    /// The durable log is the answer whenever there is one — it is the superset (the in-memory ring
+    /// is capped) and it is what makes a session readable after a restart.
     pub fn records(&self, device_id: &str, session_id: &str) -> Vec<serde_json::Value> {
-        self.map()
-            .get(&(device_id.to_owned(), session_id.to_owned()))
-            .map(|s| s.records.clone())
-            .unwrap_or_default()
+        match self.dir() {
+            Some(dir) => crate::frames::session(&dir, device_id, session_id),
+            None => self
+                .map()
+                .get(&(device_id.to_owned(), session_id.to_owned()))
+                .map(|s| s.records.clone())
+                .unwrap_or_default(),
+        }
+    }
+
+    /// Every frame this device streamed, across all its sessions. A Bug knows the *desktop's*
+    /// session id, not the device's, so its evidence window resolves by device and by time.
+    pub fn device_records(&self, device_id: &str) -> Vec<serde_json::Value> {
+        match self.dir() {
+            Some(dir) => crate::frames::read(&dir, device_id)
+                .into_iter()
+                .map(|stored| stored.frame)
+                .collect(),
+            None => self
+                .map()
+                .values()
+                .filter(|s| s.device_id == device_id)
+                .flat_map(|s| s.records.clone())
+                .collect(),
+        }
+    }
+
+    /// FR-035b: clear the general logs, keeping every frame inside a bug's evidence window. The
+    /// live rows are re-seeded from what survived, so the screen and the file never disagree.
+    pub fn clear(
+        &self,
+        device_id: &str,
+        windows: &[(OffsetDateTime, OffsetDateTime)],
+    ) -> Result<(), String> {
+        if let Some(dir) = self.dir() {
+            crate::frames::retain(&dir, device_id, windows)?;
+        }
+        // The same rule the file was rewritten by — `seen` is deliberately not reset, so a replay
+        // arriving after a clear is still a replay.
+        let inside = |frame: &serde_json::Value| {
+            crate::frames::occurred_at(frame)
+                .is_some_and(|at| windows.iter().any(|(from, to)| at >= *from && at <= *to))
+        };
+        for session in self.map().values_mut().filter(|s| s.device_id == device_id) {
+            session.records.retain(&inside);
+            session.record_count = session.records.len();
+        }
+        Ok(())
     }
 }
 
@@ -363,7 +449,13 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
         }
 
         if RECORD_TYPES.contains(&kind.as_str()) {
-            sessions.record(workspace_id, &device, &current, frame, now);
+            // FR-036: a replay is not an error and not a second entry — it is a no-op with a note.
+            if !sessions.record(workspace_id, &device, &current, frame, now) {
+                eprintln!(
+                    "device-desktop-ws: ignored a repeated {kind} from {}",
+                    device.device_id
+                );
+            }
         } else {
             // `heartbeat`, and any type a newer minor invented: liveness, ignored silently.
             sessions.touched(workspace_id, &device, &current, now);
@@ -461,6 +553,31 @@ pub fn session_records(
     session_id: String,
 ) -> Vec<serde_json::Value> {
     server.sessions.records(&device_id, &session_id)
+}
+
+/// FR-035b: every frame a device streamed, for a Bug's evidence window. One call rather than
+/// "list sessions, then read each" — a marked moment resolves by device and by time, and after a
+/// restart there are no live session rows to enumerate.
+#[tauri::command]
+pub fn device_records(server: State<'_, WsServer>, device_id: String) -> Vec<serde_json::Value> {
+    server.sessions.device_records(&device_id)
+}
+
+/// FR-035b: clear this device's general logs. Every frame inside *any* bug's evidence window is
+/// kept — including bugs in another workspace, because clearing a screen is not a licence to drop
+/// somebody else's evidence.
+#[tauri::command]
+pub fn clear_device_logs(
+    app: AppHandle,
+    server: State<'_, WsServer>,
+    device_id: String,
+) -> Result<(), String> {
+    let windows: Vec<(OffsetDateTime, OffsetDateTime)> = crate::bug::load(&app)?
+        .iter()
+        .filter(|bug| bug.device_id == device_id)
+        .map(|bug| (bug.window_start, bug.window_end))
+        .collect();
+    server.sessions.clear(&device_id, &windows)
 }
 
 /// Called by the webview on mount and on every workspace switch — the gate cannot ask React which
@@ -630,6 +747,53 @@ mod tests {
                 r#"{{"type":"app_log","session_id":"{session_id}","log_id":"l1","level":"info"}}"#
             ),
         ]
+    }
+
+    // FR-035b / FR-036 — the durable half. Three promises in one run: a replay is never a second
+    // entry, a restart keeps the frames, and clearing the general logs keeps a bug's window.
+    #[test]
+    fn a_replay_is_dropped_frames_survive_a_restart_and_clearing_keeps_the_evidence_window() {
+        let dir = std::env::temp_dir().join(format!(
+            "server-frames-{}",
+            OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ));
+        let sessions = Sessions::default();
+        sessions.store_in(dir.clone());
+        let device = registered("sdk-a", "Bench A");
+        let now = at("2026-08-10T10:15:00Z");
+        let frame = |request: &str, when: &str| {
+            serde_json::json!({
+                "type": "log_event", "request_id": request, "phase": "started", "started_at": when
+            })
+        };
+
+        assert!(sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now));
+        assert!(
+            !sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now),
+            "the same request_id+phase delivered twice is one entry"
+        );
+        assert!(sessions.record("ws-1", &device, "sess-1", frame("r2", "2026-08-10T11:00:00Z"), now));
+        assert_eq!(sessions.records("sdk-a", "sess-1").len(), 2);
+        assert_eq!(sessions.snapshot("ws-1")[0].record_count, 2);
+
+        // A restart is exactly this: a fresh map over the same directory.
+        let restarted = Sessions::default();
+        restarted.store_in(dir.clone());
+        assert!(restarted.snapshot("ws-1").is_empty(), "no device is connected after a restart");
+        assert_eq!(restarted.device_records("sdk-a").len(), 2, "the frames are still there");
+        assert_eq!(restarted.records("sdk-a", "sess-1").len(), 2);
+
+        // FR-035b: clearing the general logs cannot empty a bug's already-captured evidence.
+        let window = (at("2026-08-10T10:14:30Z"), at("2026-08-10T10:15:30Z"));
+        sessions.clear("sdk-a", &[window]).unwrap();
+        let left = sessions.records("sdk-a", "sess-1");
+        assert_eq!(left.len(), 1);
+        assert_eq!(left[0]["request_id"], "r1");
+        assert_eq!(sessions.snapshot("ws-1")[0].record_count, 1, "the live rows agree with the file");
+        // And the replay guard outlives the clear — a re-sent r1 is still a replay.
+        assert!(!sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now));
+
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     // FR-021 — two devices connected at once, each with its own session, over real WS framing.

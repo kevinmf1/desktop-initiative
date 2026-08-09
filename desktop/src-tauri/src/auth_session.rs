@@ -193,7 +193,14 @@ fn mint_request_body(proof: &GoogleIdentityProof) -> [(&'static str, &str); 2] {
     [("id_token", &proof.id_token), ("nonce", &proof.nonce)]
 }
 
-fn api_base_url() -> Result<String, String> {
+/// The bearer credential for a backend call, or `None` when there is nothing to present — signed
+/// out, or a keychain we cannot read. Callers on the sync path treat `None` as "stay queued", never
+/// as an error: FR-035b's promise is about the local record, not about the backend.
+pub(crate) fn credential() -> Option<String> {
+    load_cache().ok().flatten().map(|session| session.session_token)
+}
+
+pub(crate) fn api_base_url() -> Result<String, String> {
     env::var("TESTLAB_API_BASE_URL")
         .ok()
         .map(|value| value.trim().trim_end_matches('/').to_owned())

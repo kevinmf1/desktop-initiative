@@ -22,6 +22,9 @@ export type TestSession = {
   server: string;
   result: SessionResult | null;
   case_ids: string[];
+  /** FR-035b: null means "written locally, not yet at the backend" — the local record is the one
+   *  that matters, and syncing is what happens afterwards. */
+  synced_at: string | null;
 };
 
 export const SEVERITIES = ['P0', 'P1', 'P2', 'P3'] as const;
@@ -48,6 +51,7 @@ export type Bug = {
   window_seconds: number;
   window_start: string;
   window_end: string;
+  synced_at: string | null;
 };
 
 export const RESULTS: SessionResult[] = ['Passed', 'Failed', 'Blocked', 'Incomplete'];

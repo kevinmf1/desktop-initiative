@@ -26,6 +26,7 @@ const bug = (overrides: Partial<Bug> = {}): Bug => ({
   window_seconds: 30,
   window_start: '2026-08-10T10:14:30Z',
   window_end: '2026-08-10T10:15:30Z',
+  synced_at: null,
   ...overrides,
 });
 
@@ -65,11 +66,9 @@ function ipc(handlers: Record<string, (args: any) => unknown> = {}) {
       { id: 'tc-2', workspace_id: 'ws-1', title: 'Archived case', lifecycle: 'Archived' },
     ],
     list_test_sessions: () => [{ id: 'ts-1', name: 'Regression', platform: 'Android' }],
-    device_sessions: () => [
-      { device_id: 'dev-a', session_id: 's-1' },
-      { device_id: 'dev-b', session_id: 's-9' },
-    ],
-    session_records: ({ deviceId }: { deviceId: string }) => (deviceId === 'dev-a' ? FRAMES : []),
+    // FR-035b: the durable log, read by device — no live session has to exist for a bug to show
+    // its evidence, which is exactly what makes it survive a restart.
+    device_records: ({ deviceId }: { deviceId: string }) => (deviceId === 'dev-a' ? FRAMES : []),
   };
   const command = vi.fn((name: string, args: unknown) =>
     name in handlers ? handlers[name](args) : defaults[name]?.(args),
@@ -142,4 +141,32 @@ test('triage sends one field and the refusal is reported', async () => {
   await user.tab();
 
   expect((await screen.findByRole('alert')).textContent).toMatch(/between 1 and 3600 seconds/);
+});
+
+// FR-035, FR-035b — an unreachable backend is a state, never a failure, and never a data loss.
+test('an unsynced bug says so, and syncing while offline leaves it recorded and queued', async () => {
+  const command = ipc({
+    sync_now: () => ({
+      queued: 1,
+      applied: 0,
+      duplicate: 0,
+      rejected: [],
+      offline: true,
+      detail: 'The backend is unreachable — records stay queued.',
+    }),
+  });
+  const user = userEvent.setup();
+  render(<Bugs workspaceId="ws-1" />);
+
+  const detail = await screen.findByLabelText('Bug Checkout 500s');
+  expect(within(detail).getByText('Not yet synced')).toBeTruthy();
+  expect(screen.getByRole('status').textContent).toMatch(/1 not yet synced/);
+
+  await user.click(screen.getByText('Sync now'));
+
+  expect(command).toHaveBeenCalledWith('sync_now', expect.objectContaining({ workspaceId: 'ws-1' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/unreachable/));
+  // The record and its evidence are untouched by a failed push — that is the whole promise.
+  expect(within(await screen.findByLabelText('Bug Checkout 500s')).getByText('Not yet synced')).toBeTruthy();
+  expect(within(screen.getByLabelText('Log excerpt')).getByText('Tap Pay')).toBeTruthy();
 });

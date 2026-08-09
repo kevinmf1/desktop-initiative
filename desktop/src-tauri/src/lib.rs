@@ -2,6 +2,8 @@ pub mod auth;
 pub mod auth_session;
 pub mod bug;
 pub mod device;
+pub mod frames;
+pub mod sync;
 pub mod test_case;
 pub mod test_plan;
 pub mod test_session;
@@ -34,7 +36,17 @@ pub fn run() {
         // FR-021: the device hot path is a LAN listener, up as soon as the app is, and independent
         // of the backend and of whether anyone has opened the Devices screen (Principle III).
         .setup(|app| {
-            ws::server::start(&app.handle().clone());
+            use tauri::Manager;
+            let handle = app.handle().clone();
+            // FR-035b: the durable frame log is wired before the listener, so the very first frame
+            // a device sends is already written down rather than only remembered.
+            if let Ok(dir) = store_path(&handle, frames::DIR) {
+                let server: tauri::State<'_, ws::server::WsServer> = handle.state();
+                server.sessions.store_in(dir);
+            }
+            ws::server::start(&handle);
+            // FR-035: the outbox drains on its own timer, and never on a capture path.
+            sync::start(&handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -58,6 +70,9 @@ pub fn run() {
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,
             ws::server::session_records,
+            ws::server::device_records,
+            ws::server::clear_device_logs,
+            sync::sync_now,
             ws::server::set_active_workspace,
             device::list_devices,
             device::rename_device,

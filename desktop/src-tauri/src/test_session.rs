@@ -55,6 +55,9 @@ pub struct TestSession {
     /// Snapshot of what was in scope when the run started — a later plan edit must not change it.
     #[serde(default)]
     pub case_ids: Vec<String>,
+    /// FR-035b's outbox marker, same rule as a Bug's: written locally first, synced afterwards.
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    pub synced_at: Option<OffsetDateTime>,
 }
 
 impl TestSession {
@@ -184,6 +187,7 @@ pub fn start(
         server: input.server.trim().into(),
         result: None,
         case_ids,
+        synced_at: None,
     };
     sessions.push(session.clone());
     Ok(session)
@@ -207,6 +211,7 @@ pub fn stop(
     }
     session.stopped_at = Some(now);
     session.result = Some(result);
+    session.synced_at = None;
     Ok(session.clone())
 }
 
@@ -220,7 +225,7 @@ pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestSession>, String> {
     }
 }
 
-fn save(app: &AppHandle, sessions: &[TestSession]) -> Result<(), String> {
+pub(crate) fn save(app: &AppHandle, sessions: &[TestSession]) -> Result<(), String> {
     let path = crate::store_path(app, STORE_FILE)?;
     let raw = serde_json::to_string_pretty(sessions).map_err(|e| e.to_string())?;
     fs::write(&path, raw).map_err(|e| format!("Could not write {}: {e}", path.display()))

@@ -1,6 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useMemo, useState } from 'react';
-import type { DeviceSession } from './Devices';
 import { groupRows, logRow, type Entry, type Frame } from './LogInspector';
 import { SEVERITIES, STATUSES, type Bug, type TestSession } from './Runner';
 import type { TestCase } from './TestCases';
@@ -24,6 +23,16 @@ const SEVERITY_COLOR: Record<Bug['severity'], string> = {
 };
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString();
+
+/** What `sync.rs::drain` reports back. Offline is a state, not a failure (FR-035, SC-005). */
+type SyncReport = {
+  queued: number;
+  applied: number;
+  duplicate: number;
+  rejected: string[];
+  offline: boolean;
+  detail: string;
+};
 
 /** FR-031/FR-032: the excerpt is *derived* from the window, never stored with the bug. A frame the
  *  contract gave no timestamp to cannot be placed in the window, so it is left out rather than
@@ -197,8 +206,7 @@ function Evidence({ bug, entries }: { bug: Bug; entries: Entry[] }) {
       <h3 style={sectionTitle}>Log excerpt ({excerpt.length} records)</h3>
       {excerpt.length === 0 ? (
         <p style={{ margin: 0, fontSize: 12, color: t.text2 }}>
-          This device streamed no record inside the window. Records are held in memory for the
-          running session — feat-023 is what makes them survive a restart.
+          This device streamed no record inside the window.
         </p>
       ) : (
         <ul aria-label="Log excerpt" style={{ margin: 0, padding: 0, listStyle: 'none', border: `1px solid ${t.border}`, borderRadius: t.rSm }}>
@@ -242,6 +250,7 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   const [frames, setFrames] = useState<Frame[]>([]);
   const [pickedId, setPickedId] = useState('');
   const [error, setError] = useState('');
+  const [syncNote, setSyncNote] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -261,35 +270,39 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   const picked = bugs.find((bug) => bug.id === pickedId) ?? bugs[0];
 
   // The device names the WS session (CONSTITUTION 2026-08-10), so a bug — which knows the *desktop's*
-  // session id — resolves its frames by device and by time. Every session this device streamed is
-  // read; the window is what narrows it. ponytail: loaded on select, not polled — a marked moment
-  // is in the past, and the Log Inspector is where a live run is watched.
+  // session id — resolves its frames by device and by time, not by session key. `device_records`
+  // reads the durable log (FR-035b), so this works after a restart and with no device connected.
+  // ponytail: loaded on select, not polled — a marked moment is in the past.
   useEffect(() => {
     if (!picked) {
       setFrames([]);
       return;
     }
     let live = true;
-    invoke<DeviceSession[]>('device_sessions', { workspaceId })
-      .then((listed) =>
-        Promise.all(
-          (listed ?? [])
-            .filter((session) => session.device_id === picked.device_id)
-            .map((session) =>
-              invoke<Frame[]>('session_records', {
-                deviceId: session.device_id,
-                sessionId: session.session_id,
-              }).catch(() => [] as Frame[]),
-            ),
-        ),
-      )
-      .then((collected) => live && setFrames(collected.flat()), () => live && setFrames([]));
+    invoke<Frame[]>('device_records', { deviceId: picked.device_id }).then(
+      (listed) => live && setFrames(listed ?? []),
+      () => live && setFrames([]),
+    );
     return () => {
       live = false;
     };
-  }, [workspaceId, picked?.id, picked?.device_id]);
+  }, [picked?.id, picked?.device_id]);
 
   const entries = useMemo(() => frames.map((frame, index) => ({ row: logRow(frame, index), frame })), [frames]);
+
+  // FR-035b: the backend is *later*. This button only ever asks the outbox to drain now — nothing
+  // it can do or fail to do changes what is already recorded locally.
+  async function syncNow() {
+    try {
+      const report = await invoke<SyncReport>('sync_now', { workspaceId });
+      setSyncNote(report.detail);
+      if (!report.offline) {
+        setBugs(await invoke<Bug[]>('list_bugs', { workspaceId }));
+      }
+    } catch (reason) {
+      setSyncNote(String(reason));
+    }
+  }
 
   async function patch(bug: Bug, change: BugPatch) {
     try {
@@ -325,7 +338,30 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', fontFamily: t.font }}>
       <div style={{ width: 280, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${t.border}`, background: t.surface }}>
-        <div style={listHeader}>Bugs · {bugs.length}</div>
+        <div style={listHeader}>
+          <span>Bugs · {bugs.length}</span>
+          {/* FR-035b made visible: how many records are still only local, and the way to try now. */}
+          <button
+            type="button"
+            onClick={syncNow}
+            style={{
+              marginLeft: 'auto',
+              all: 'unset',
+              cursor: 'pointer',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.6,
+              color: t.accent,
+            }}
+          >
+            Sync now
+          </button>
+        </div>
+        {(syncNote || bugs.some((bug) => bug.synced_at === null)) && (
+          <div role="status" style={{ padding: '6px 12px', fontSize: 11, color: t.text2, borderBottom: `1px solid ${t.borderSubtle}` }}>
+            {syncNote || `${bugs.filter((bug) => bug.synced_at === null).length} not yet synced — kept locally.`}
+          </div>
+        )}
         <ul aria-label="Bugs" style={{ flex: 1, margin: 0, padding: 0, listStyle: 'none', overflowY: 'auto' }}>
           {bugs.map((bug) => {
             const on = picked?.id === bug.id;
@@ -381,6 +417,9 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
               <span>{picked.environment || '—'}</span>
               <span>{sessionOf(picked)?.platform ?? '—'}</span>
               <span>Marked by {picked.marked_by}</span>
+              <span style={{ color: picked.synced_at ? t.text2 : t.warn }}>
+                {picked.synced_at ? `Synced ${clock(picked.synced_at)}` : 'Not yet synced'}
+              </span>
             </div>
             <Triage bug={picked} cases={cases} onPatch={(change) => patch(picked, change)} />
             <Evidence bug={picked} entries={entries} />
