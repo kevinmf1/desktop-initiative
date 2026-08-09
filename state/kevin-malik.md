@@ -8,31 +8,31 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-016 closed; nothing 🔵)
-- **Status:** feat-016 complete. The Runner screen starts a session from a plan or ad hoc cases
-  (build, server, platform, registered device) with a guaranteed-unique id, and Stop *is* the
-  Passed/Failed/Blocked/Incomplete prompt — nothing is written until a result is picked. Sessions
-  live in `test-sessions.json` and key on the SDK's stable `device_id`, the same key
-  `ws::server::Sessions` files records under. Two shell fixes came with it: FR-056d now counts real
-  running sessions from the store, and FR-053a stopped blanking the whole Runner.
-  Detail: [archive](../archive/features/feat-016.md).
+- **Active feature:** — (feat-017 closed; nothing 🔵)
+- **Status:** feat-017 complete. The Log Inspector screen streams a session's frames flat and
+  chronologically, keyed on `(device_id, session_id)` — the pair `ws::server::Sessions` files under —
+  with a session rail grouped by device, a text filter and per-type chips. Parity (FR-029a) is
+  structural: one pure `logRow(frame, index)` derives every row from contract fields, with no
+  `platform` branch in the render path. New command: `ws::server::session_records`. The naming
+  question is settled in `CONSTITUTION.md` (2026-08-10 · *The device names the WS session*): the
+  device names the run, the desktop's Test Session id stays its own name for it.
+  Detail: [archive](../archive/features/feat-017.md).
 - **Last verify:** 2026-08-10 · `build` → **PASS** · `test` → **PASS** · `lint` → not
   configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`;
-  Vitest 50/50, Rust 67/67.
+  Vitest 57/57, Rust 67/67.
 
 ## Next step
 
-Three features are ready — **feat-017** is the one to take:
+Three features are ready — **feat-018** is the natural continuation:
 
-- **feat-017** (live log viewer, FR-029a). Start in `desktop/src-tauri/src/ws/server.rs`:
-  `Sessions::records(device_id, session_id)` already returns a session's raw frames and
-  `device_sessions` already lists the sessions, so the screen is mostly reading. Its one real
-  design question first: a `TestSession` row has no WS **session id** — the device supplies that at
-  handshake, but the desktop mints its run before the device is told to start. Decide which side
-  names the run before writing the viewer.
-- **feat-019** (Bug Occurred marker) is unblocked once feat-017 lands; **feat-023** (local-first
-  store + `sync-api` client) is independent and is what makes captured frames survive a restart —
-  `Sessions` is in memory, capped at 500 frames per session.
+- **feat-018** (grouped log view, FR-039b–e). Everything is already in `LogInspector.tsx`: rows come
+  from `logRow`, and `user_action` frames carry `action_id` while `log_event` / `app_log` carry the
+  `action_id` they belong to (`null` → "Unattributed", never dropped). Group *those*, keep empty
+  groups, and make the existing filter apply inside groups while hiding groups with no match.
+- **feat-019** (Bug Occurred marker) is now unblocked — it needs the correlation the constitution
+  defers to `test_case_push`, so read that decision first. **feat-023** (local-first store +
+  `sync-api` client) is independent and is what makes captured frames survive a restart —
+  `Sessions` is still in memory, capped at 500 frames per session.
 
 ## Parked
 
@@ -56,3 +56,14 @@ Three features are ready — **feat-017** is the one to take:
 
 _feat-009 … feat-024: rotated to [archive](../archive/features/). Latest session:
 [2026-08-10-feat-016.md](../archive/sessions/2026-08-10-feat-016.md)._
+
+| File | What | Why |
+|------|------|-----|
+| `desktop/src-tauri/src/ws/server.rs` | `session_records` command | FR-029a: the viewer asks for one session's frames by its `(device_id, session_id)` key |
+| `desktop/src-tauri/src/lib.rs` | registered `session_records` | a command not in `invoke_handler` does not exist to the webview |
+| `desktop/src/LogInspector.tsx` | **new** — the Log Inspector screen + `logRow` / `matches` | FR-029a: rows derived from contract fields only, so iOS and Android cannot diverge |
+| `desktop/src/App.tsx` | `logs` renders `LogInspector`, full-bleed | the screen was a placeholder |
+| `desktop/src/__tests__/LogInspector.test.tsx` | **new** — 7 tests | parity, tone thresholds, session isolation, filter-keeps-selection, three empty states |
+| `desktop/src/__tests__/App.test.tsx` | assert the refusal text, not `role="status"` | the Log Inspector's empty state is a legitimate status and is not a refusal |
+| `CONSTITUTION.md` | decision · the device names the WS session | two ids named the same run; only one exists when a record arrives |
+| `FEATURES.md` · `archive/features/feat-017.md` | feat-017 ✅ + evidence | definition of done |

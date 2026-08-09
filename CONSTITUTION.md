@@ -89,6 +89,25 @@ _Dated entries. Add one whenever an arguable choice gets settled — include the
 it can be reopened later without redoing the analysis. Amend by adding a new dated entry that
 supersedes the old one; never silently edit history._
 
+### 2026-08-10 · The device names the WS session; the desktop's Test Session id is a separate name
+
+feat-017 needed to know which id the log viewer keys on. A `TestSession` (feat-016) is minted by the
+desktop before the device is told anything; a `session_id` on the wire is minted by the SDK and is
+what `ws::server::Sessions` files every record under. They are two different names for overlapping
+things, and only one of them exists at the moment a record arrives.
+
+So: **the device names the run, and the viewer keys on `(device_id, session_id)`** — the same pair
+`Sessions` already uses, which is also what keeps two devices (or one device in two sessions) apart
+under FR-021. The desktop's Test Session id stays the desktop's own name for the run, shown on the
+Runner card.
+
+Chosen over pushing the desktop's id down at handshake. That would mean a new desktop → SDK message,
+i.e. a coordinated `device-desktop-ws` minor with three other projects, to serve a correlation
+nothing yet needs: the viewer lists sessions and the operator picks. The contract's existing
+`test_case_push` already carries a desktop-minted `session_id`, so when correlation *does* become
+load-bearing (feat-019's bug marker, feat-022's reporting) it lands there — on a message that is
+already in the contract — not on `hello`.
+
 ### 2026-08-10 · The WS server uses `tokio-tungstenite`; RFC 6455 is not hand-rolled
 
 feat-015 needed an actual WebSocket server on `WS_PORT`. Nothing already in the graph speaks the

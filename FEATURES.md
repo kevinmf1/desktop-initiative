@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 14/21 | feat-017 … feat-023 (all 🟡) |
+| Desktop app (Tauri) | 15/21 | feat-018 … feat-023 (all 🟡) |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -61,7 +61,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-014 | Device registry: display name + stable device ID, enable/disable without deleting, persists across restarts, access policy `open`/`allowlist` (default `allowlist`), observed platform shown — FR-015, FR-017, FR-018, FR-019, FR-022 | ✅ | kevin-malik | feat-013 | [archive](archive/features/feat-014.md) |
 | feat-015 | `device-desktop-ws` server with ≥2 concurrent visible device sessions, state and logs isolated per device + session ID — FR-021 | ✅ | kevin-malik | feat-013 | [archive](archive/features/feat-015.md) |
 | feat-016 | Manual test runner: start from a plan or ad-hoc cases (build, server, platform, device) producing a unique session ID; stop prompts Passed/Failed/Blocked/Incomplete — FR-012, FR-014 | ✅ | kevin-malik | feat-012, feat-015 | [archive](archive/features/feat-016.md) |
-| feat-017 | Live log viewer, behaviour identical for iOS and Android devices — FR-029a | 🟡 | — | feat-015 | — |
+| feat-017 | Live log viewer, behaviour identical for iOS and Android devices — FR-029a | ✅ | kevin-malik | feat-015 | [archive](archive/features/feat-017.md) |
 | feat-018 | Grouped log view by User Action (label, timestamp, record count, success/error summary), "Unattributed" group, empty groups kept, grouped ⇄ flat toggle with search/sort/filter inside groups — FR-039b, FR-039c, FR-039d, FR-039e | 🟡 | — | feat-017 | — |
 | feat-019 | "Bug Occurred" marker mid-session: creates the bug, bookmarks the activity window, session keeps running — FR-013 | 🟡 | — | feat-016, feat-017 | — |
 | feat-020 | Bug record + evidence: full field set, severity P0–P3, status Open/In Progress/Resolved/Closed/Won't Fix (default Open), attached marker + log excerpt + preceding User Actions, configurable ±30s window — FR-030, FR-030a, FR-030b, FR-031, FR-032 | 🟡 | — | feat-019 | — |

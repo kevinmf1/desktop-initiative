@@ -53,6 +53,7 @@ pub fn run() {
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,
+            ws::server::session_records,
             ws::server::set_active_workspace,
             device::list_devices,
             device::rename_device,

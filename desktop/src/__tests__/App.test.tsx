@@ -118,7 +118,9 @@ test('expired offline grace still opens local data and gates only starting a new
   for (const label of ['Test Cases', 'Bugs', 'Log Inspector']) {
     await user.click(await screen.findByRole('button', { name: label }));
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(label);
-    expect(screen.queryByRole('status')).toBeNull();
+    // The refusal itself, not `role="status"` — a built screen may have its own status text
+    // (the Log Inspector's "no device connected" since feat-017), and that is not a refusal.
+    expect(screen.queryByText(/Sign in again to start a new session/)).toBeNull();
   }
 
   await user.click(screen.getByRole('button', { name: 'Runner' }));

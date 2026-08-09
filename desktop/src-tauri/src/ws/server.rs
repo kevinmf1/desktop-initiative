@@ -451,6 +451,18 @@ pub fn device_sessions(server: State<'_, WsServer>, workspace_id: String) -> Vec
     server.sessions.snapshot(&workspace_id)
 }
 
+/// FR-029a: one session's raw frames, in arrival order, for the live viewer. The frames cross as
+/// they came off the wire — the webview owns what a row looks like, and it never branches on
+/// platform, which is what makes iOS and Android identical by construction.
+#[tauri::command]
+pub fn session_records(
+    server: State<'_, WsServer>,
+    device_id: String,
+    session_id: String,
+) -> Vec<serde_json::Value> {
+    server.sessions.records(&device_id, &session_id)
+}
+
 /// Called by the webview on mount and on every workspace switch — the gate cannot ask React which
 /// workspace is open, and a record must never be filed against the wrong one (FR-001).
 #[tauri::command]
