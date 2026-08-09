@@ -49,7 +49,7 @@ const RECORD_TYPES: [&str; 5] = [
     "media_chunk",
 ];
 
-/// ponytail: a ring of the last N frames per session — the live view, bounded so a long soak cannot
+/// A ring of the last N frames per session keeps the live view bounded so a long soak cannot
 /// eat the heap. The durable answer is `crate::frames`, which is what `records()` reads.
 const MAX_RECORDS_PER_SESSION: usize = 500;
 
@@ -86,22 +86,39 @@ pub struct Sessions {
     /// Where the durable log lives. `None` in tests and before the app is set up — the map then is
     /// the whole store, which is exactly what the protocol tests want.
     dir: Mutex<Option<PathBuf>>,
+    /// Where a `media_chunk`'s bytes land (FR-044). Separate from `dir` because a capture is a file
+    /// pair, not a line in the frame log — and because clearing the logs must never touch it.
+    media: Mutex<Option<PathBuf>>,
 }
 
 impl Sessions {
     fn map(&self) -> MutexGuard<'_, BTreeMap<(String, String), DeviceSession>> {
         // A poisoned lock means some other connection panicked. Losing every session over one bad
         // frame is worse than carrying on with the state that was there.
-        self.map.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+        self.map
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     fn dir(&self) -> Option<PathBuf> {
         self.dir.lock().ok().and_then(|dir| dir.clone())
     }
 
+    pub fn media(&self) -> Option<PathBuf> {
+        self.media.lock().ok().and_then(|dir| dir.clone())
+    }
+
     /// Called once at startup with the app data dir. Until then records are memory-only.
     pub fn store_in(&self, dir: PathBuf) {
         if let Ok(mut slot) = self.dir.lock() {
+            *slot = Some(dir);
+        }
+    }
+
+    /// The same, for capture bytes. `None` means a `media_chunk` payload is liveness and nothing
+    /// more — which is what every protocol test wants and what the app never runs with.
+    pub fn store_media_in(&self, dir: PathBuf) {
+        if let Ok(mut slot) = self.media.lock() {
             *slot = Some(dir);
         }
     }
@@ -143,7 +160,13 @@ impl Sessions {
         }
     }
 
-    pub fn touched(&self, workspace_id: &str, device: &Device, session_id: &str, now: OffsetDateTime) {
+    pub fn touched(
+        &self,
+        workspace_id: &str,
+        device: &Device,
+        session_id: &str,
+        now: OffsetDateTime,
+    ) {
         let key = (device.device_id.clone(), session_id.to_owned());
         let mut map = self.entry(workspace_id, device, session_id, now);
         if let Some(session) = map.get_mut(&key) {
@@ -313,7 +336,11 @@ pub fn admit(
     }
 
     // 1 & 2 — recognise the returning device, else the token is the only way in (FR-018/019/020).
-    let credential = match hello.reconnect_credential.as_deref().filter(|c| !c.is_empty()) {
+    let credential = match hello
+        .reconnect_credential
+        .as_deref()
+        .filter(|c| !c.is_empty())
+    {
         Some(cred) if device::reconnects(registry, workspace_id, &hello.device_id, cred) => {
             cred.to_owned()
         }
@@ -351,7 +378,10 @@ async fn send<S: AsyncRead + AsyncWrite + Unpin>(
     frame: &impl Serialize,
 ) -> Result<(), String> {
     let json = serde_json::to_string(frame).map_err(|e| e.to_string())?;
-    socket.send(Message::text(json)).await.map_err(|e| e.to_string())
+    socket
+        .send(Message::text(json))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// One client, start to finish. Takes the gate as a parameter so the protocol can be exercised
@@ -389,7 +419,7 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
                 return socket.close(None).await.map_err(|e| e.to_string());
             }
             Ok(HandshakeOutcome::Accepted(accepted)) => {
-                // ponytail: negotiation only keeps the version half of the frame, so the trust half
+                // Negotiation only keeps the version half of the frame, so the trust half
                 // is re-read here. Cheaper than threading the whole hello through the outcome type.
                 let hello: HelloHandshake =
                     serde_json::from_str(&text).map_err(|e| e.to_string())?;
@@ -412,14 +442,46 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
     // A record without its own `session_id` belongs to the session the device is currently in —
     // `user_action` may omit it, and dropping those would lose the grouping key feat-018 needs.
     let mut current = NO_SESSION.to_owned();
+    // FR-044: the `media_chunk` control frame that a binary payload belongs to. Any other data frame in
+    // between clears it — a payload with no control frame names no capture and no offset, so filing
+    // it anywhere would be a guess.
+    let mut awaiting: Option<serde_json::Value> = None;
 
     while let Some(message) = socket.next().await {
         let now = OffsetDateTime::now_utc();
         let text = match message {
             Ok(Message::Text(text)) => text,
-            // feat-021 owns the binary half of `media_chunk`; the control frame above is what
-            // files it, so an early payload is liveness and nothing more.
-            Ok(Message::Binary(_)) | Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {
+            Ok(Message::Binary(payload)) => {
+                // The bytes land beside the capture's own metadata; the control frame carries the
+                // offset, so an interrupted transfer resumes rather than restarts (FR-044a).
+                match (awaiting.take(), sessions.media()) {
+                    (Some(control), Some(dir)) => match crate::capture::receive(
+                            &dir,
+                            workspace_id,
+                            &device.device_id,
+                            &control,
+                            &payload,
+                            now,
+                        ) {
+                            Ok(_) => send(&mut socket, &serde_json::json!({ "type": "ack" })).await?,
+                            Err(error) => {
+                                eprintln!("device-desktop-ws: {error}");
+                                send(
+                                    &mut socket,
+                                    &serde_json::json!({ "type": "nack", "reason": "malformed" }),
+                                )
+                                .await?;
+                            }
+                        },
+                    _ => eprintln!(
+                        "device-desktop-ws: discarded a binary frame from {} that no media_chunk announced",
+                        device.device_id
+                    ),
+                }
+                sessions.touched(workspace_id, &device, &current, now);
+                continue;
+            }
+            Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {
                 sessions.touched(workspace_id, &device, &current, now);
                 continue;
             }
@@ -427,10 +489,19 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
             Ok(Message::Frame(_)) => continue,
         };
 
+        // Any text frame supersedes a prior announcement, including malformed text. Without this,
+        // its later binary could be filed against a stale capture id.
+        awaiting = None;
+
         // FR-036: a malformed frame is discarded with a diagnostic, never shown as valid data.
         let Some(frame) = serde_json::from_str::<serde_json::Value>(&text)
             .ok()
-            .filter(|value| value.get("type").and_then(serde_json::Value::as_str).is_some())
+            .filter(|value| {
+                value
+                    .get("type")
+                    .and_then(serde_json::Value::as_str)
+                    .is_some()
+            })
         else {
             eprintln!(
                 "device-desktop-ws: discarded a malformed frame from {}",
@@ -447,6 +518,10 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
         {
             current = session_id.to_owned();
         }
+
+        // A `media_chunk` announces the payload that follows it; anything else means the payload
+        // never came, so the announcement lapses.
+        awaiting = (kind == "media_chunk").then(|| frame.clone());
 
         if RECORD_TYPES.contains(&kind.as_str()) {
             // FR-036: a replay is not an error and not a second entry — it is a no-op with a note.
@@ -466,7 +541,10 @@ pub async fn handle<S: AsyncRead + AsyncWrite + Unpin>(
     Ok(())
 }
 
-fn gate_with(app: &AppHandle) -> impl Fn(&HelloHandshake, &AcceptedHandshake) -> Result<(Device, String), PairingNack> + Send + Sync {
+fn gate_with(
+    app: &AppHandle,
+) -> impl Fn(&HelloHandshake, &AcceptedHandshake) -> Result<(Device, String), PairingNack> + Send + Sync
+{
     let app = app.clone();
     move |hello, accepted| {
         let server: State<'_, WsServer> = app.state();
@@ -483,14 +561,13 @@ fn gate_with(app: &AppHandle) -> impl Fn(&HelloHandshake, &AcceptedHandshake) ->
             ));
         }
 
-        // ponytail: holding the pairing lock across the whole gate serialises concurrent
+        // Holding the pairing lock across the whole gate serialises concurrent
         // handshakes, which is also what keeps the read-modify-write of devices.json honest.
         let mut slot = pairing
             .0
             .lock()
             .map_err(|e| PairingNack::refused("malformed", e.to_string()))?;
-        let mut registry =
-            device::load(&app).map_err(|e| PairingNack::refused("malformed", e))?;
+        let mut registry = device::load(&app).map_err(|e| PairingNack::refused("malformed", e))?;
         let admitted = admit(
             &mut registry,
             &mut slot,
@@ -638,7 +715,10 @@ mod tests {
         )
         .unwrap_err();
         assert_eq!(refused.reason, "expired_token");
-        assert!(registry.devices.is_empty(), "a refused hello registers nothing");
+        assert!(
+            registry.devices.is_empty(),
+            "a refused hello registers nothing"
+        );
 
         let (device, credential) = admit(
             &mut registry,
@@ -767,20 +847,45 @@ mod tests {
             })
         };
 
-        assert!(sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now));
+        assert!(sessions.record(
+            "ws-1",
+            &device,
+            "sess-1",
+            frame("r1", "2026-08-10T10:14:45Z"),
+            now
+        ));
         assert!(
-            !sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now),
+            !sessions.record(
+                "ws-1",
+                &device,
+                "sess-1",
+                frame("r1", "2026-08-10T10:14:45Z"),
+                now
+            ),
             "the same request_id+phase delivered twice is one entry"
         );
-        assert!(sessions.record("ws-1", &device, "sess-1", frame("r2", "2026-08-10T11:00:00Z"), now));
+        assert!(sessions.record(
+            "ws-1",
+            &device,
+            "sess-1",
+            frame("r2", "2026-08-10T11:00:00Z"),
+            now
+        ));
         assert_eq!(sessions.records("sdk-a", "sess-1").len(), 2);
         assert_eq!(sessions.snapshot("ws-1")[0].record_count, 2);
 
         // A restart is exactly this: a fresh map over the same directory.
         let restarted = Sessions::default();
         restarted.store_in(dir.clone());
-        assert!(restarted.snapshot("ws-1").is_empty(), "no device is connected after a restart");
-        assert_eq!(restarted.device_records("sdk-a").len(), 2, "the frames are still there");
+        assert!(
+            restarted.snapshot("ws-1").is_empty(),
+            "no device is connected after a restart"
+        );
+        assert_eq!(
+            restarted.device_records("sdk-a").len(),
+            2,
+            "the frames are still there"
+        );
         assert_eq!(restarted.records("sdk-a", "sess-1").len(), 2);
 
         // FR-035b: clearing the general logs cannot empty a bug's already-captured evidence.
@@ -789,9 +894,19 @@ mod tests {
         let left = sessions.records("sdk-a", "sess-1");
         assert_eq!(left.len(), 1);
         assert_eq!(left[0]["request_id"], "r1");
-        assert_eq!(sessions.snapshot("ws-1")[0].record_count, 1, "the live rows agree with the file");
+        assert_eq!(
+            sessions.snapshot("ws-1")[0].record_count,
+            1,
+            "the live rows agree with the file"
+        );
         // And the replay guard outlives the clear — a re-sent r1 is still a replay.
-        assert!(!sessions.record("ws-1", &device, "sess-1", frame("r1", "2026-08-10T10:14:45Z"), now));
+        assert!(!sessions.record(
+            "ws-1",
+            &device,
+            "sess-1",
+            frame("r1", "2026-08-10T10:14:45Z"),
+            now
+        ));
 
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -827,11 +942,8 @@ mod tests {
         }
 
         // Both connections run at the same time — that is the concurrency FR-021 asks for.
-        let (first, second) = futures_util::future::join(
-            servers.pop().unwrap(),
-            servers.pop().unwrap(),
-        )
-        .await;
+        let (first, second) =
+            futures_util::future::join(servers.pop().unwrap(), servers.pop().unwrap()).await;
         first.unwrap();
         second.unwrap();
 
@@ -849,8 +961,98 @@ mod tests {
             3,
             "the malformed and unknown frames are not records"
         );
-        assert!(visible.iter().any(|s| s.session_id == NO_SESSION && s.record_count == 0));
-        assert_eq!(sessions.snapshot("ws-2").len(), 0, "sessions do not cross workspaces");
+        assert!(visible
+            .iter()
+            .any(|s| s.session_id == NO_SESSION && s.record_count == 0));
+        assert_eq!(
+            sessions.snapshot("ws-2").len(),
+            0,
+            "sessions do not cross workspaces"
+        );
+    }
+
+    // FR-044 / FR-044a — the capture relay, end to end over real WS framing: a control frame, the
+    // binary that follows it, and a payload nobody announced.
+    #[tokio::test]
+    async fn a_media_chunk_control_frame_files_the_binary_that_follows_it() {
+        let media = std::env::temp_dir().join(format!(
+            "server-media-{}",
+            OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ));
+        let sessions = Sessions::default();
+        sessions.store_media_in(media.clone());
+        let gate: Box<Gate> = Box::new(|hello: &HelloHandshake, _: &AcceptedHandshake| {
+            Ok((registered(&hello.device_id, "Bench A"), "cred".into()))
+        });
+
+        let payload = b"screenshot-bytes";
+        use sha2::Digest;
+        let sha: String = sha2::Sha256::digest(payload)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        let (server_side, client_side) = tokio::io::duplex(8 * 1024);
+        let serving = handle(server_side, &sessions, "ws-1", gate.as_ref());
+
+        let clienting = tokio::spawn(async move {
+            let (mut client, _) = tokio_tungstenite::client_async("ws://desktop/", client_side)
+                .await
+                .unwrap();
+            client
+                .send(Message::text(
+                    r#"{"type":"hello","contract_version":"1.0.0","capabilities":[],"device_id":"sdk-a"}"#,
+                ))
+                .await
+                .unwrap();
+            let paired = client.next().await.unwrap().unwrap().into_text().unwrap();
+            assert_eq!(
+                serde_json::from_str::<serde_json::Value>(&paired).unwrap()["type"],
+                "paired"
+            );
+            client
+                .send(Message::text(format!(
+                    r#"{{"type":"media_chunk","session_id":"sess-1","capture_id":"cap-1","bug_id":"bug-1","offset":0,"chunk_size":16,"total_size":16,"content_type":"image/png","sha256":"{sha}"}}"#
+                )))
+                .await
+                .unwrap();
+            client
+                .send(Message::binary(payload.to_vec()))
+                .await
+                .unwrap();
+            let ack = client.next().await.unwrap().unwrap().into_text().unwrap();
+            assert_eq!(
+                serde_json::from_str::<serde_json::Value>(&ack).unwrap(),
+                serde_json::json!({ "type": "ack" })
+            );
+            // Unannounced bytes: discarded with a diagnostic, and the stream carries on.
+            client
+                .send(Message::binary(b"stray".to_vec()))
+                .await
+                .unwrap();
+            client.close(None).await.unwrap();
+            while client.next().await.is_some() {}
+        });
+
+        serving.await.unwrap();
+        clienting.await.unwrap();
+
+        let stored = crate::capture::load(&media);
+        assert_eq!(stored.len(), 1, "the stray payload filed nothing");
+        assert_eq!(stored[0].id, "cap-1");
+        assert_eq!(stored[0].bug_id, "bug-1");
+        assert_eq!(stored[0].workspace_id, "ws-1");
+        assert_eq!(stored[0].device_id, "sdk-a");
+        assert!(
+            stored[0].verified,
+            "the checksum verified, so the capture is complete"
+        );
+        // FR-044a: complete on this machine is still "pending upload" until the backend confirms.
+        assert!(stored[0].pending_upload());
+        assert_eq!(crate::capture::bytes(&media, "cap-1").unwrap(), payload);
+        // The control frame is also an ordinary record, so it shows in the log like any other.
+        assert_eq!(sessions.records("sdk-a", "sess-1").len(), 1);
+
+        std::fs::remove_dir_all(&media).ok();
     }
 
     // FR-021 — the same thing over a real TCP listener, so the accept path is exercised too, not
@@ -874,7 +1076,9 @@ mod tests {
                             Box::new(|hello: &HelloHandshake, _: &AcceptedHandshake| {
                                 Ok((registered(&hello.device_id, "Bench"), "cred".into()))
                             });
-                        handle(stream, &sessions, "ws-1", gate.as_ref()).await.unwrap();
+                        handle(stream, &sessions, "ws-1", gate.as_ref())
+                            .await
+                            .unwrap();
                     }));
                 }
                 for connection in connections {
@@ -925,7 +1129,9 @@ mod tests {
             while client.next().await.is_some() {}
         });
 
-        handle(server_side, &sessions, "ws-1", gate.as_ref()).await.unwrap();
+        handle(server_side, &sessions, "ws-1", gate.as_ref())
+            .await
+            .unwrap();
 
         assert_eq!(sessions.records("sdk-a", "sess-1").len(), 1);
         assert_eq!(sessions.records("sdk-a", "sess-2").len(), 2);
@@ -954,7 +1160,9 @@ mod tests {
             serde_json::from_str::<serde_json::Value>(&reply).unwrap()
         });
 
-        handle(server_side, &sessions, "ws-1", gate.as_ref()).await.unwrap();
+        handle(server_side, &sessions, "ws-1", gate.as_ref())
+            .await
+            .unwrap();
         let nack = client.await.unwrap();
         assert_eq!(nack["type"], "nack");
         assert_eq!(nack["reason"], "version_mismatch");
@@ -967,7 +1175,10 @@ mod tests {
     async fn a_paired_device_is_told_its_row_and_its_reconnect_credential() {
         let sessions = Sessions::default();
         let gate: Box<Gate> = Box::new(|hello: &HelloHandshake, _: &AcceptedHandshake| {
-            Ok((registered(&hello.device_id, "Bench iPhone"), "cred-xyz".into()))
+            Ok((
+                registered(&hello.device_id, "Bench iPhone"),
+                "cred-xyz".into(),
+            ))
         });
         let (server_side, client_side) = tokio::io::duplex(8 * 1024);
 
@@ -986,7 +1197,9 @@ mod tests {
             serde_json::from_str::<serde_json::Value>(&reply).unwrap()
         });
 
-        handle(server_side, &sessions, "ws-1", gate.as_ref()).await.unwrap();
+        handle(server_side, &sessions, "ws-1", gate.as_ref())
+            .await
+            .unwrap();
         let paired = client.await.unwrap();
         assert_eq!(paired["type"], "paired");
         assert_eq!(paired["contract_version"], super::super::CONTRACT_VERSION);

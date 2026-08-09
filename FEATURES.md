@@ -9,7 +9,7 @@
 | Epic | Progress | Active / open |
 |------|:--------:|---------------|
 | Harness setup | 1/1 | — |
-| Desktop app (Tauri) | 19/21 | feat-021, feat-022 (both 🟡) |
+| Desktop app (Tauri) | 20/21 | feat-022 🟡 |
 
 > **Scope: frontend (Tauri desktop) only.** The backend, iOS SDK and Android SDK are other
 > people's projects — they get no rows here. See `CONSTITUTION.md` § *Invariants — scope*.
@@ -65,7 +65,7 @@ they are all `MUST` statements. Write `archive/features/<id>.md` when a row clos
 | feat-018 | Grouped log view by User Action (label, timestamp, record count, success/error summary), "Unattributed" group, empty groups kept, grouped ⇄ flat toggle with search/sort/filter inside groups — FR-039b, FR-039c, FR-039d, FR-039e | ✅ | kevin-malik | feat-017 | [archive](archive/features/feat-018.md) |
 | feat-019 | "Bug Occurred" marker mid-session: creates the bug, bookmarks the activity window, session keeps running — FR-013 | ✅ | kevin-malik | feat-016, feat-017 | [archive](archive/features/feat-019.md) |
 | feat-020 | Bug record + evidence: full field set, severity P0–P3, status Open/In Progress/Resolved/Closed/Won't Fix (default Open), attached marker + log excerpt + preceding User Actions, configurable ±30s window — FR-030, FR-030a, FR-030b, FR-031, FR-032 | ✅ | kevin-malik | feat-019 | [archive](archive/features/feat-020.md) |
-| feat-021 | Capture relay: receive the binary from the device, upload to backend storage, queue + retry when unreachable, "pending upload" state, metadata syncs independently of the binary — FR-044, FR-044a, FR-044b | 🟡 | — | feat-020, feat-023 | — |
+| feat-021 | Capture relay: receive the binary from the device, upload to backend storage, queue + retry when unreachable, "pending upload" state, metadata syncs independently of the binary — FR-044, FR-044a, FR-044b | ✅ | kevin-malik | feat-020, feat-023 | [archive](archive/features/feat-021.md) |
 | feat-022 | Reporting: session history, pass/fail rate by plan, failed cases by build, bugs by environment, API error patterns by session/device, per-plan result for a shared Test Case — FR-033, FR-034 | 🟡 | — | feat-016, feat-020 | — |
 | feat-023 | Local-first store + `sync-api` client: session keeps capturing while the backend is down, bugs and evidence sync later, clearing logs never drops bug evidence, malformed messages discarded with a diagnostic, duplicates de-duplicated — FR-035, FR-035b, FR-036 | ✅ | kevin-malik | feat-015 | [archive](archive/features/feat-023.md) |
 | feat-024 | Debug-only local authentication for manual frontend testing: no Google/backend required, two active workspaces, normal auth unchanged when disabled, unavailable in release builds | ✅ | kevin-malik | feat-007 | [archive](archive/features/feat-024.md) |

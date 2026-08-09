@@ -10,7 +10,7 @@
 //! `synced_at` is null. That is what makes it survive a restart with no extra file, and what makes a
 //! crash mid-push cost nothing: the record is simply still unsynced next time.
 //!
-//! ponytail: one `POST /v1/sync/batch` for everything, no per-entity endpoints, no exponential
+//! One `POST /v1/sync/batch` carries everything; there are no per-entity endpoints or exponential
 //! backoff — a fixed retry tick is enough for a desktop that is either on the LAN or not. The
 //! upgrade path, if a workspace ever gets large, is the contract's `since` cursor for pull.
 
@@ -22,7 +22,7 @@ use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Manager, State};
 use time::OffsetDateTime;
 
-use crate::{bug::Bug, test_session::TestSession, ws::server::WsServer};
+use crate::{bug::Bug, capture::Capture, test_session::TestSession, ws::server::WsServer};
 
 /// The contract version this client speaks (`sync-api` 1.0.0).
 pub const CONTRACT_VERSION: &str = "1.0.0";
@@ -72,7 +72,15 @@ fn record(entity: &str, id: &str, updated_at: OffsetDateTime, payload: Value) ->
 /// The outbox: every record in this workspace the backend has not confirmed. A Bug's own
 /// `marked_at` and a session's stop (or start) time are the `client_updated_at` the contract's
 /// last-writer-wins rule is resolved by — the desktop never invents a clock for them.
-pub fn pending(bugs: &[Bug], sessions: &[TestSession], workspace_id: &str) -> Vec<Value> {
+///
+/// FR-044b: a capture's *metadata* rides here, with its Bug. Its bytes do not — they go out on
+/// `crate::capture`'s own outbox, so a Bug is never blocked from syncing by a large media file.
+pub fn pending(
+    bugs: &[Bug],
+    sessions: &[TestSession],
+    captures: &[Capture],
+    workspace_id: &str,
+) -> Vec<Value> {
     let queued_sessions = sessions
         .iter()
         .filter(|s| s.workspace_id == workspace_id && s.synced_at.is_none())
@@ -91,7 +99,26 @@ pub fn pending(bugs: &[Bug], sessions: &[TestSession], workspace_id: &str) -> Ve
             bugs.iter()
                 .filter(|b| b.workspace_id == workspace_id && b.synced_at.is_none())
                 .map(|b| {
-                    record("bug", &b.id, b.marked_at, serde_json::to_value(b).unwrap_or(Value::Null))
+                    record(
+                        "bug",
+                        &b.id,
+                        b.marked_at,
+                        serde_json::to_value(b).unwrap_or(Value::Null),
+                    )
+                }),
+        )
+        // Captures last, for the same reason sessions came first: a capture names its Bug.
+        .chain(
+            captures
+                .iter()
+                .filter(|c| c.workspace_id == workspace_id && c.synced_at.is_none())
+                .map(|c| {
+                    record(
+                        "capture",
+                        &c.id,
+                        c.uploaded_at.unwrap_or(c.received_at),
+                        serde_json::to_value(c).unwrap_or(Value::Null),
+                    )
                 }),
         )
         .collect()
@@ -105,7 +132,10 @@ pub fn batch_body(workspace_id: &str, records: &[Value]) -> Value {
 /// `status:"duplicate"` and no second row, and that only works if the key does not change.
 pub fn idempotency_key(body: &Value) -> String {
     let digest = Sha256::digest(body.to_string().as_bytes());
-    digest[..16].iter().map(|byte| format!("{byte:02x}")).collect()
+    digest[..16]
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 /// `applied` and `duplicate` both mean "the backend holds this record" — a duplicate is the correct
@@ -138,6 +168,7 @@ fn rejections(results: &[RecordResult]) -> Vec<String> {
 fn mark_confirmed(
     bugs: &mut [Bug],
     sessions: &mut [TestSession],
+    captures: &mut [Capture],
     ids: &HashSet<String>,
     now: OffsetDateTime,
 ) {
@@ -147,6 +178,30 @@ fn mark_confirmed(
     for session in sessions.iter_mut().filter(|s| ids.contains(&s.id)) {
         session.synced_at = Some(now);
     }
+    for capture in captures.iter_mut().filter(|c| ids.contains(&c.id)) {
+        capture.synced_at = Some(now);
+    }
+}
+
+fn mark_unchanged_captures(
+    sent: &[Capture],
+    current: &mut [Capture],
+    ids: &HashSet<String>,
+    now: OffsetDateTime,
+) -> HashSet<String> {
+    let mut marked = HashSet::new();
+    for capture in current.iter_mut().filter(|capture| ids.contains(&capture.id)) {
+        let unchanged = sent.iter().any(|snapshot| {
+            snapshot.id == capture.id
+                && snapshot.received_at == capture.received_at
+                && snapshot.uploaded_at == capture.uploaded_at
+        });
+        if unchanged {
+            capture.synced_at = Some(now);
+            marked.insert(capture.id.clone());
+        }
+    }
+    marked
 }
 
 /// Unreachable, unconfigured, signed out, or refused: one shape, and it always says how many
@@ -206,7 +261,9 @@ async fn post_batch(body: &Value, workspace_id: &str) -> Result<BatchResponse, S
 pub async fn drain(app: &AppHandle, workspace_id: &str) -> Result<SyncReport, String> {
     let mut bugs = crate::bug::load(app)?;
     let mut sessions = crate::test_session::load(app)?;
-    let records = pending(&bugs, &sessions, workspace_id);
+    let media_dir = crate::store_path(app, crate::capture::DIR)?;
+    let sent_captures = crate::capture::load(&media_dir);
+    let records = pending(&bugs, &sessions, &sent_captures, workspace_id);
     if records.is_empty() {
         return Ok(SyncReport {
             detail: "Everything in this workspace is synced.".into(),
@@ -221,19 +278,40 @@ pub async fn drain(app: &AppHandle, workspace_id: &str) -> Result<SyncReport, St
     };
 
     let ids = confirmed(&response.results);
-    mark_confirmed(&mut bugs, &mut sessions, &ids, OffsetDateTime::now_utc());
+    let confirmed_at = OffsetDateTime::now_utc();
+    mark_confirmed(&mut bugs, &mut sessions, &mut [], &ids, confirmed_at);
     crate::bug::save(app, &bugs)?;
     crate::test_session::save(app, &sessions)?;
 
+    // The media timer may have confirmed an upload while this HTTP request was in flight. Reload
+    // before marking metadata synced, and never overwrite that newer remote_ref with our snapshot.
+    let mut captures = crate::capture::load(&media_dir);
+    let marked = mark_unchanged_captures(&sent_captures, &mut captures, &ids, confirmed_at);
+    for capture in captures.iter().filter(|capture| marked.contains(&capture.id)) {
+            crate::capture::save(&media_dir, capture)?;
+    }
+
     let rejected = rejections(&response.results);
     Ok(SyncReport {
-        queued: pending(&bugs, &sessions, workspace_id).len(),
-        applied: response.results.iter().filter(|r| r.status == "applied").count(),
-        duplicate: response.results.iter().filter(|r| r.status == "duplicate").count(),
+        queued: pending(&bugs, &sessions, &captures, workspace_id).len(),
+        applied: response
+            .results
+            .iter()
+            .filter(|r| r.status == "applied")
+            .count(),
+        duplicate: response
+            .results
+            .iter()
+            .filter(|r| r.status == "duplicate")
+            .count(),
         detail: if rejected.is_empty() {
             format!("Synced {} record(s).", ids.len())
         } else {
-            format!("Synced {} record(s); {} still queued.", ids.len(), rejected.len())
+            format!(
+                "Synced {} record(s); {} still queued.",
+                ids.len(),
+                rejected.len()
+            )
         },
         rejected,
         offline: false,
@@ -245,7 +323,7 @@ pub async fn sync_now(app: AppHandle, workspace_id: String) -> Result<SyncReport
     drain(&app, &workspace_id).await
 }
 
-// ponytail: no `sync_queue` command — a record's own `synced_at` is already on the screen, so the
+// There is no `sync_queue` command: a record's own `synced_at` is already on the screen, so the
 // queue count is a `.filter()` in the webview rather than a second source of the same truth.
 
 /// The "once a connection is available" half of FR-035b: a fixed tick, started with the app, that
@@ -259,7 +337,11 @@ pub fn start(app: &AppHandle) {
             tokio::time::sleep(std::time::Duration::from_secs(RETRY_SECONDS)).await;
             let workspace_id = {
                 let server: State<'_, WsServer> = app.state();
-                server.workspace_id.lock().map(|id| id.clone()).unwrap_or_default()
+                server
+                    .workspace_id
+                    .lock()
+                    .map(|id| id.clone())
+                    .unwrap_or_default()
             };
             if workspace_id.is_empty() {
                 continue;
@@ -323,12 +405,37 @@ mod tests {
         }
     }
 
+    fn capture(id: &str, workspace_id: &str, uploaded: bool) -> Capture {
+        Capture {
+            id: id.into(),
+            bug_id: "bug-1".into(),
+            workspace_id: workspace_id.into(),
+            device_id: "dev-a".into(),
+            content_type: "image/png".into(),
+            total_size: 2_097_152,
+            sha256: "abc".into(),
+            received: 2_097_152,
+            verified: true,
+            remote_ref: uploaded.then(|| "obj-1".into()),
+            uploaded_at: uploaded.then(|| at("2026-08-10T10:20:00Z")),
+            synced_at: None,
+            received_at: at("2026-08-10T10:16:00Z"),
+        }
+    }
+
     #[test]
     fn the_outbox_is_the_unsynced_records_of_this_workspace_sessions_first() {
-        let bugs = vec![bug("bug-1", "ws-1", false), bug("bug-2", "ws-1", true), bug("bug-3", "ws-2", false)];
-        let sessions = vec![session("ts-1", "ws-1", false), session("ts-2", "ws-1", true)];
+        let bugs = vec![
+            bug("bug-1", "ws-1", false),
+            bug("bug-2", "ws-1", true),
+            bug("bug-3", "ws-2", false),
+        ];
+        let sessions = vec![
+            session("ts-1", "ws-1", false),
+            session("ts-2", "ws-1", true),
+        ];
 
-        let records = pending(&bugs, &sessions, "ws-1");
+        let records = pending(&bugs, &sessions, &[], "ws-1");
 
         let ids: Vec<&str> = records.iter().map(|r| r["id"].as_str().unwrap()).collect();
         assert_eq!(ids, ["ts-1", "bug-1"]);
@@ -342,12 +449,92 @@ mod tests {
         assert!(!ids.contains(&"bug-3"));
     }
 
+    /// FR-044b: the Bug's record does not wait for its capture's bytes. Both are in the batch, the
+    /// capture still `pending` (no `uploaded_at`), and the Bug syncs regardless.
+    #[test]
+    fn a_bug_syncs_while_its_capture_is_still_pending_upload() {
+        let bugs = vec![bug("bug-1", "ws-1", false)];
+        let captures = vec![
+            capture("cap-1", "ws-1", false),
+            capture("cap-2", "ws-2", false),
+        ];
+
+        let records = pending(&bugs, &[], &captures, "ws-1");
+
+        let ids: Vec<&str> = records.iter().map(|r| r["id"].as_str().unwrap()).collect();
+        assert_eq!(ids, ["bug-1", "cap-1"]);
+        assert_eq!(records[1]["entity"], "capture");
+        assert_eq!(records[1]["payload"]["uploaded_at"], Value::Null);
+        assert_eq!(records[1]["payload"]["bug_id"], "bug-1");
+        assert_eq!(records[1]["client_updated_at"], "2026-08-10T10:16:00Z");
+
+        // The backend applies the Bug and rejects nothing: the record is synced with its capture
+        // still on this machine, which is the whole of the independence rule.
+        let results = vec![
+            RecordResult {
+                id: "bug-1".into(),
+                status: "applied".into(),
+                reason: None,
+            },
+            RecordResult {
+                id: "cap-1".into(),
+                status: "applied".into(),
+                reason: None,
+            },
+        ];
+        let mut bugs = bugs;
+        let mut captures = captures;
+        mark_confirmed(
+            &mut bugs,
+            &mut [],
+            &mut captures,
+            &confirmed(&results),
+            at("2026-08-10T11:00:00Z"),
+        );
+
+        assert_eq!(bugs[0].synced_at, Some(at("2026-08-10T11:00:00Z")));
+        assert_eq!(captures[0].synced_at, Some(at("2026-08-10T11:00:00Z")));
+        // Still pending upload — metadata reaching the backend says nothing about the bytes.
+        assert!(captures[0].uploaded_at.is_none());
+        assert!(pending(&bugs, &[], &captures, "ws-1").is_empty());
+    }
+
+    #[test]
+    fn uploaded_capture_metadata_uses_confirmation_as_its_update_clock() {
+        let records = pending(&[], &[], &[capture("cap-1", "ws-1", true)], "ws-1");
+
+        assert_eq!(records[0]["client_updated_at"], "2026-08-10T10:20:00Z");
+        assert_eq!(records[0]["payload"]["remote_ref"], "obj-1");
+    }
+
+    #[test]
+    fn a_media_update_during_record_sync_is_not_overwritten_or_marked_synced() {
+        let sent = vec![capture("cap-1", "ws-1", false), capture("cap-2", "ws-1", false)];
+        let mut current = vec![capture("cap-1", "ws-1", true), capture("cap-2", "ws-1", false)];
+        let ids = HashSet::from(["cap-1".to_owned(), "cap-2".to_owned()]);
+
+        let marked = mark_unchanged_captures(
+            &sent,
+            &mut current,
+            &ids,
+            at("2026-08-10T11:00:00Z"),
+        );
+
+        assert_eq!(marked, HashSet::from(["cap-2".to_owned()]));
+        assert_eq!(current[0].remote_ref.as_deref(), Some("obj-1"));
+        assert!(current[0].synced_at.is_none(), "newer metadata must stay queued");
+        assert_eq!(current[1].synced_at, Some(at("2026-08-10T11:00:00Z")));
+    }
+
     #[test]
     fn a_replay_of_the_same_batch_carries_the_same_idempotency_key() {
         let bugs = vec![bug("bug-1", "ws-1", false)];
-        let first = batch_body("ws-1", &pending(&bugs, &[], "ws-1"));
-        let again = batch_body("ws-1", &pending(&bugs, &[], "ws-1"));
-        let other = batch_body("ws-1", &pending(&[bug("bug-9", "ws-1", false)], &[], "ws-1"));
+        let first = batch_body("ws-1", &pending(&bugs, &[], &[], "ws-1"));
+        let again = batch_body("ws-1", &pending(&bugs, &[], &[], "ws-1"));
+        let other = batch_body(
+            "ws-1",
+            &pending(&[bug("bug-9", "ws-1", false)], &[], &[], "ws-1"),
+        );
 
         assert_eq!(idempotency_key(&first), idempotency_key(&again));
         assert_ne!(idempotency_key(&first), idempotency_key(&other));
@@ -357,8 +544,16 @@ mod tests {
     #[test]
     fn applied_and_duplicate_both_clear_the_outbox_and_a_rejection_keeps_it_queued() {
         let results = vec![
-            RecordResult { id: "ts-1".into(), status: "applied".into(), reason: None },
-            RecordResult { id: "bug-1".into(), status: "duplicate".into(), reason: None },
+            RecordResult {
+                id: "ts-1".into(),
+                status: "applied".into(),
+                reason: None,
+            },
+            RecordResult {
+                id: "bug-1".into(),
+                status: "duplicate".into(),
+                reason: None,
+            },
             RecordResult {
                 id: "bug-2".into(),
                 status: "rejected".into(),
@@ -369,22 +564,31 @@ mod tests {
         let mut sessions = vec![session("ts-1", "ws-1", false)];
 
         let ids = confirmed(&results);
-        mark_confirmed(&mut bugs, &mut sessions, &ids, at("2026-08-10T11:00:00Z"));
+        mark_confirmed(
+            &mut bugs,
+            &mut sessions,
+            &mut [],
+            &ids,
+            at("2026-08-10T11:00:00Z"),
+        );
 
         assert_eq!(sessions[0].synced_at, Some(at("2026-08-10T11:00:00Z")));
         assert_eq!(bugs[0].synced_at, Some(at("2026-08-10T11:00:00Z")));
         // Rejected stays in the outbox, with the backend's own reason attached.
         assert_eq!(bugs[1].synced_at, None);
-        assert_eq!(rejections(&results), ["bug-2: workspace membership revoked"]);
-        assert_eq!(pending(&bugs, &sessions, "ws-1").len(), 1);
+        assert_eq!(
+            rejections(&results),
+            ["bug-2: workspace membership revoked"]
+        );
+        assert_eq!(pending(&bugs, &sessions, &[], "ws-1").len(), 1);
     }
 
     #[test]
     fn an_unreachable_backend_is_a_report_not_a_failure_and_leaves_the_outbox_intact() {
         let bugs = vec![bug("bug-1", "ws-1", false)];
-        let body = batch_body("ws-1", &pending(&bugs, &[], "ws-1"));
+        let body = batch_body("ws-1", &pending(&bugs, &[], &[], "ws-1"));
 
-        // ponytail: the offline path is asserted on the report it produces, not by standing up an
+        // The offline path is asserted on the report it produces, not by standing up an
         // HTTP server. `post_batch` itself is one `send()` away from this — what must never regress
         // is that being offline is a *report*, with the record still queued and nothing marked.
         let report = offline_report(&body, "The backend is unreachable.".into());

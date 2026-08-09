@@ -34,6 +34,37 @@ type SyncReport = {
   detail: string;
 };
 
+type MediaReport = {
+  queued: number;
+  uploaded: number;
+  offline: boolean;
+  detail: string;
+};
+
+/** FR-044: a bug-attached capture, as `capture.rs` stores it. `received`/`total_size` are the
+ *  transfer, `uploaded_at` is the backend — a capture is "pending upload" until the second one. */
+export type Capture = {
+  id: string;
+  bug_id: string;
+  content_type: string;
+  total_size: number;
+  received: number;
+  verified: boolean;
+  uploaded_at: string | null;
+};
+
+/** FR-044a: evidence-in-transit is shown as itself. A capture is never invisible just because its
+ *  bytes have not reached the backend — that would read as "no evidence was taken". */
+export function captureState(capture: Capture): string {
+  if (capture.uploaded_at) return 'Uploaded';
+  if (capture.verified) return 'Pending upload';
+  const share = capture.total_size > 0 ? Math.floor((capture.received / capture.total_size) * 100) : 0;
+  return `Receiving ${share}%`;
+}
+
+const size = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
+
 /** FR-031/FR-032: the excerpt is *derived* from the window, never stored with the bug. A frame the
  *  contract gave no timestamp to cannot be placed in the window, so it is left out rather than
  *  guessed into the evidence. */
@@ -172,7 +203,7 @@ function Triage({ bug, cases, onPatch }: { bug: Bug; cases: TestCase[]; onPatch:
 
 /** FR-031. Grouped by User Action with the Log Inspector's own `groupRows`, so an excerpt reads
  *  exactly like the live view it was cut from — no second idea of what a record looks like. */
-function Evidence({ bug, entries }: { bug: Bug; entries: Entry[] }) {
+function Evidence({ bug, entries, captures }: { bug: Bug; entries: Entry[]; captures: Capture[] }) {
   const excerpt = useMemo(() => withinWindow(entries, bug), [entries, bug]);
   const actions = useMemo(() => precedingActions(entries, bug), [entries, bug]);
   const groups = useMemo(() => groupRows(excerpt, () => true, { on: false, query: '' }), [excerpt]);
@@ -233,12 +264,24 @@ function Evidence({ bug, entries }: { bug: Bug; entries: Entry[] }) {
       )}
 
       <h3 style={sectionTitle}>Attached captures</h3>
-      <p style={{ margin: 0, fontSize: 12, color: t.text2 }}>
-        {/* FR-031 lists screenshots/recordings as evidence; FR-044 (feat-021) is what moves the
-            binary off the device. Saying so beats an empty area that reads as "none were taken". */}
-        Screenshots and recordings attach once the capture relay lands (feat-021). Any media frame
-        that arrived inside the window is listed in the excerpt above.
-      </p>
+      {captures.length === 0 ? (
+        <p style={{ margin: 0, fontSize: 12, color: t.text2 }}>No screenshots or recordings are attached.</p>
+      ) : (
+        <ul aria-label="Attached captures" style={{ margin: 0, padding: 0, listStyle: 'none', border: `1px solid ${t.border}`, borderRadius: t.rSm }}>
+          {captures.map((capture) => {
+            const state = captureState(capture);
+            return (
+              <li key={capture.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderBottom: `1px solid ${t.borderSubtle}`, fontSize: 12 }}>
+                <span style={{ fontFamily: t.mono, color: t.text }}>{capture.content_type || 'capture'}</span>
+                <span style={{ color: t.text3 }}>{size(capture.total_size)}</span>
+                <span style={{ marginLeft: 'auto', color: state === 'Uploaded' ? t.pass : state === 'Pending upload' ? t.warn : t.text2 }}>
+                  {state}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </>
   );
 }
@@ -248,6 +291,7 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   const [cases, setCases] = useState<TestCase[]>([]);
   const [sessions, setSessions] = useState<TestSession[]>([]);
   const [frames, setFrames] = useState<Frame[]>([]);
+  const [captures, setCaptures] = useState<Capture[]>([]);
   const [pickedId, setPickedId] = useState('');
   const [error, setError] = useState('');
   const [syncNote, setSyncNote] = useState('');
@@ -272,21 +316,35 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   // The device names the WS session (CONSTITUTION 2026-08-10), so a bug — which knows the *desktop's*
   // session id — resolves its frames by device and by time, not by session key. `device_records`
   // reads the durable log (FR-035b), so this works after a restart and with no device connected.
-  // ponytail: loaded on select, not polled — a marked moment is in the past.
+  // Loaded on selection rather than polled: a marked moment is already in the past.
   useEffect(() => {
     if (!picked) {
       setFrames([]);
+      setCaptures([]);
       return;
     }
     let live = true;
-    invoke<Frame[]>('device_records', { deviceId: picked.device_id }).then(
-      (listed) => live && setFrames(listed ?? []),
-      () => live && setFrames([]),
+    Promise.all([
+      invoke<Frame[]>('device_records', { deviceId: picked.device_id }),
+      invoke<Capture[]>('list_captures', { workspaceId, bugId: picked.id }),
+    ]).then(
+      ([listedFrames, listedCaptures]) => {
+        if (live) {
+          setFrames(listedFrames ?? []);
+          setCaptures(listedCaptures ?? []);
+        }
+      },
+      () => {
+        if (live) {
+          setFrames([]);
+          setCaptures([]);
+        }
+      },
     );
     return () => {
       live = false;
     };
-  }, [picked?.id, picked?.device_id]);
+  }, [workspaceId, picked?.id, picked?.device_id]);
 
   const entries = useMemo(() => frames.map((frame, index) => ({ row: logRow(frame, index), frame })), [frames]);
 
@@ -294,10 +352,20 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
   // it can do or fail to do changes what is already recorded locally.
   async function syncNow() {
     try {
-      const report = await invoke<SyncReport>('sync_now', { workspaceId });
-      setSyncNote(report.detail);
-      if (!report.offline) {
+      // These requests are intentionally independent: a large or unreachable media upload cannot
+      // hold the Bug record back (FR-044b).
+      const [recordResult, mediaResult] = await Promise.allSettled([
+        invoke<SyncReport>('sync_now', { workspaceId }),
+        invoke<MediaReport>('upload_captures', { workspaceId }),
+      ]);
+      const recordNote = recordResult.status === 'fulfilled' ? recordResult.value.detail : String(recordResult.reason);
+      const mediaNote = mediaResult.status === 'fulfilled' ? mediaResult.value.detail : String(mediaResult.reason);
+      setSyncNote(`${recordNote} ${mediaNote}`);
+      if (recordResult.status === 'fulfilled' && !recordResult.value.offline) {
         setBugs(await invoke<Bug[]>('list_bugs', { workspaceId }));
+      }
+      if (picked) {
+        setCaptures(await invoke<Capture[]>('list_captures', { workspaceId, bugId: picked.id }));
       }
     } catch (reason) {
       setSyncNote(String(reason));
@@ -422,7 +490,7 @@ export default function Bugs({ workspaceId }: { workspaceId: string }) {
               </span>
             </div>
             <Triage bug={picked} cases={cases} onPatch={(change) => patch(picked, change)} />
-            <Evidence bug={picked} entries={entries} />
+            <Evidence bug={picked} entries={entries} captures={captures} />
           </article>
         )}
       </div>

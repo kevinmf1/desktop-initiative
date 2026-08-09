@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod auth_session;
 pub mod bug;
+pub mod capture;
 pub mod device;
 pub mod frames;
 pub mod sync;
@@ -11,11 +12,8 @@ pub mod workbook;
 pub mod ws;
 
 /// Every local store is one JSON file in the app data dir, so they all resolve their path the same
-/// way. ponytail: named here rather than copied per module — feat-023 replaces one function.
-pub(crate) fn store_path(
-    app: &tauri::AppHandle,
-    file: &str,
-) -> Result<std::path::PathBuf, String> {
+/// way. It is named here rather than copied per module so every store follows the same rule.
+pub(crate) fn store_path(app: &tauri::AppHandle, file: &str) -> Result<std::path::PathBuf, String> {
     use tauri::Manager;
     let dir = app
         .path()
@@ -44,9 +42,17 @@ pub fn run() {
                 let server: tauri::State<'_, ws::server::WsServer> = handle.state();
                 server.sessions.store_in(dir);
             }
+            // FR-044: same reasoning for capture bytes — the relay must be able to write the first
+            // chunk a device sends, not only the ones that arrive after someone opens a screen.
+            if let Ok(dir) = store_path(&handle, capture::DIR) {
+                let server: tauri::State<'_, ws::server::WsServer> = handle.state();
+                server.sessions.store_media_in(dir);
+            }
             ws::server::start(&handle);
             // FR-035: the outbox drains on its own timer, and never on a capture path.
             sync::start(&handle);
+            // FR-044b: the media outbox is a *second* timer — a large binary never paces the records.
+            capture::start(&handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -66,6 +72,8 @@ pub fn run() {
             bug::list_bugs,
             bug::mark_bug,
             bug::update_bug,
+            capture::list_captures,
+            capture::upload_captures,
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,

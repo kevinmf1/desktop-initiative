@@ -2,7 +2,7 @@ import { clearMocks, mockIPC } from '@tauri-apps/api/mocks';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
-import Bugs, { precedingActions, withinWindow } from '../Bugs';
+import Bugs, { captureState, precedingActions, type Capture, withinWindow } from '../Bugs';
 import { logRow, type Frame } from '../LogInspector';
 import type { Bug } from '../Runner';
 
@@ -69,6 +69,8 @@ function ipc(handlers: Record<string, (args: any) => unknown> = {}) {
     // FR-035b: the durable log, read by device — no live session has to exist for a bug to show
     // its evidence, which is exactly what makes it survive a restart.
     device_records: ({ deviceId }: { deviceId: string }) => (deviceId === 'dev-a' ? FRAMES : []),
+    list_captures: () => [],
+    upload_captures: () => ({ queued: 0, uploaded: 0, offline: false, detail: 'No capture is waiting to upload.' }),
   };
   const command = vi.fn((name: string, args: unknown) =>
     name in handlers ? handlers[name](args) : defaults[name]?.(args),
@@ -95,8 +97,29 @@ test('preceding User Actions stop at the marker', () => {
   expect(actions.map(({ row }) => row.title)).toEqual(['Tap Pay']);
 });
 
+test('capture state distinguishes receiving, pending upload, and uploaded', () => {
+  const base: Capture = {
+    id: 'cap-1',
+    bug_id: 'bug-1',
+    content_type: 'image/png',
+    total_size: 100,
+    received: 25,
+    verified: false,
+    uploaded_at: null,
+  };
+
+  expect(captureState(base)).toBe('Receiving 25%');
+  expect(captureState({ ...base, received: 100, verified: true })).toBe('Pending upload');
+  expect(captureState({ ...base, received: 100, verified: true, uploaded_at: '2026-08-10T10:20:00Z' })).toBe('Uploaded');
+});
+
 test('a bug shows its record, its excerpt and the actions that preceded it', async () => {
-  ipc();
+  ipc({
+    list_captures: () => [{
+      id: 'cap-1', bug_id: 'bug-1', content_type: 'image/png', total_size: 2_097_152,
+      received: 2_097_152, verified: true, uploaded_at: null,
+    } satisfies Capture],
+  });
 
   render(<Bugs workspaceId="ws-1" />);
 
@@ -113,6 +136,9 @@ test('a bug shows its record, its excerpt and the actions that preceded it', asy
   expect(within(screen.getByLabelText('Preceding User Actions')).getAllByRole('listitem')).toHaveLength(1);
   // Grouped by the same User Action the live viewer groups by.
   expect(within(screen.getByLabelText('Log excerpt')).getByText('Tap Pay')).toBeTruthy();
+  expect(within(screen.getByLabelText('Attached captures')).getByText('image/png')).toBeTruthy();
+  expect(within(screen.getByLabelText('Attached captures')).getByText('2.0 MB')).toBeTruthy();
+  expect(within(screen.getByLabelText('Attached captures')).getByText('Pending upload')).toBeTruthy();
   // Only an Active case is offerable as the related one.
   expect(within(detail).queryByText('Archived case')).toBeNull();
 });
@@ -165,6 +191,7 @@ test('an unsynced bug says so, and syncing while offline leaves it recorded and 
   await user.click(screen.getByText('Sync now'));
 
   expect(command).toHaveBeenCalledWith('sync_now', expect.objectContaining({ workspaceId: 'ws-1' }));
+  expect(command).toHaveBeenCalledWith('upload_captures', expect.objectContaining({ workspaceId: 'ws-1' }));
   await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/unreachable/));
   // The record and its evidence are untouched by a failed push — that is the whole promise.
   expect(within(await screen.findByLabelText('Bug Checkout 500s')).getByText('Not yet synced')).toBeTruthy();
