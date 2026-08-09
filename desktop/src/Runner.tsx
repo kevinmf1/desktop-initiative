@@ -24,7 +24,23 @@ export type TestSession = {
   case_ids: string[];
 };
 
+// FR-013's marker, from `bug.rs`. The window is a bookmark — it names a time range over the
+// session's records rather than copying them.
+export type Bug = {
+  id: string;
+  workspace_id: string;
+  test_session_id: string;
+  device_id: string;
+  summary: string;
+  marked_by: string;
+  marked_at: string;
+  window_start: string;
+  window_end: string;
+};
+
 export const RESULTS: SessionResult[] = ['Passed', 'Failed', 'Blocked', 'Incomplete'];
+
+const clock = (iso: string) => new Date(iso).toLocaleTimeString();
 
 export const isRunning = (session: TestSession) => session.stopped_at === null;
 
@@ -232,17 +248,49 @@ function StopPrompt({ onStop, onCancel }: { onStop: (result: SessionResult) => v
   );
 }
 
+/** FR-013: marking is a one-field act *during* the run — no dialog, no stop, no result. The summary
+ *  is optional because the moment is the point; feat-020 is what fills the rest of the record in. */
+function BugMarker({ onMark }: { onMark: (summary: string) => Promise<void> | void }) {
+  const [summary, setSummary] = useState('');
+  return (
+    <form
+      aria-label="Mark a bug"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        await onMark(summary);
+        setSummary('');
+      }}
+      style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}
+    >
+      <input
+        aria-label="Bug summary"
+        placeholder="What went wrong? (optional)"
+        value={summary}
+        onChange={(event) => setSummary(event.target.value)}
+        style={{ ...field, flex: 1, marginTop: 0 }}
+      />
+      <button type="submit" style={{ ...button(), color: t.warn, borderColor: t.warnBorder, flexShrink: 0 }}>
+        Bug Occurred
+      </button>
+    </form>
+  );
+}
+
 function SessionCard({
   session,
   deviceName,
+  bugs,
   stopping,
+  onMark,
   onStopRequested,
   onStop,
   onCancelStop,
 }: {
   session: TestSession;
   deviceName: string;
+  bugs: Bug[];
   stopping: boolean;
+  onMark: (summary: string) => Promise<void> | void;
   onStopRequested: () => void;
   onStop: (result: SessionResult) => void;
   onCancelStop: () => void;
@@ -288,7 +336,39 @@ function SessionCard({
         <span>{session.case_ids.length} cases</span>
         <span>Started {new Date(session.started_at).toLocaleString()} by {session.started_by}</span>
         {session.stopped_at && <span>Stopped {new Date(session.stopped_at).toLocaleString()}</span>}
+        {bugs.length > 0 && (
+          <span style={{ color: t.warn, fontWeight: 700 }}>
+            {bugs.length} bug{bugs.length === 1 ? '' : 's'}
+          </span>
+        )}
       </div>
+      {bugs.length > 0 && (
+        <ul aria-label={`Bug markers for ${session.name}`} style={{ margin: '10px 0 0', padding: 0, listStyle: 'none' }}>
+          {bugs.map((bug) => (
+            <li
+              key={bug.id}
+              style={{
+                display: 'flex',
+                gap: 10,
+                padding: '6px 8px',
+                marginTop: 4,
+                background: t.warnLight,
+                border: `1px solid ${t.warnBorder}`,
+                borderRadius: t.rSm,
+                fontSize: 12,
+                color: t.text,
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0 }}>{bug.summary}</span>
+              {/* The bookmark, not a copy: the window is what feat-020 reads records out of. */}
+              <span style={{ fontFamily: t.mono, fontSize: 11, color: t.text2 }}>
+                {clock(bug.marked_at)} · window {clock(bug.window_start)}–{clock(bug.window_end)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {running && <BugMarker onMark={onMark} />}
     </article>
   );
 }
@@ -309,6 +389,7 @@ export default function Runner({
   const [plans, setPlans] = useState<TestPlan[]>([]);
   const [cases, setCases] = useState<TestCase[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [bugs, setBugs] = useState<Bug[]>([]);
   const [draft, setDraft] = useState<Draft>(BLANK);
   const [stoppingId, setStoppingId] = useState('');
   const [error, setError] = useState('');
@@ -318,11 +399,13 @@ export default function Runner({
       invoke<TestPlan[]>('list_test_plans', { workspaceId }),
       invoke<TestCase[]>('list_test_cases', { workspaceId }),
       invoke<Registry>('list_devices', { workspaceId }),
+      invoke<Bug[]>('list_bugs', { workspaceId }),
     ]).then(
-      ([listedPlans, listedCases, registry]) => {
+      ([listedPlans, listedCases, registry, listedBugs]) => {
         setPlans((listedPlans ?? []).filter((plan) => plan.lifecycle === 'Active'));
         setCases((listedCases ?? []).filter((testCase) => testCase.lifecycle === 'Active'));
         setDevices(registry?.devices ?? []);
+        setBugs(listedBugs ?? []);
       },
       (reason) => setError(String(reason)),
     );
@@ -350,8 +433,20 @@ export default function Runner({
     }
   }
 
+  /** FR-013: the marker is added and the session list is left alone — nothing here stops a run. */
+  async function mark(session: TestSession, summary: string) {
+    try {
+      const bug = await invoke<Bug>('mark_bug', { workspaceId, testSessionId: session.id, summary });
+      setBugs((current) => [...current, bug]);
+      setError('');
+    } catch (reason) {
+      setError(String(reason));
+    }
+  }
+
   const nameOf = (deviceId: string) =>
     devices.find((device) => device.device_id === deviceId)?.display_name ?? deviceId;
+  const bugsOf = (session: TestSession) => bugs.filter((bug) => bug.test_session_id === session.id);
   const running = sessions.filter(isRunning);
   const finished = sessions.filter((session) => !isRunning(session));
 
@@ -390,7 +485,9 @@ export default function Runner({
             key={session.id}
             session={session}
             deviceName={nameOf(session.device_id)}
+            bugs={bugsOf(session)}
             stopping={stoppingId === session.id}
+            onMark={(summary) => mark(session, summary)}
             onStopRequested={() => setStoppingId(session.id)}
             onStop={(result) => stop(session, result)}
             onCancelStop={() => setStoppingId('')}
@@ -406,7 +503,9 @@ export default function Runner({
               key={session.id}
               session={session}
               deviceName={nameOf(session.device_id)}
+              bugs={bugsOf(session)}
               stopping={false}
+              onMark={() => {}}
               onStopRequested={() => {}}
               onStop={() => {}}
               onCancelStop={() => {}}

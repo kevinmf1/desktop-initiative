@@ -210,7 +210,7 @@ pub fn stop(
     Ok(session.clone())
 }
 
-fn load(app: &AppHandle) -> Result<Vec<TestSession>, String> {
+pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestSession>, String> {
     let path = crate::store_path(app, STORE_FILE)?;
     match fs::read_to_string(&path) {
         Ok(raw) => serde_json::from_str(&raw)

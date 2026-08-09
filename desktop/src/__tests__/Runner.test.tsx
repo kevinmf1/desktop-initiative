@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { Device } from '../Devices';
-import Runner, { draftScope, isRunning, type TestSession } from '../Runner';
+import Runner, { draftScope, isRunning, type Bug, type TestSession } from '../Runner';
 import type { TestCase } from '../TestCases';
 import type { TestPlan } from '../TestPlans';
 
@@ -72,11 +72,25 @@ const session = (overrides: Partial<TestSession> = {}): TestSession => ({
   ...overrides,
 });
 
+const bug = (overrides: Partial<Bug> = {}): Bug => ({
+  id: 'bug-1',
+  workspace_id: 'ws-1',
+  test_session_id: 'ts-1',
+  device_id: 'dev-a',
+  summary: 'Checkout 500s',
+  marked_by: 'Kevin',
+  marked_at: '2026-08-10T10:15:00Z',
+  window_start: '2026-08-10T10:14:30Z',
+  window_end: '2026-08-10T10:15:30Z',
+  ...overrides,
+});
+
 function ipc(handlers: Record<string, (args: any) => unknown> = {}) {
   const defaults: Record<string, (args: any) => unknown> = {
     list_test_plans: () => [testPlan()],
     list_test_cases: () => [testCase(), testCase('tc-2', 'Password reset')],
     list_devices: () => ({ policy: 'Allowlist', devices: [device()] }),
+    list_bugs: () => [],
   };
   const command = vi.fn((name: string, args: unknown) =>
     name in handlers ? handlers[name](args) : defaults[name]?.(args),
@@ -202,6 +216,56 @@ test('cancelling the prompt leaves the session running and unjudged', async () =
 
   expect(command.mock.calls.some(([name]) => name === 'stop_test_session')).toBe(false);
   expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
+});
+
+// FR-013
+test('marking a bug mid-session records the marker and the session keeps running', async () => {
+  const user = userEvent.setup();
+  const command = ipc({ mark_bug: () => bug() });
+  const onSessionsChanged = vi.fn();
+  mount({ sessions: [session()], onSessionsChanged });
+
+  await user.type(await screen.findByLabelText('Bug summary'), 'Checkout 500s');
+  await user.click(screen.getByRole('button', { name: 'Bug Occurred' }));
+
+  expect(command).toHaveBeenCalledWith('mark_bug', {
+    workspaceId: 'ws-1',
+    testSessionId: 'ts-1',
+    summary: 'Checkout 500s',
+  });
+  // The run continues: nothing was stopped, no result was asked for, the card still offers Stop.
+  expect(command.mock.calls.some(([name]) => name === 'stop_test_session')).toBe(false);
+  expect(onSessionsChanged).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
+  expect(screen.getByText('Running (1)')).toBeTruthy();
+
+  // The marker is on the card with the window it bookmarked, and the field is clear for the next one.
+  const markers = within(await screen.findByLabelText('Bug markers for Regression'));
+  expect(markers.getByText('Checkout 500s')).toBeTruthy();
+  expect(markers.getByText(/window/)).toBeTruthy();
+  expect(screen.getByText('1 bug')).toBeTruthy();
+  expect((screen.getByLabelText('Bug summary') as HTMLInputElement).value).toBe('');
+});
+
+// FR-013: a stopped run is a closed record — its markers are shown, no new one can be added.
+test('a refused marker is reported, and a stopped session offers no marker at all', async () => {
+  const user = userEvent.setup();
+  ipc({
+    list_bugs: () => [bug({ test_session_id: 'ts-0' })],
+    mark_bug: () => {
+      throw new Error('That session has been stopped — a bug marker needs a running session.');
+    },
+  });
+  mount({
+    sessions: [session(), session({ id: 'ts-0', name: 'Yesterday', stopped_at: '2026-08-09T12:00:00Z', result: 'Failed' })],
+  });
+
+  await user.click(await screen.findByRole('button', { name: 'Bug Occurred' }));
+  expect((await screen.findByRole('alert')).textContent).toContain('needs a running session');
+
+  // One marker form only — the running card's. The stopped card still shows its own marker.
+  expect(screen.getAllByRole('button', { name: 'Bug Occurred' })).toHaveLength(1);
+  expect(within(screen.getByLabelText('Bug markers for Yesterday')).getByText('Checkout 500s')).toBeTruthy();
 });
 
 // FR-012: the unique id is the join to the device's records, so it is on screen, not implied.

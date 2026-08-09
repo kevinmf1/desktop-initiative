@@ -8,29 +8,34 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-018 closed; nothing 🔵)
-- **Status:** feat-018 complete. The Log Inspector now has a grouped view beside the flat one: one
-  pure `groupRows(entries, keep, filtering)` nests records under the `user_action` whose `action_id`
-  they carry, everything else lands in **Unattributed** (FR-039c), an action with no records keeps
-  its empty group (FR-039d), and the *flat view's own* `keep` predicate is what filters inside groups
-  — while it narrows, a group with nothing left is hidden unless the action's label matches
-  (FR-039e). Toggling is lossless by construction: both views render the same `entries`, and the
-  open record is resolved against all of them. No Rust change — `action_id` was already on the wire.
-  Detail: [archive](../archive/features/feat-018.md). feat-017: [archive](../archive/features/feat-017.md).
+- **Active feature:** — (feat-019 closed; nothing 🔵)
+- **Status:** feat-019 complete. New `bug.rs` store + a one-field marker form on the Runner's running
+  session card. FR-013's three clauses are structural, not conventional: `mark(bugs, sessions, …)`
+  takes `&[TestSession]` so a marker **cannot** stop a run; the bug stores `window_start`/`window_end`
+  = `marked_at ± 30s` (a bookmark, so the frames it points at include the ones that arrive *after*
+  the click); and it carries `(test_session_id, device_id)` — the SDK-reported id `Sessions` files
+  records under, so the window resolves with no translation table. `test_session::load` is now
+  `pub(crate)` so `mark_bug` validates against real sessions. Marking never calls
+  `onSessionsChanged`. Detail: [archive](../archive/features/feat-019.md).
+  feat-018: [archive](../archive/features/feat-018.md).
 - **Last verify:** 2026-08-10 · `build` → **PASS** · `test` → **PASS** · `lint` → not
   configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`;
-  Vitest 60/60, Rust 67/67.
+  Vitest 62/62, Rust 70/70.
 
 ## Next step
 
 Two features are ready:
 
-- **feat-019** (Bug Occurred marker mid-session, FR-013) — the natural continuation, and the first
-  consumer of the correlation `CONSTITUTION.md` (2026-08-10) defers to `test_case_push`. Read that
-  decision before designing it. The activity window it bookmarks is exactly what feat-018 now groups.
+- **feat-020** (bug record + evidence, FR-030/030a/030b/031/032) — the direct continuation. It fills
+  in the record `bug.rs` now creates: full field set, severity P0–P3, status Open → Won't Fix
+  (default Open), and the log excerpt + preceding User Actions pulled from the window feat-019 stores.
+  The ±30s is already a per-bug field pair (`WINDOW_SECONDS` is the only fixed part), so making it
+  configurable is an input, not a migration. `groupRows` (feat-018) is what turns the window's frames
+  into the "preceding User Actions" list.
 - **feat-023** (local-first store + `sync-api` client) is independent and is what makes captured
-  frames survive a restart — `Sessions` is still in memory, capped at 500 frames per session.
-- Not yet ready: feat-020 (needs feat-019), feat-021 (needs 020 + 023), feat-022 (needs 020).
+  frames survive a restart — `Sessions` is still in memory, capped at 500 frames per session, and
+  `bugs.json` / `test-sessions.json` are still whole-file rewrites.
+- Not yet ready: feat-021 (needs 020 + 023), feat-022 (needs 020).
 
 ## Parked
 
@@ -57,7 +62,9 @@ _feat-009 … feat-024: rotated to [archive](../archive/features/). Latest sessi
 
 | File | What | Why |
 |------|------|-----|
-| `desktop/src/LogInspector.tsx` | `groupRows` + `Entry` / `LogGroup` | FR-039b–e: grouping is one pure function over the rows `logRow` already derives |
-| `desktop/src/LogInspector.tsx` | `RecordRow` extracted; grouped/flat toggle chip | a record line must read identically in both views, and the toggle needs one lossless source |
-| `desktop/src/__tests__/LogInspector.test.tsx` | 3 new tests (60 total) | nesting + empty group + Unattributed; filter inside groups; toggle loses nothing |
-| `FEATURES.md` · `archive/features/feat-018.md` | feat-018 ✅ + evidence | definition of done |
+| `desktop/src-tauri/src/bug.rs` | new: `Bug`, `mark`, `visible`, `list_bugs`, `mark_bug`, 3 tests | FR-013: the marker store. `&[TestSession]` is what makes "keeps the session running" a type, not a promise |
+| `desktop/src-tauri/src/test_session.rs` | `load` → `pub(crate)` | `mark_bug` must validate the id against real sessions, not trust the webview |
+| `desktop/src-tauri/src/lib.rs` | `pub mod bug` + both commands registered | a command not in `generate_handler!` is invisible to the webview |
+| `desktop/src/Runner.tsx` | `Bug` type, `BugMarker` form, marker list + bug count on the card, `mark()` | FR-013 on screen: one field, no dialog, and the window shown as what it is — a bookmark |
+| `desktop/src/__tests__/Runner.test.tsx` | 2 new tests (62 total) | marker IPC + session stays running; refusal reported and no marker form on a stopped card |
+| `FEATURES.md` · `archive/features/feat-019.md` | feat-019 ✅ + evidence | definition of done |

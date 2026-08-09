@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod auth_session;
+pub mod bug;
 pub mod device;
 pub mod test_case;
 pub mod test_plan;
@@ -50,6 +51,8 @@ pub fn run() {
             test_session::list_test_sessions,
             test_session::start_test_session,
             test_session::stop_test_session,
+            bug::list_bugs,
+            bug::mark_bug,
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,
