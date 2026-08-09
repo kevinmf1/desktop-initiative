@@ -228,7 +228,7 @@ fn new_id(prefix: &str, now: OffsetDateTime) -> String {
     format!("{prefix}-{}", now.unix_timestamp_nanos())
 }
 
-fn load(app: &AppHandle) -> Result<Vec<TestPlan>, String> {
+pub(crate) fn load(app: &AppHandle) -> Result<Vec<TestPlan>, String> {
     let path = crate::store_path(app, STORE_FILE)?;
     match fs::read_to_string(&path) {
         Ok(raw) => serde_json::from_str(&raw)

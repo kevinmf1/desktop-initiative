@@ -188,7 +188,7 @@ fn save(app: &AppHandle, cases: &[TestCase]) -> Result<(), String> {
 
 /// Whose name lands in the audit fields. Comes from the cached Auth Session, never from the
 /// webview — the caller must not be able to claim authorship of somebody else's edit.
-fn actor() -> String {
+pub(crate) fn actor() -> String {
     crate::auth_session::cached_account()
         .ok()
         .flatten()

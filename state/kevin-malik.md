@@ -8,29 +8,31 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-015 closed; nothing 🔵)
-- **Status:** feat-015 complete. The desktop is now a WS server on `0.0.0.0:8787`, up from
-  `.setup()`. Every handshake runs the gate in order (disabled → reconnect credential → pairing
-  token → register → access policy) and every record is filed under `(device_id, session_id)`, so
-  two devices — or one device in two sessions — never share state. Devices screen shows the live
-  sessions. Detail: [archive](../archive/features/feat-015.md).
+- **Active feature:** — (feat-016 closed; nothing 🔵)
+- **Status:** feat-016 complete. The Runner screen starts a session from a plan or ad hoc cases
+  (build, server, platform, registered device) with a guaranteed-unique id, and Stop *is* the
+  Passed/Failed/Blocked/Incomplete prompt — nothing is written until a result is picked. Sessions
+  live in `test-sessions.json` and key on the SDK's stable `device_id`, the same key
+  `ws::server::Sessions` files records under. Two shell fixes came with it: FR-056d now counts real
+  running sessions from the store, and FR-053a stopped blanking the whole Runner.
+  Detail: [archive](../archive/features/feat-016.md).
 - **Last verify:** 2026-08-10 · `build` → **PASS** · `test` → **PASS** · `lint` → not
   configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`;
-  Vitest 43/43, Rust 62/62.
+  Vitest 50/50, Rust 67/67.
 
 ## Next step
 
-Two features are ready now that feat-015 is ✅ — pick one:
+Three features are ready — **feat-017** is the one to take:
 
-- **feat-017** (log viewer, FR-029a) is the shorter hop: `ws::server::Sessions::records(device_id,
-  session_id)` already returns the raw frames per session, and `device_sessions` already lists the
-  sessions. It needs a screen that reads one session's records and renders them identically for iOS
-  and Android.
-- **feat-023** (local-first store + `sync-api` client) is what makes those sessions survive a
-  restart — today `Sessions` is in memory, capped at 500 frames per session.
-
-Either way, start from `desktop/src-tauri/src/ws/server.rs` — its module doc says what it owns and
-what it deliberately leaves to those two features.
+- **feat-017** (live log viewer, FR-029a). Start in `desktop/src-tauri/src/ws/server.rs`:
+  `Sessions::records(device_id, session_id)` already returns a session's raw frames and
+  `device_sessions` already lists the sessions, so the screen is mostly reading. Its one real
+  design question first: a `TestSession` row has no WS **session id** — the device supplies that at
+  handshake, but the desktop mints its run before the device is told to start. Decide which side
+  names the run before writing the viewer.
+- **feat-019** (Bug Occurred marker) is unblocked once feat-017 lands; **feat-023** (local-first
+  store + `sync-api` client) is independent and is what makes captured frames survive a restart —
+  `Sessions` is in memory, capped at 500 frames per session.
 
 ## Parked
 
@@ -53,4 +55,4 @@ what it deliberately leaves to those two features.
 ## Changes
 
 _feat-009 … feat-024: rotated to [archive](../archive/features/). Latest session:
-[2026-08-10-feat-015.md](../archive/sessions/2026-08-10-feat-015.md)._
+[2026-08-10-feat-016.md](../archive/sessions/2026-08-10-feat-016.md)._

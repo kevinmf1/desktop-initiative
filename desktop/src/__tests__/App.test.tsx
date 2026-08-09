@@ -21,6 +21,22 @@ function account(overrides: Partial<Account> = {}): Account {
   };
 }
 
+const running = (id: string) => ({
+  id,
+  workspace_id: 'ws-1',
+  test_plan_id: null,
+  device_id: 'dev-a',
+  name: 'Ad hoc session',
+  started_by: 'Kevin',
+  started_at: '2026-08-10T10:00:00Z',
+  stopped_at: null,
+  build_version: '2.4.1',
+  platform: 'Android' as const,
+  server: 'staging',
+  result: null,
+  case_ids: ['tc-1'],
+});
+
 /** Routes each Tauri command to a handler, defaulting to a signed-out desktop. */
 function ipc(handlers: Record<string, (args: unknown) => unknown>) {
   const command = vi.fn((name: string, args: unknown) =>
@@ -75,6 +91,9 @@ test('a cached keychain session restores the workspace with no sign-in and no ne
       'cached_account',
       'list_test_cases',
       'list_test_plans',
+      // Local reads of this machine's own files — the shell needs the session list on every
+      // screen for FR-056d, not only on the Runner.
+      'list_test_sessions',
       // Local, and not a read of anything: it tells the WS gate which workspace is open (FR-021).
       'set_active_workspace',
     ]),
@@ -170,7 +189,11 @@ test('switching scopes the content to the new workspace without rewriting anythi
     command.mock.calls
       .map(([name]) => name)
       .filter(
-        (n) => n !== 'list_test_cases' && n !== 'list_test_plans' && n !== 'set_active_workspace',
+        (n) =>
+          n !== 'list_test_cases' &&
+          n !== 'list_test_plans' &&
+          n !== 'list_test_sessions' &&
+          n !== 'set_active_workspace',
       ),
   ).toEqual(['cached_account']);
   const scoping = command.mock.calls.filter(([name]) => name === 'set_active_workspace');
@@ -189,8 +212,10 @@ test('a switch is refused while a test session is running', async () => {
       { workspace_id: 'ws-3', name: 'Gamma', role: 'admin', status: 'active' },
     ],
   });
-  ipc({ list_test_cases: () => [] });
-  render(<WorkspaceShell account={signedIn} onSignOut={() => {}} runningSessions={2} />);
+  // The count is read from the store, not passed in — a session survives a restart, so the guard
+  // has to hold on a shell that has never opened the Runner.
+  ipc({ list_test_cases: () => [], list_test_sessions: () => [running('ts-1'), running('ts-2')] });
+  render(<WorkspaceShell account={signedIn} onSignOut={() => {}} />);
   // The refusal is asserted from the Bugs screen so it is the only alert on the page.
   await user.click(screen.getByRole('button', { name: 'Bugs' }));
 

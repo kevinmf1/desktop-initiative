@@ -3,6 +3,7 @@ pub mod auth_session;
 pub mod device;
 pub mod test_case;
 pub mod test_plan;
+pub mod test_session;
 pub mod workbook;
 pub mod ws;
 
@@ -46,6 +47,9 @@ pub fn run() {
             test_plan::save_test_plan,
             test_plan::archive_test_plan,
             test_plan::duplicate_test_plan,
+            test_session::list_test_sessions,
+            test_session::start_test_session,
+            test_session::stop_test_session,
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
             ws::server::device_sessions,

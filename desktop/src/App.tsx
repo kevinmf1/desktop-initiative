@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import Devices from './Devices';
+import Runner, { isRunning, type TestSession } from './Runner';
 import TestCases from './TestCases';
 import TestPlans from './TestPlans';
 import { t } from './tokens';
@@ -173,23 +174,29 @@ function NavRail({
   );
 }
 
-export function WorkspaceShell({
-  account,
-  onSignOut,
-  // ponytail: no Test Session state exists yet — feat-016 passes the real count here, and until it
-  // does the FR-056d guard is reachable but never triggers.
-  runningSessions = 0,
-}: {
-  account: Account;
-  onSignOut: () => void;
-  runningSessions?: number;
-}) {
+export function WorkspaceShell({ account, onSignOut }: { account: Account; onSignOut: () => void }) {
   const [active, setActive] = useState<ScreenId>('cases');
   const workspaces = switchableWorkspaces(account);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(workspaces[0]?.workspace_id ?? '');
   const [refusal, setRefusal] = useState('');
+  const [sessions, setSessions] = useState<TestSession[]>([]);
   const screen = SCREENS.find((s) => s.id === active)!;
   const workspace = workspaces.find((w) => w.workspace_id === activeWorkspaceId);
+  const runningSessions = sessions.filter(isRunning).length;
+
+  // FR-056d needs the count on every screen, not only the Runner — and a session survives a
+  // restart, so the shell owns the list rather than the screen that happens to show it.
+  async function loadSessions() {
+    try {
+      setSessions((await invoke<TestSession[]>('list_test_sessions', { workspaceId: activeWorkspaceId })) ?? []);
+    } catch {
+      setSessions([]);
+    }
+  }
+
+  useEffect(() => {
+    void loadSessions();
+  }, [activeWorkspaceId]);
 
   // FR-021: the WS listener is up before any screen is opened, so it has to be told which
   // workspace a connecting device registers against — React owns the switcher, Rust owns the gate.
@@ -217,9 +224,9 @@ export function WorkspaceShell({
       </main>
     );
   }
-  // FR-053a: expired offline grace gates starting a *new* session and nothing else. Every other
-  // screen — all locally captured data — stays reachable, and a running session is never touched.
-  const newSessionBlocked = screen.id === 'runner' && !account.can_start_new_session;
+  // FR-053a: expired offline grace gates starting a *new* session and nothing else — the Runner
+  // renders that refusal in place of its start form, so running sessions stay visible and stoppable.
+  const fullBleed = ['cases', 'plans', 'devices', 'runner'].includes(screen.id);
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: t.font, background: t.bg }}>
@@ -254,29 +261,25 @@ export function WorkspaceShell({
         </h1>
         <section
           style={
-            (screen.id === 'cases' || screen.id === 'plans' || screen.id === 'devices') &&
-            !newSessionBlocked
+            fullBleed
               ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
               : { flex: 1, display: 'grid', placeItems: 'center', color: t.text2 }
           }
         >
-          {newSessionBlocked ? (
-            <div role="status" style={{ textAlign: 'center', maxWidth: 420 }}>
-              <div style={{ fontSize: 14, color: t.text }}>
-                Sign in again to start a new session.
-              </div>
-              <div style={{ fontSize: 13, marginTop: 8, lineHeight: 1.5 }}>
-                The offline grace period ended on{' '}
-                {new Date(account.offline_grace_until).toLocaleDateString()}. Running sessions and
-                everything already captured on this machine are unaffected.
-              </div>
-            </div>
-          ) : screen.id === 'cases' ? (
+          {screen.id === 'cases' ? (
             <TestCases workspaceId={workspace.workspace_id} />
           ) : screen.id === 'plans' ? (
             <TestPlans workspaceId={workspace.workspace_id} />
           ) : screen.id === 'devices' ? (
             <Devices workspaceId={workspace.workspace_id} />
+          ) : screen.id === 'runner' ? (
+            <Runner
+              workspaceId={workspace.workspace_id}
+              sessions={sessions}
+              onSessionsChanged={loadSessions}
+              canStartNewSession={account.can_start_new_session}
+              offlineGraceUntil={account.offline_grace_until}
+            />
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14 }}>
