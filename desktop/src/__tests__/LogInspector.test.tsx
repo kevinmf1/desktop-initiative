@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { DeviceSession } from '../Devices';
-import LogInspector, { logRow, matches, type Frame } from '../LogInspector';
+import LogInspector, { groupRows, logRow, matches, type Entry, type Frame } from '../LogInspector';
 
 afterEach(clearMocks);
 
@@ -146,6 +146,52 @@ test('a filter narrows the list without losing the record it points at', async (
   // The surviving row still opens its own frame — filtering must not shift the selection.
   await userEvent.click(screen.getByText('OkHttp: order submit failed'));
   expect(screen.getByLabelText('Raw frame').textContent).toContain('"log_id": "l1"');
+});
+
+// FR-039b–d — the grouped view, over the frames plus one action that produced nothing.
+const GROUPED: Frame[] = [
+  ...FRAMES,
+  { type: 'user_action', action_id: 'a2', label: 'Open settings', occurred_at: '2026-08-10T10:00:09Z' },
+];
+
+const entries = (frames: Frame[]): Entry[] => frames.map((frame, index) => ({ row: logRow(frame, index), frame }));
+const all = () => true;
+
+test('nests records under their user action, keeps the empty one and never drops the unattributed', () => {
+  const groups = groupRows(entries(GROUPED), all, { on: false, query: '' });
+
+  expect(groups.map((group) => group.label)).toEqual(['Checkout', 'Open settings', 'Unattributed']);
+  // The started request carries action_id a1; the completed one and the app_log carry none.
+  expect(groups[0]).toMatchObject({ at: '2026-08-10T10:00:01Z', errors: 0 });
+  expect(groups[0].rows.map(({ row }) => row.detail)).toEqual(['started']);
+  expect(groups[1].rows).toHaveLength(0); // FR-039d
+  expect(groups[2].rows).toHaveLength(3); // FR-039c: 500, the app_log, the unknown type
+  expect(groups[2].errors).toBe(2);
+});
+
+test('a filter applies inside groups and hides the groups left with nothing', () => {
+  const groups = groupRows(entries(GROUPED), ({ row }) => matches(row, 'okhttp'), { on: true, query: 'okhttp' });
+  expect(groups.map((group) => group.label)).toEqual(['Unattributed']);
+  expect(groups[0].rows).toHaveLength(1);
+
+  // The action's own label is searchable too — otherwise a group could never be found by name.
+  expect(groupRows(entries(GROUPED), () => false, { on: true, query: 'settings' }).map((g) => g.label)).toEqual([
+    'Open settings',
+  ]);
+});
+
+test('switching between grouped and flat views loses no records', async () => {
+  ipc([session({ record_count: GROUPED.length })], { 'sdk-abc sess-1': GROUPED });
+  render(<LogInspector workspaceId="ws-1" />);
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Flat' }));
+  expect(screen.getByText('Unattributed')).toBeTruthy();
+  expect(screen.getByText('No records')).toBeTruthy(); // the empty "Open settings" group
+  expect(screen.getByText('2 errors')).toBeTruthy();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Grouped' }));
+  expect(screen.queryByText('Unattributed')).toBeNull();
+  expect(screen.getByText(/6 of 6 records/)).toBeTruthy();
 });
 
 test('says no device is connected rather than showing an empty log', async () => {
