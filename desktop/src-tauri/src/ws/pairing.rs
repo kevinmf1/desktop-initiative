@@ -61,12 +61,18 @@ pub struct PairingNack {
 }
 
 impl PairingNack {
-    fn expired_token(message: &str) -> Self {
+    /// The contract's `nack` reasons: `expired_token | not_allowlisted | disabled | malformed |
+    /// version_mismatch`. One type for all of them — they differ only in the reason string.
+    pub fn refused(reason: &'static str, message: impl Into<String>) -> Self {
         Self {
             message_type: "nack",
-            reason: "expired_token",
-            message: message.to_owned(),
+            reason,
+            message: message.into(),
         }
+    }
+
+    fn expired_token(message: &str) -> Self {
+        Self::refused("expired_token", message)
     }
 }
 
@@ -207,6 +213,9 @@ mod tests {
             device_id: device_id.into(),
             pairing_token: token.map(str::to_owned),
             reconnect_credential: None,
+            platform: None,
+            os_version: None,
+            display_name: None,
         }
     }
 

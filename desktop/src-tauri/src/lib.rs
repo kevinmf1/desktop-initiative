@@ -27,7 +27,14 @@ pub fn run() {
     tauri::Builder::default()
         .manage(auth::AuthState::default())
         .manage(ws::pairing::PairingState::default())
+        .manage(ws::server::WsServer::default())
         .plugin(tauri_plugin_opener::init())
+        // FR-021: the device hot path is a LAN listener, up as soon as the app is, and independent
+        // of the backend and of whether anyone has opened the Devices screen (Principle III).
+        .setup(|app| {
+            ws::server::start(&app.handle().clone());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             auth::sign_in_with_google,
             auth_session::cached_account,
@@ -41,6 +48,8 @@ pub fn run() {
             test_plan::duplicate_test_plan,
             workbook::read_workbook,
             ws::pairing::mint_pairing_invite,
+            ws::server::device_sessions,
+            ws::server::set_active_workspace,
             device::list_devices,
             device::rename_device,
             device::set_device_enabled,

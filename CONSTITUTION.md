@@ -89,6 +89,23 @@ _Dated entries. Add one whenever an arguable choice gets settled — include the
 it can be reopened later without redoing the analysis. Amend by adding a new dated entry that
 supersedes the old one; never silently edit history._
 
+### 2026-08-10 · The WS server uses `tokio-tungstenite`; RFC 6455 is not hand-rolled
+
+feat-015 needed an actual WebSocket server on `WS_PORT`. Nothing already in the graph speaks the
+protocol — `sha2` is the wrong hash for the upgrade (it wants SHA-1) — so this was the one rung of
+the ladder where a new dependency is the smaller answer. `tokio-tungstenite` with
+`default-features = false, features = ["handshake"]` pulls no TLS stack; the LAN hop is `ws://`
+because the pairing token, not transport crypto, is the trust gate (FR-020).
+
+Chosen over writing the framing here. Masking, fragmentation, control frames and close handshakes
+are where a hand-rolled server is subtly wrong against one SDK and fine against the other — exactly
+the cross-platform parity Principle II forbids us to get wrong.
+
+The connection handler takes its gate as a parameter rather than reaching for `AppHandle`, so the
+protocol is testable over `tokio::io::duplex` and over a real `TcpListener` on port 0, with no Tauri
+app running. Generalised: **anything on the device hot path is written so it can be driven without
+the app**, because a test that needs the whole app is a test nobody runs.
+
 ### 2026-08-06 · Local authentication bypass exists only in debug builds
 
 Manual testing of the desktop's local features must not wait for a Google OAuth client or a live

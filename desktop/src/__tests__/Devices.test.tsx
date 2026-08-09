@@ -7,7 +7,10 @@ import Devices, {
   countdown,
   groupCode,
   secondsLeft,
+  sessionLabel,
+  sessionState,
   type Device,
+  type DeviceSession,
   type PairingInvite,
   type Registry,
 } from '../Devices';
@@ -41,7 +44,27 @@ function device(over: Partial<Device> = {}): Device {
 
 /** The Rust side is two stores behind one screen, so the mock dispatches on the command name and
  *  the registry is stateful — a disable has to actually be visible on the next list. */
-function ipc(mint: () => unknown, registry: Registry = { policy: 'Allowlist', devices: [] }) {
+function session(over: Partial<DeviceSession> = {}): DeviceSession {
+  return {
+    device_id: 'sdk-abc',
+    session_id: 'sess-1',
+    display_name: 'Pixel 8',
+    platform: 'Android',
+    os_version: '15',
+    contract_version: '1.0.0',
+    connected: true,
+    record_count: 3,
+    started_at: '2026-08-10T10:00:00Z',
+    last_seen_at: '2026-08-10T10:00:05Z',
+    ...over,
+  };
+}
+
+function ipc(
+  mint: () => unknown,
+  registry: Registry = { policy: 'Allowlist', devices: [] },
+  sessions: DeviceSession[] = [],
+) {
   const state = structuredClone(registry);
   const command = vi.fn((cmd: string, args: Record<string, never>) => {
     const target = state.devices.find((d) => d.id === (args as { id?: string }).id);
@@ -50,6 +73,8 @@ function ipc(mint: () => unknown, registry: Registry = { policy: 'Allowlist', de
         return mint();
       case 'list_devices':
         return state;
+      case 'device_sessions':
+        return sessions;
       case 'set_device_policy':
         state.policy = args.policy;
         return null;
@@ -199,7 +224,45 @@ test('the access policy defaults to allowlist and can be set to open', async () 
   expect(command).toHaveBeenCalledWith('set_device_policy', expect.objectContaining({ policy: 'Open' }));
 });
 
+// FR-021 — two devices streaming at once, each session its own row, isolated by device + session.
+test('shows concurrent device sessions kept apart by device and session ID', async () => {
+  vi.useFakeTimers();
+  try {
+    ipc(() => invite('123456789'), { policy: 'Allowlist', devices: [device()] }, [
+      session(),
+      // Same session ID, other device: the pair is the identity, so this is a second row.
+      session({ device_id: 'sdk-xyz', display_name: 'Bench iPhone', platform: 'iOS', os_version: '17.4', record_count: 8 }),
+      // Same device, second session — and a drop keeps the session rather than erasing it.
+      session({ session_id: 'sess-2', connected: false, record_count: 1 }),
+    ]);
+    render(<Devices workspaceId="ws-1" />);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(screen.getAllByText('sess-1')).toHaveLength(2);
+    expect(screen.getByText('sess-2')).toBeTruthy();
+    expect(screen.getAllByText('Live')).toHaveLength(2);
+    expect(screen.getByText('Disconnected — session kept')).toBeTruthy();
+    expect(screen.getByText('sdk-xyz · iOS 17.4')).toBeTruthy();
+    expect(screen.getByText('8')).toBeTruthy();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test('an empty session list says so rather than showing nothing', async () => {
+  ipc(() => invite('123456789'));
+  render(<Devices workspaceId="ws-1" />);
+
+  expect(await screen.findByText(/No device has connected yet/)).toBeTruthy();
+});
+
 test('the countdown, code grouping and admission wording hold at their boundaries', () => {
+  // FR-021: a connected device with no session yet is a state, not a blank cell.
+  expect(sessionLabel(session({ session_id: '' }))).toBe('No session started');
+  expect(sessionLabel(session())).toBe('sess-1');
+  expect(sessionState(session())).toBe('Live');
+  expect(sessionState(session({ connected: false }))).toBe('Disconnected — session kept');
+
   expect(admission(device(), 'Allowlist')).toBe('Allowed — on the allowlist');
   expect(admission(device(), 'Open')).toBe('Allowed — policy is open');
   // FR-018: disabled means rejected under either policy.

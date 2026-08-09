@@ -191,6 +191,12 @@ export function WorkspaceShell({
   const screen = SCREENS.find((s) => s.id === active)!;
   const workspace = workspaces.find((w) => w.workspace_id === activeWorkspaceId);
 
+  // FR-021: the WS listener is up before any screen is opened, so it has to be told which
+  // workspace a connecting device registers against — React owns the switcher, Rust owns the gate.
+  useEffect(() => {
+    void invoke('set_active_workspace', { workspaceId: activeWorkspaceId }).catch(() => {});
+  }, [activeWorkspaceId]);
+
   // FR-056c: switching only changes what is *shown*. Nothing is rewritten, so an existing device,
   // session, bug or capture can never be reattributed to the workspace switched into.
   function switchWorkspace(workspaceId: string) {

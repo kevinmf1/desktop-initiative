@@ -75,6 +75,8 @@ test('a cached keychain session restores the workspace with no sign-in and no ne
       'cached_account',
       'list_test_cases',
       'list_test_plans',
+      // Local, and not a read of anything: it tells the WS gate which workspace is open (FR-021).
+      'set_active_workspace',
     ]),
   );
 });
@@ -162,11 +164,20 @@ test('switching scopes the content to the new workspace without rewriting anythi
   expect(screen.queryByText(/in Alpha/)).toBeNull();
   // No reattribution: a switch only re-*reads* for the workspace switched into. Nothing is
   // written, so no existing device, session, bug or capture can change workspace.
+  // `set_active_workspace` is the exception that proves it: it tells the WS gate where a *future*
+  // connection registers (FR-021) and touches no stored record.
   expect(
     command.mock.calls
       .map(([name]) => name)
-      .filter((n) => n !== 'list_test_cases' && n !== 'list_test_plans'),
+      .filter(
+        (n) => n !== 'list_test_cases' && n !== 'list_test_plans' && n !== 'set_active_workspace',
+      ),
   ).toEqual(['cached_account']);
+  const scoping = command.mock.calls.filter(([name]) => name === 'set_active_workspace');
+  expect(scoping[scoping.length - 1]).toEqual([
+    'set_active_workspace',
+    { workspaceId: 'ws-3' },
+  ]);
 });
 
 // FR-056d

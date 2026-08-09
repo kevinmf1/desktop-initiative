@@ -8,21 +8,29 @@
 ## Now
 
 - **Objective:** Build the Tauri desktop app to `specs/frontend/`.
-- **Active feature:** — (feat-024 closed; nothing 🔵)
-- **Status:** feat-024 complete. `TESTLAB_DEV_AUTH=1` now opens debug builds as `Local Developer`
-  with two active local workspaces at the Rust auth boundary; it needs no Google/backend and release
-  builds always return no development account. Detail: [archive](../archive/features/feat-024.md).
-- **Last verify:** 2026-08-06 · `build` → **PASS** · `test` → **PASS** · `lint` → not
-  configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`; release
-  all-target check passed; Vitest 41/41, Rust 55/55.
+- **Active feature:** — (feat-015 closed; nothing 🔵)
+- **Status:** feat-015 complete. The desktop is now a WS server on `0.0.0.0:8787`, up from
+  `.setup()`. Every handshake runs the gate in order (disabled → reconnect credential → pairing
+  token → register → access policy) and every record is filed under `(device_id, session_id)`, so
+  two devices — or one device in two sessions — never share state. Devices screen shows the live
+  sessions. Detail: [archive](../archive/features/feat-015.md).
+- **Last verify:** 2026-08-10 · `build` → **PASS** · `test` → **PASS** · `lint` → not
+  configured. Evidence: `HARNESS_VERIFY: PASS (build)` and `HARNESS_VERIFY: PASS (test)`;
+  Vitest 43/43, Rust 62/62.
 
 ## Next step
 
-**feat-015** is ready (feat-013 ✅): bind `ws::pairing::WS_PORT` (8787) and implement the
-`device-desktop-ws` server with at least two concurrent visible sessions, isolated by device and
-session ID. At each handshake: check `device::reconnects(...)`; otherwise call
-`ws::pairing::authorize()`; then `device::register(...)` and `device::admits(...)` before any record
-reaches a viewer or store. Fill `device::Observation.platform` / `os_version` when reported.
+Two features are ready now that feat-015 is ✅ — pick one:
+
+- **feat-017** (log viewer, FR-029a) is the shorter hop: `ws::server::Sessions::records(device_id,
+  session_id)` already returns the raw frames per session, and `device_sessions` already lists the
+  sessions. It needs a screen that reads one session's records and renders them identically for iOS
+  and Android.
+- **feat-023** (local-first store + `sync-api` client) is what makes those sessions survive a
+  restart — today `Sessions` is in memory, capped at 500 frames per session.
+
+Either way, start from `desktop/src-tauri/src/ws/server.rs` — its module doc says what it owns and
+what it deliberately leaves to those two features.
 
 ## Parked
 
@@ -45,4 +53,4 @@ reaches a viewer or store. Fill `device::Observation.platform` / `os_version` wh
 ## Changes
 
 _feat-009 … feat-024: rotated to [archive](../archive/features/). Latest session:
-[2026-08-06-feat-024.md](../archive/sessions/2026-08-06-feat-024.md)._
+[2026-08-10-feat-015.md](../archive/sessions/2026-08-10-feat-015.md)._

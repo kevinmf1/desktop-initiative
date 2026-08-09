@@ -67,8 +67,8 @@ pub struct Device {
     pub registered_at: OffsetDateTime,
 }
 
-/// What a handshake tells us about the device. `platform` / `os_version` are optional because the
-/// contract's `hello` does not carry them — they arrive with the first records (FR-022).
+/// What a handshake tells us about the device. `platform` / `os_version` are optional because an
+/// older SDK minor may not report them; when it does, they arrive in `hello` (FR-022).
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct Observation {
     pub device_id: String,
@@ -248,7 +248,7 @@ pub(crate) fn load(app: &AppHandle) -> Result<Registry, String> {
     }
 }
 
-fn save(app: &AppHandle, registry: &Registry) -> Result<(), String> {
+pub(crate) fn save(app: &AppHandle, registry: &Registry) -> Result<(), String> {
     let path = crate::store_path(app, STORE_FILE)?;
     let raw = serde_json::to_string_pretty(registry).map_err(|e| e.to_string())?;
     fs::write(&path, raw).map_err(|e| format!("Could not write {}: {e}", path.display()))

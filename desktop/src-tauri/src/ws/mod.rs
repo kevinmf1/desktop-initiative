@@ -1,4 +1,5 @@
 pub mod pairing;
+pub mod server;
 
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
@@ -108,10 +109,16 @@ pub struct HelloHandshake {
     pub device_id: String,
     #[serde(default)]
     pub pairing_token: Option<String>,
-    // ponytail: parsed but not yet checked — the per-device credential is stored and re-verified by
-    // the device registry (feat-014). Until then a return visit re-pairs from the QR.
     #[serde(default)]
     pub reconnect_credential: Option<String>,
+    // FR-022: reported here, so the registry can show the source platform from the first handshake
+    // instead of waiting for a record that carries it.
+    #[serde(default)]
+    pub platform: Option<crate::device::ObservedPlatform>,
+    #[serde(default)]
+    pub os_version: Option<String>,
+    #[serde(default)]
+    pub display_name: Option<String>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -120,6 +127,12 @@ pub struct PairedHandshake {
     pub message_type: &'static str,
     pub contract_version: &'static str,
     pub capabilities: Vec<&'static str>,
+    /// Filled in by the server once the gate has run — version negotiation happens before anything
+    /// knows *which* device this is, so `negotiate_handshake` cannot produce them.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device: Option<crate::device::Device>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reconnect_credential: Option<String>,
 }
 
 impl PairedHandshake {
@@ -128,6 +141,8 @@ impl PairedHandshake {
             message_type: "paired",
             contract_version: CONTRACT_VERSION,
             capabilities: DESKTOP_CAPABILITIES.to_vec(),
+            device: None,
+            reconnect_credential: None,
         }
     }
 }
